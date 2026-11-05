@@ -25,8 +25,6 @@ const identityLabel=document.getElementById('identity-label');
 const identityInput=document.getElementById('identity');
 const supportText=document.getElementById('login-support');
 const studentRegistration=document.getElementById('student-registration');
-const passwordInput=document.getElementById('password');
-const passwordToggle=document.querySelector('[data-password-toggle]');
 function selectLoginRole(role){
     const isAdmin=role==='admin';
     const isTeknisi=role==='teknisi';
@@ -43,13 +41,5 @@ function selectLoginRole(role){
 }
 document.querySelectorAll('.role-switch button').forEach(button=>button.addEventListener('click',()=>selectLoginRole(button.dataset.role)));
 selectLoginRole(roleInput.value);
-passwordToggle.addEventListener('click',()=>{
-    const showPassword=passwordInput.type==='password';
-    passwordInput.type=showPassword?'text':'password';
-    passwordToggle.setAttribute('aria-label',showPassword?'Sembunyikan password':'Tampilkan password');
-    passwordToggle.setAttribute('aria-pressed',String(showPassword));
-    passwordToggle.querySelector('i').classList.toggle('bi-eye',!showPassword);
-    passwordToggle.querySelector('i').classList.toggle('bi-eye-slash',showPassword);
-});
 </script>
 @endsection

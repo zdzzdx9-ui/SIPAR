@@ -101,6 +101,14 @@
             .export-action{flex:1;justify-content:center;min-width:0;padding-right:10px;padding-left:10px}
         }
     </style>
+    <style>
+        .password-field{position:relative}
+        .password-field>.form-control{padding-right:44px}
+        .password-toggle{position:absolute;top:50%;right:6px;display:grid;width:34px;height:34px;place-items:center;transform:translateY(-50%);border:0;border-radius:6px;background:transparent;color:#718090}
+        .password-toggle:hover{background:#e8f2ff;color:#0868ce}
+        .password-toggle:focus-visible{outline:3px solid #9ed1f7;outline-offset:1px}
+        .password-toggle .bi{font-size:16px}
+    </style>
     @stack('head')
 </head>
 <body>
@@ -175,6 +183,20 @@
 @endif
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 @stack('scripts')
+<script>
+document.querySelectorAll('[data-password-toggle]').forEach(toggle => {
+    toggle.addEventListener('click', () => {
+        const input = toggle.closest('.password-field')?.querySelector('input');
+        if (!input) return;
+        const visible = input.type === 'password';
+        input.type = visible ? 'text' : 'password';
+        toggle.setAttribute('aria-label', visible ? 'Sembunyikan password' : 'Tampilkan password');
+        toggle.setAttribute('aria-pressed', String(visible));
+        toggle.querySelector('i')?.classList.toggle('bi-eye', !visible);
+        toggle.querySelector('i')?.classList.toggle('bi-eye-slash', visible);
+    });
+});
+</script>
 @if(auth()->check())
 <script>
 (() => {

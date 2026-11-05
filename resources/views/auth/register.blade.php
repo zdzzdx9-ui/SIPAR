@@ -9,8 +9,8 @@
         <label class="form-label">Nama lengkap</label><input class="form-control mb-3" name="nama" value="{{ old('nama') }}" required maxlength="120">
         <label class="form-label">NIS</label><input class="form-control mb-3" name="nis_nip" value="{{ old('nis_nip') }}" required maxlength="30">
         <label class="form-label">Email</label><input class="form-control mb-3" name="email" type="email" value="{{ old('email') }}" required>
-        <label class="form-label">Password</label><input class="form-control mb-3" name="password" type="password" required minlength="8" autocomplete="new-password">
-        <label class="form-label">Ulangi password</label><input class="form-control mb-3" name="password_confirmation" type="password" required minlength="8" autocomplete="new-password">
+        <label class="form-label" for="register-password">Password</label><div class="password-field mb-3"><input class="form-control pe-5" id="register-password" name="password" type="password" required minlength="8" autocomplete="new-password"><button class="password-toggle" type="button" data-password-toggle aria-label="Tampilkan password" aria-pressed="false"><i class="bi bi-eye" aria-hidden="true"></i></button></div>
+        <label class="form-label" for="register-password-confirmation">Ulangi password</label><div class="password-field mb-3"><input class="form-control pe-5" id="register-password-confirmation" name="password_confirmation" type="password" required minlength="8" autocomplete="new-password"><button class="password-toggle" type="button" data-password-toggle aria-label="Tampilkan password" aria-pressed="false"><i class="bi bi-eye" aria-hidden="true"></i></button></div>
         <button class="btn btn-primary w-100" type="submit">Buat akun siswa</button><p class="text-center mt-3 mb-0">Sudah punya akun? <a href="{{ route('login') }}">Masuk</a></p>
     </form></main>
 </div>

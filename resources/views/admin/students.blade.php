@@ -46,7 +46,7 @@
 											<label class="form-label" for="student-email-{{ $student->id_user }}">Email</label>
 											<input class="form-control mb-3" id="student-email-{{ $student->id_user }}" name="email" type="email" value="{{ $keepEditInput ? old('email', $student->email) : $student->email }}" required maxlength="255">
 											<label class="form-label" for="student-password-{{ $student->id_user }}">Password baru (opsional)</label>
-											<input class="form-control" id="student-password-{{ $student->id_user }}" name="password" type="password" minlength="8" autocomplete="new-password">
+											<div class="password-field"><input class="form-control" id="student-password-{{ $student->id_user }}" name="password" type="password" minlength="8" autocomplete="new-password"><button class="password-toggle" type="button" data-password-toggle aria-label="Tampilkan password" aria-pressed="false"><i class="bi bi-eye" aria-hidden="true"></i></button></div>
 											<div class="form-text">Kosongkan jika password tidak ingin diubah.</div>
 										</div>
 										<div class="modal-footer">
@@ -83,7 +83,7 @@
 				<label class="form-label" for="new-student-email">Email</label>
 				<input class="form-control mb-3" id="new-student-email" type="email" name="email" required maxlength="255">
 				<label class="form-label" for="new-student-password">Password awal</label>
-				<input class="form-control" id="new-student-password" type="password" name="password" minlength="8" autocomplete="new-password" required>
+				<div class="password-field"><input class="form-control" id="new-student-password" type="password" name="password" minlength="8" autocomplete="new-password" required><button class="password-toggle" type="button" data-password-toggle aria-label="Tampilkan password" aria-pressed="false"><i class="bi bi-eye" aria-hidden="true"></i></button></div>
 			</div>
 			<div class="modal-footer">
 				<button class="btn btn-light" type="button" data-bs-dismiss="modal">Batal</button>

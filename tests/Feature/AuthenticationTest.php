@@ -52,6 +52,17 @@ class AuthenticationTest extends TestCase
             ->assertDontSee('Akun demo tersedia setelah menjalankan seeder.');
     }
 
+    public function test_registration_page_has_password_visibility_toggles_for_both_password_fields(): void
+    {
+        $this->get(route('register'))
+            ->assertOk()
+            ->assertSee('id="register-password"', false)
+            ->assertSee('id="register-password-confirmation"', false)
+            ->assertSee('data-password-toggle', false)
+            ->assertSee('aria-pressed="false"', false)
+            ->assertSee('bi-eye', false);
+    }
+
     public function test_login_urls_follow_the_https_scheme_from_the_railway_proxy(): void
     {
         $this->withHeaders([

@@ -41,6 +41,14 @@ class PageAccessTest extends TestCase
         ] as $url) {
             $this->get($url)->assertOk();
         }
+        $this->get(route('admin.students'))
+            ->assertSee('id="new-student-password"', false)
+            ->assertSee('data-password-toggle', false)
+            ->assertSee('bi-eye', false);
+        $this->get(route('profile'))
+            ->assertSee('id="current-password"', false)
+            ->assertSee('id="new-password-confirmation"', false)
+            ->assertSee('data-password-toggle', false);
         $this->get('/admin/pengembalian/verifikasi')->assertNotFound();
         $this->get('/admin/pengembalian')->assertNotFound();
         $this->get('/admin/pengembalian/cari')->assertNotFound();
@@ -67,6 +75,11 @@ class PageAccessTest extends TestCase
         foreach ([route('dashboard'), route('catalog'), route('loans.mine'), route('profile')] as $url) {
             $this->get($url)->assertOk();
         }
+        $this->get(route('profile'))
+            ->assertSee('id="current-password"', false)
+            ->assertSee('id="new-password"', false)
+            ->assertSee('id="new-password-confirmation"', false)
+            ->assertSee('data-password-toggle', false);
         $this->get(route('catalog'))
             ->assertSee('class="btn btn-primary btn-sm add-to-cart"', false)
             ->assertSee('id="loan-cart-form"', false)

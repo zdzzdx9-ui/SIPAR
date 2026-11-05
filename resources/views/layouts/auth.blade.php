@@ -45,6 +45,7 @@
         .password-toggle{position:absolute;top:50%;right:7px;display:grid;width:34px;height:34px;place-items:center;transform:translateY(-50%);border:0;border-radius:6px;background:transparent;color:var(--auth-muted)}
         .password-toggle:hover{background:var(--auth-surface);color:var(--auth-blue-dark)}
         .password-toggle .bi{font-size:16px}
+        .password-toggle:focus-visible{outline:3px solid #9ed1f7;outline-offset:1px}
         .auth-form .form-check-input{width:16px;height:16px;margin-top:.1em}
         .auth-form .form-check-input:checked{background-color:var(--auth-blue);border-color:var(--auth-blue)}
         .auth-form .form-check-label,.auth-form .text-muted{font-size:12px;color:var(--auth-muted)!important}
@@ -104,5 +105,21 @@
         @media(prefers-reduced-motion:reduce){.auth-form{animation:none}.role-switch button{transition:none}}
     </style>
 </head>
-<body>@yield('content')</body>
+<body>
+    @yield('content')
+    <script>
+        document.querySelectorAll('[data-password-toggle]').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const input = toggle.closest('.password-field')?.querySelector('input');
+                if (!input) return;
+                const visible = input.type === 'password';
+                input.type = visible ? 'text' : 'password';
+                toggle.setAttribute('aria-label', visible ? 'Sembunyikan password' : 'Tampilkan password');
+                toggle.setAttribute('aria-pressed', String(visible));
+                toggle.querySelector('i')?.classList.toggle('bi-eye', !visible);
+                toggle.querySelector('i')?.classList.toggle('bi-eye-slash', visible);
+            });
+        });
+    </script>
+</body>
 </html>
