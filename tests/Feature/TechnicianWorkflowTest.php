@@ -81,6 +81,8 @@ class TechnicianWorkflowTest extends TestCase
         $this->actingAs($technician)->get(route('technician.handovers'))
             ->assertOk()
             ->assertSee('capture="environment"', false)
+            ->assertSee('data-disable-on-submit', false)
+            ->assertSee('data-submitting-text="Menyimpan..."', false)
             ->assertSee('Kode Transaksi')
             ->assertSee($loan->booking_code)
             ->assertSee('badge text-bg-primary font-monospace', false);
@@ -97,6 +99,8 @@ class TechnicianWorkflowTest extends TestCase
         $this->actingAs($technician)->get(route('technician.returns'))
             ->assertOk()
             ->assertSee('capture="environment"', false)
+            ->assertSee('data-disable-on-submit', false)
+            ->assertSee('data-submitting-text="Menyimpan..."', false)
             ->assertSee('Kode Transaksi')
             ->assertSee($loan->booking_code)
             ->assertSee('badge text-bg-primary font-monospace', false);

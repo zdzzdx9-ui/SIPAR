@@ -20,7 +20,7 @@
     @foreach($loan->detail as $detail)
         @php($handed = $detail->penyerahanDetail->sum('jumlah'))
         @if($handed < $detail->jumlah)
-        <form class="border rounded p-3 mb-2" method="post" action="{{ route('technician.handovers.store', $loan) }}" enctype="multipart/form-data">
+        <form class="border rounded p-3 mb-2" method="post" action="{{ route('technician.handovers.store', $loan) }}" enctype="multipart/form-data" data-disable-on-submit>
             @csrf
             <input type="hidden" name="id_detail" value="{{ $detail->id_detail }}">
             <input type="hidden" name="jumlah" value="{{ $detail->jumlah - $handed }}">
@@ -30,7 +30,7 @@
                 <div class="col-12 col-sm-6"><label class="form-label">Kondisi saat diserahkan</label><select class="form-select" name="kondisi_alat" required><option value="Baik">Baik</option><option value="Rusak">Rusak</option></select></div>
                 <div class="col-12 col-sm-6"><label class="form-label">Foto bukti siswa dengan alat <span class="text-danger">*</span> (maks. 5 MB)</label><input class="form-control" type="file" name="foto_bukti" accept="image/jpeg,image/png,image/webp" capture="environment" required></div>
                 <div class="col-12"><label class="form-label">Catatan</label><textarea class="form-control" name="catatan" rows="2"></textarea></div>
-                <div class="col-12"><button class="btn btn-primary" type="submit">Simpan penyerahan</button></div>
+                <div class="col-12"><button class="btn btn-primary" type="submit" data-submitting-text="Menyimpan...">Simpan penyerahan</button></div>
             </div>
         </form>
         @else

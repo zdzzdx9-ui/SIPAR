@@ -28,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
         View::composer('layouts.app', function ($view): void {
             $technicianHandoverCount = 0;
             $technicianReturnCount = 0;
+            $studentLoanNotificationCount = 0;
             if (auth()->check() && auth()->user()->role === 'teknisi') {
                 $technicianHandoverCount = DetailPeminjaman::whereHas('peminjaman', fn ($query) => $query->where('status', 'Approved'))
                     ->whereRaw('loan_items.jumlah > (
@@ -48,9 +49,13 @@ class AppServiceProvider extends ServiceProvider
                         WHERE detail_pengembalian.id_detail = loan_items.id_detail
                     )'))
                     ->count();
+            } elseif (auth()->check() && auth()->user()->role === 'siswa') {
+                $studentLoanNotificationCount = Peminjaman::where('id_user', auth()->user()->id_user)
+                    ->whereNull('status_read_at')
+                    ->count();
             }
 
-            $view->with(compact('technicianHandoverCount', 'technicianReturnCount'));
+            $view->with(compact('technicianHandoverCount', 'technicianReturnCount', 'studentLoanNotificationCount'));
         });
     }
 }

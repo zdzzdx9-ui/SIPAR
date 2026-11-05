@@ -25,24 +25,24 @@
             <div class="d-flex align-items-center gap-2 mb-3"><span class="equipment-icon overflow-hidden"><x-equipment-image :equipment="$detail->alat" alt="Foto {{ $detail->alat->nama_alat }}"></x-equipment-image></span><div><strong>{{ $detail->alat->nama_alat }}</strong><small class="d-block text-muted">{{ $detail->alat->kode_alat }} · telah diserahkan {{ $handed }}, kembali {{ $returned }}</small></div></div>
             @if($assets->isNotEmpty())
                 @foreach($assets as $handover)
-                <form class="row g-2 align-items-end border-top py-3" method="post" action="{{ route('technician.returns.store') }}" enctype="multipart/form-data">
+                <form class="row g-2 align-items-end border-top py-3" method="post" action="{{ route('technician.returns.store') }}" enctype="multipart/form-data" data-disable-on-submit>
                     @csrf
                     <input type="hidden" name="id_peminjaman" value="{{ $loan->id_peminjaman }}"><input type="hidden" name="booking_code" value="{{ $loan->booking_code }}"><input type="hidden" name="id_detail" value="{{ $detail->id_detail }}"><input type="hidden" name="kode_alat" value="{{ $detail->alat->kode_alat }}"><input type="hidden" name="asset_id" value="{{ $handover->asset_id }}"><input type="hidden" name="item_unit_id" value="{{ $handover->item_unit_id }}"><input type="hidden" name="jumlah" value="1">
                     <div class="col-12"><strong>Asset ID: {{ $handover->asset_id }}</strong></div>
                     <div class="col-12 col-md-3"><label class="form-label">Kondisi item</label><select class="form-select" name="kondisi_alat" required><option value="Baik">Baik</option><option value="Maintenance">Maintenance</option><option value="Rusak">Rusak</option><option value="Hilang">Hilang</option></select></div>
                     <div class="col-12 col-md-5"><label class="form-label">Foto kondisi item <span class="text-danger">*</span></label><input class="form-control" type="file" name="foto_bukti" accept="image/jpeg,image/png,image/webp" capture="environment" required></div>
-                    <div class="col-12 col-md-4"><label class="form-label">Catatan</label><input class="form-control" name="catatan" maxlength="2000"><button class="btn btn-primary mt-2" type="submit">Catat pengembalian</button></div>
+                    <div class="col-12 col-md-4"><label class="form-label">Catatan</label><input class="form-control" name="catatan" maxlength="2000"><button class="btn btn-primary mt-2" type="submit" data-submitting-text="Menyimpan...">Catat pengembalian</button></div>
                 </form>
                 @endforeach
             @else
                 @php($remaining = max(0, $handed - $returned))
-                <form class="row g-2 align-items-end border-top pt-3" method="post" action="{{ route('technician.returns.store') }}" enctype="multipart/form-data">
+                <form class="row g-2 align-items-end border-top pt-3" method="post" action="{{ route('technician.returns.store') }}" enctype="multipart/form-data" data-disable-on-submit>
                     @csrf
                     <input type="hidden" name="id_peminjaman" value="{{ $loan->id_peminjaman }}"><input type="hidden" name="booking_code" value="{{ $loan->booking_code }}"><input type="hidden" name="id_detail" value="{{ $detail->id_detail }}"><input type="hidden" name="kode_alat" value="{{ $detail->alat->kode_alat }}">
                     <div class="col-12 col-md-2"><label class="form-label">Jumlah</label><input class="form-control" type="number" name="jumlah" min="1" max="{{ $remaining }}" value="1" required></div>
                     <div class="col-12 col-md-3"><label class="form-label">Kondisi item</label><select class="form-select" name="kondisi_alat" required><option value="Baik">Baik</option><option value="Maintenance">Maintenance</option><option value="Rusak">Rusak</option><option value="Hilang">Hilang</option></select></div>
                     <div class="col-12 col-md-4"><label class="form-label">Foto kondisi item <span class="text-danger">*</span></label><input class="form-control" type="file" name="foto_bukti" accept="image/jpeg,image/png,image/webp" capture="environment" required></div>
-                    <div class="col-12 col-md-3"><label class="form-label">Catatan</label><input class="form-control" name="catatan" maxlength="2000"><button class="btn btn-primary mt-2" type="submit">Catat pengembalian</button></div>
+                    <div class="col-12 col-md-3"><label class="form-label">Catatan</label><input class="form-control" name="catatan" maxlength="2000"><button class="btn btn-primary mt-2" type="submit" data-submitting-text="Menyimpan...">Catat pengembalian</button></div>
                 </form>
             @endif
         </div>

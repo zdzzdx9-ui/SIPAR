@@ -391,6 +391,63 @@ class LoanWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_student_status_badge_counts_decisions_and_clears_after_opening_history(): void
+    {
+        $category = KategoriAlat::create(['nama_kategori' => 'Notifikasi Status']);
+        $equipment = Alat::create([
+            'kode_alat' => 'STATUS-BADGE', 'nama_alat' => 'Alat Notifikasi', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 3, 'stok_tersedia' => 3, 'kondisi' => 'Baik', 'qr_code' => 'status-badge-qr', 'status_alat' => 'Tersedia',
+        ]);
+        $student = User::factory()->create(['role' => 'siswa']);
+        $admin = User::factory()->create(['role' => 'admin']);
+        $approvedLoan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDays(2)->toDateString(),
+            'keperluan' => 'Notifikasi persetujuan',
+            'status' => 'Pending',
+        ]);
+        $approvedLoan->detail()->create(['id_alat' => $equipment->id_alat, 'jumlah' => 1]);
+        $rejectedLoan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDays(2)->toDateString(),
+            'keperluan' => 'Notifikasi penolakan',
+            'status' => 'Pending',
+        ]);
+        $rejectedLoan->detail()->create(['id_alat' => $equipment->id_alat, 'jumlah' => 1]);
+
+        $this->actingAs($admin)->get(route('admin.approvals'))
+            ->assertOk()
+            ->assertSee('data-disable-on-submit', false)
+            ->assertSee('data-submitting-text="Menyetujui..."', false)
+            ->assertSee('data-submitting-text="Menolak..."', false);
+
+        $this->actingAs($admin)
+            ->post(route('admin.approvals.approve', $approvedLoan))
+            ->assertRedirect();
+        $this->post(route('admin.approvals.reject', $rejectedLoan), ['catatan_admin' => 'Jadwal tidak tersedia'])
+            ->assertRedirect();
+
+        $approvedLoan->update(['status' => 'Selesai']);
+        $this->assertDatabaseHas('loans', ['id_peminjaman' => $approvedLoan->id_peminjaman, 'status_read_at' => null]);
+        $this->assertDatabaseHas('loans', ['id_peminjaman' => $rejectedLoan->id_peminjaman, 'status_read_at' => null]);
+
+        $this->actingAs($student)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('2 perubahan status belum dibaca');
+
+        $this->get(route('loans.mine'))
+            ->assertOk()
+            ->assertSee('0 perubahan status belum dibaca');
+
+        $this->assertNotNull($approvedLoan->fresh()->status_read_at);
+        $this->assertNotNull($rejectedLoan->fresh()->status_read_at);
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('0 perubahan status belum dibaca');
+    }
+
     public function test_return_cannot_exceed_the_remaining_quantity(): void
     {
         $category = KategoriAlat::create(['nama_kategori' => 'Jaringan']);

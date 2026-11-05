@@ -129,7 +129,7 @@
             <a class="nav-link {{ request()->routeIs('technician.returns') ? 'active' : '' }}" href="{{ route('technician.returns') }}"><i class="bi bi-arrow-return-left"></i>Pengembalian Alat @if($technicianReturnCount > 0)<span class="badge rounded-pill text-bg-warning ms-auto">{{ $technicianReturnCount }}</span>@endif</a>
         @else
             <a class="nav-link {{ request()->routeIs('catalog') ? 'active' : '' }}" href="{{ route('catalog') }}"><i class="bi bi-grid"></i>Katalog Alat</a>
-            <a class="nav-link {{ request()->routeIs('loans.mine') ? 'active' : '' }}" href="{{ route('loans.mine') }}"><i class="bi bi-clock-history"></i>Riwayat Peminjaman</a>
+            <a class="nav-link {{ request()->routeIs('loans.mine') ? 'active' : '' }}" href="{{ route('loans.mine') }}"><i class="bi bi-clock-history"></i>Riwayat Peminjaman <span class="badge rounded-pill text-bg-warning ms-auto" aria-label="{{ $studentLoanNotificationCount }} perubahan status belum dibaca">{{ $studentLoanNotificationCount }}</span></a>
         @endif
         <a class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}" href="{{ route('profile') }}"><i class="bi bi-person-gear"></i>Profil Saya</a>
         <div class="side-user"><strong>{{ auth()->user()->nama }}</strong><small>{{ auth()->user()->nis_nip }} · {{ ucfirst(auth()->user()->role) }}</small></div>
@@ -154,7 +154,7 @@
                 <a class="nav-link {{ request()->routeIs('technician.returns') ? 'active' : '' }}" href="{{ route('technician.returns') }}"><i class="bi bi-arrow-return-left"></i>Pengembalian Alat @if($technicianReturnCount > 0)<span class="badge rounded-pill text-bg-warning ms-auto">{{ $technicianReturnCount }}</span>@endif</a>
             @else
                 <a class="nav-link {{ request()->routeIs('catalog') ? 'active' : '' }}" href="{{ route('catalog') }}"><i class="bi bi-grid"></i>Katalog Alat</a>
-                <a class="nav-link {{ request()->routeIs('loans.mine') ? 'active' : '' }}" href="{{ route('loans.mine') }}"><i class="bi bi-clock-history"></i>Riwayat Peminjaman</a>
+                <a class="nav-link {{ request()->routeIs('loans.mine') ? 'active' : '' }}" href="{{ route('loans.mine') }}"><i class="bi bi-clock-history"></i>Riwayat Peminjaman <span class="badge rounded-pill text-bg-warning ms-auto" aria-label="{{ $studentLoanNotificationCount }} perubahan status belum dibaca">{{ $studentLoanNotificationCount }}</span></a>
             @endif
             <a class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}" href="{{ route('profile') }}"><i class="bi bi-person-gear"></i>Profil Saya</a>
             <div class="side-user"><strong>{{ auth()->user()->nama }}</strong><small>{{ auth()->user()->nis_nip }} · {{ ucfirst(auth()->user()->role) }}</small></div>
@@ -184,6 +184,23 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 @stack('scripts')
 <script>
+document.querySelectorAll('form[data-disable-on-submit]').forEach(form => {
+    form.addEventListener('submit', event => {
+        if (form.dataset.submitting === 'true') {
+            event.preventDefault();
+            return;
+        }
+        if (event.defaultPrevented) return;
+        form.dataset.submitting = 'true';
+        form.setAttribute('aria-busy', 'true');
+        form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach(button => {
+            button.disabled = true;
+            button.setAttribute('aria-disabled', 'true');
+            if (button instanceof HTMLButtonElement) button.textContent = button.dataset.submittingText || 'Memproses...';
+            if (button instanceof HTMLInputElement) button.value = button.dataset.submittingText || 'Memproses...';
+        });
+    });
+});
 document.querySelectorAll('[data-password-toggle]').forEach(toggle => {
     toggle.addEventListener('click', () => {
         const input = toggle.closest('.password-field')?.querySelector('input');

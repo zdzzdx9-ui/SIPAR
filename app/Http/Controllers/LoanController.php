@@ -98,6 +98,7 @@ class LoanController extends Controller
                     'tanggal_kembali_rencana' => $data['tanggal_kembali_rencana'],
                     'keperluan' => $data['keperluan'],
                     'status' => 'Pending',
+                    'status_read_at' => now(),
                 ]);
                 foreach ($equipmentList as $equipment) {
                     $loan->detail()->create([
@@ -117,6 +118,10 @@ class LoanController extends Controller
 
     public function mine(Request $request): View
     {
+        Peminjaman::where('id_user', $request->user()->id_user)
+            ->whereNull('status_read_at')
+            ->update(['status_read_at' => now()]);
+
         $loans = Peminjaman::with(['detail.alat', 'detail.pengembalianDetail', 'pengembalian'])
             ->where('id_user', $request->user()->id_user)
             ->latest('tanggal_pengajuan')->paginate(10);
@@ -197,6 +202,7 @@ class LoanController extends Controller
 
                 $loan->update([
                     'status' => 'Approved',
+                    'status_read_at' => null,
                     'operational_notes' => 'Lokasi pengambilan: Lab / Ruang Inventaris. Jam operasional teknisi: 12.00 - 13.00 WIB.',
                     'overdue_flag' => false,
                     'reminder_flag' => false,
@@ -216,7 +222,7 @@ class LoanController extends Controller
         $data = $request->validate(['catatan_admin' => ['required', 'string', 'max:1000']]);
         $updated = Peminjaman::whereKey($peminjaman->id_peminjaman)
             ->where('status', 'Pending')
-            ->update(['status' => 'Rejected', 'catatan_admin' => $data['catatan_admin']]);
+            ->update(['status' => 'Rejected', 'catatan_admin' => $data['catatan_admin'], 'status_read_at' => null]);
 
         if (! $updated) {
             return back()->withErrors(['status' => 'Hanya pengajuan Pending yang dapat ditolak.']);

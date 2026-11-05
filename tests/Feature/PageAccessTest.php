@@ -83,6 +83,8 @@ class PageAccessTest extends TestCase
         $this->get(route('catalog'))
             ->assertSee('class="btn btn-primary btn-sm add-to-cart"', false)
             ->assertSee('id="loan-cart-form"', false)
+            ->assertSee('data-disable-on-submit', false)
+            ->assertSee('data-submitting-text="Mengajukan..."', false)
             ->assertSee('name="tanggal_kembali_rencana"', false)
             ->assertSee('Keranjang peminjaman')
             ->assertSee('Ajukan seluruh keranjang');

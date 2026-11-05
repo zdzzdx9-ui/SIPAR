@@ -17,7 +17,7 @@ class Peminjaman extends Model
     protected $fillable = [
         'id_user', 'user_id', 'tanggal_pengajuan', 'tanggal_pinjam', 'tanggal_kembali_rencana',
         'start_date', 'end_date', 'keperluan', 'status', 'catatan_admin', 'booking_code',
-        'operational_notes', 'overdue_flag', 'reminder_flag',
+        'operational_notes', 'overdue_flag', 'reminder_flag', 'status_read_at',
     ];
 
     protected $casts = [
@@ -28,6 +28,7 @@ class Peminjaman extends Model
         'end_date' => 'date',
         'overdue_flag' => 'boolean',
         'reminder_flag' => 'boolean',
+        'status_read_at' => 'datetime',
     ];
 
     protected static function booted(): void

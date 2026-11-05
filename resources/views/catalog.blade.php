@@ -41,14 +41,14 @@
     <h2 class="panel-title">Keranjang peminjaman</h2>
     <p class="panel-subtitle">Pilih beberapa jenis alat; setiap jenis maksimal 1 unit per siswa. Maksimal durasi peminjaman 5 hari dan boleh dikembalikan lebih awal.</p>
     <div id="cart-empty" class="text-muted py-2">Keranjang masih kosong.</div>
-    <form method="post" action="{{ route('loans.create') }}" id="loan-cart-form" class="d-none">
+    <form method="post" action="{{ route('loans.create') }}" id="loan-cart-form" class="d-none" data-disable-on-submit>
         @csrf
         <div id="cart-items" class="mb-3"></div>
         <div class="row g-3">
             <div class="col-12 col-sm-6"><label class="form-label" for="loan-date">Tanggal pinjam</label><input class="form-control" id="loan-date" type="date" name="tanggal_pinjam" min="{{ now()->toDateString() }}" value="{{ now()->toDateString() }}" required></div>
             <div class="col-12 col-sm-6"><label class="form-label" for="return-date">Rencana kembali</label><input class="form-control" id="return-date" type="date" name="tanggal_kembali_rencana" min="{{ now()->toDateString() }}" max="{{ now()->addDays(5)->toDateString() }}" value="{{ now()->addDays(5)->toDateString() }}" required></div>
             <div class="col-12"><label class="form-label" for="loan-purpose">Keperluan</label><textarea class="form-control" id="loan-purpose" name="keperluan" rows="3" maxlength="2000" required placeholder="Jelaskan keperluan alat..."></textarea></div>
-            <div class="col-12"><button class="btn btn-primary" type="submit"><i class="bi bi-send me-1"></i>Ajukan seluruh keranjang</button></div>
+            <div class="col-12"><button class="btn btn-primary" type="submit" data-submitting-text="Mengajukan..."><i class="bi bi-send me-1"></i>Ajukan seluruh keranjang</button></div>
         </div>
     </form>
 </section>
