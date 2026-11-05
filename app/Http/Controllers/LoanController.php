@@ -24,7 +24,19 @@ class LoanController extends Controller
             $query->where(fn ($builder) => $builder->where('nama_alat', 'like', $term)->orWhere('kode_alat', 'like', $term));
         })->orderBy('nama_alat')->paginate(12)->withQueryString();
 
-        return view('catalog', compact('equipment'));
+        $activeEquipmentStatuses = DetailPeminjaman::with('peminjaman:id_peminjaman,status')
+            ->whereHas('peminjaman', fn ($query) => $query
+                ->where('id_user', $request->user()->id_user)
+                ->whereIn('status', ['Pending', 'Approved']))
+            ->whereRaw('loan_items.jumlah > (
+                SELECT COALESCE(SUM(detail_pengembalian.jumlah), 0)
+                FROM detail_pengembalian
+                WHERE detail_pengembalian.id_detail = loan_items.id_detail
+            )')
+            ->get()
+            ->mapWithKeys(fn (DetailPeminjaman $detail) => [$detail->id_alat => $detail->peminjaman->status]);
+
+        return view('catalog', compact('equipment', 'activeEquipmentStatuses'));
     }
 
     public function create(Request $request): RedirectResponse
@@ -39,7 +51,7 @@ class LoanController extends Controller
         $data = $request->validate([
             'items' => ['required', 'array', 'min:1'],
             'items.*.id_alat' => ['required', 'integer', 'distinct', 'exists:alat,id_alat'],
-            'items.*.jumlah' => ['required', 'integer', 'min:1', 'max:10000'],
+            'items.*.jumlah' => ['required', 'integer', 'in:1'],
             'tanggal_pinjam' => ['required', 'date', 'after_or_equal:today', 'before_or_equal:today'],
             'tanggal_kembali_rencana' => ['required', 'date', 'after_or_equal:tanggal_pinjam', 'before_or_equal:'.now()->addDays(5)->toDateString()],
             'keperluan' => ['required', 'string', 'max:2000'],

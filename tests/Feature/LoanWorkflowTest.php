@@ -58,7 +58,7 @@ class LoanWorkflowTest extends TestCase
         $this->assertSame(3, $equipment->fresh()->stok_tersedia);
     }
 
-    public function test_student_can_request_multiple_units_and_equipment_in_one_loan(): void
+    public function test_student_can_request_multiple_equipment_but_only_one_of_each_type(): void
     {
         $category = KategoriAlat::create(['nama_kategori' => 'Jaringan']);
         $firstEquipment = Alat::create([
@@ -78,14 +78,8 @@ class LoanWorkflowTest extends TestCase
 
         $this->actingAs($student)->post(route('loans.create'), $request + [
             'items' => [['id_alat' => $firstEquipment->id_alat, 'jumlah' => 2]],
-        ])->assertRedirect(route('loans.mine'));
-
-        $this->assertDatabaseHas('loan_items', [
-            'id_peminjaman' => Peminjaman::firstOrFail()->id_peminjaman,
-            'id_alat' => $firstEquipment->id_alat,
-            'jumlah' => 2,
-        ]);
-        Peminjaman::query()->delete();
+        ])->assertSessionHasErrors('items.0.jumlah');
+        $this->assertSame(0, Peminjaman::count());
 
         $this->post(route('loans.create'), $request + [
             'items' => [
@@ -96,6 +90,10 @@ class LoanWorkflowTest extends TestCase
 
         $this->assertSame(1, Peminjaman::count());
         $this->assertSame(2, Peminjaman::firstOrFail()->detail()->count());
+        $this->assertSame(
+            [1, 1],
+            Peminjaman::firstOrFail()->detail()->orderBy('id_alat')->pluck('jumlah')->all()
+        );
     }
 
     public function test_loan_duration_is_limited_to_five_days_and_booking_fields_are_stored(): void
@@ -151,6 +149,10 @@ class LoanWorkflowTest extends TestCase
             'keperluan' => 'Pengajuan kedua',
         ];
 
+        $this->actingAs($student)->get(route('catalog'))
+            ->assertOk()
+            ->assertSee('Sudah diajukan')
+            ->assertSee('data-unavailable="1"', false);
         $this->actingAs($student)->post(route('loans.create'), $requestData)
             ->assertSessionHasErrors('items');
         $this->assertSame(1, Peminjaman::count());
