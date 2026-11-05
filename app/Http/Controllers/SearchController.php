@@ -47,13 +47,22 @@ class SearchController extends Controller
                 'url' => route('search', ['q' => $category->nama_kategori]),
             ]);
 
+        $role = $request->user()->role;
         $loans = Peminjaman::with('user')
-            ->when($request->user()->role !== 'admin', fn (Builder $query) => $query->where('id_user', $request->user()->id_user))
+            ->when($role === 'siswa', fn (Builder $query) => $query->where('id_user', $request->user()->id_user))
+            ->when($role === 'teknisi', fn (Builder $query) => $query->where('status', 'Approved'))
+            ->when($role === 'teknisi', fn (Builder $query) => $query->where('status', 'Approved'))
             ->where(fn (Builder $query) => $query
                 ->where('keperluan', 'like', $like)
                 ->orWhere('status', 'like', $like)
                 ->orWhere('booking_code', 'like', $like)
-                ->when(preg_match('/^(?:PJM-)?\d+$/i', $term), fn (Builder $query) => $query->orWhere('id_peminjaman', (int) preg_replace('/^PJM-/i', '', $term))))
+                ->when(preg_match('/^(?:PJM-)?\d+$/i', $term), fn (Builder $query) => $query->orWhere('id_peminjaman', (int) preg_replace('/^PJM-/i', '', $term)))
+                ->orWhereHas('detail.alat', fn (Builder $equipmentQuery) => $equipmentQuery
+                    ->where('nama_alat', 'like', $like)
+                    ->orWhere('kode_alat', 'like', $like))
+                ->orWhereHas('detail', fn (Builder $detailQuery) => $detailQuery
+                    ->where('alat_snapshot_nama', 'like', $like)
+                    ->orWhere('alat_snapshot_kode', 'like', $like)))
             ->latest('tanggal_pengajuan')
             ->take(4)
             ->get()
@@ -61,7 +70,9 @@ class SearchController extends Controller
                 'type' => 'Transaksi',
                 'title' => $loan->booking_code,
                 'subtitle' => $loan->status_label.' · '.$loan->user->nama,
-                'url' => route('search', ['q' => $loan->booking_code]),
+                'url' => $role === 'teknisi'
+                    ? route('technician.returns', ['q' => $loan->booking_code])
+                    : route('search', ['q' => $loan->booking_code]),
             ]);
 
         if ($request->user()->role === 'admin') {
@@ -92,6 +103,7 @@ class SearchController extends Controller
         $data = $request->validate(['q' => ['nullable', 'string', 'max:100']]);
         $term = trim($data['q'] ?? '');
         $isAdmin = $request->user()->role === 'admin';
+        $isTechnician = $request->user()->role === 'teknisi';
         $equipment = collect();
         $students = collect();
         $loans = collect();
@@ -119,8 +131,10 @@ class SearchController extends Controller
             }
 
             $loanQuery = Peminjaman::with(['user', 'detail.alat']);
-            if (! $isAdmin) {
+            if ($request->user()->role === 'siswa') {
                 $loanQuery->where('id_user', $request->user()->id_user);
+            } elseif ($isTechnician) {
+                $loanQuery->where('status', 'Approved');
             }
 
             $loanId = preg_match('/^(?:PJM-)?\d+$/i', $term)
@@ -147,6 +161,6 @@ class SearchController extends Controller
                 ->get();
         }
 
-        return view('search.index', compact('term', 'isAdmin', 'equipment', 'students', 'loans'));
+        return view('search.index', compact('term', 'isAdmin', 'isTechnician', 'equipment', 'students', 'loans'));
     }
 }

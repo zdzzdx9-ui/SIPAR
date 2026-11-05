@@ -68,6 +68,44 @@ class SearchTest extends TestCase
             ->assertViewHas('students', fn ($students) => $students->isEmpty());
     }
 
+    public function test_technician_can_search_other_students_active_loans_and_open_return_processing(): void
+    {
+        $technician = User::factory()->create(['role' => 'teknisi']);
+        $student = User::factory()->create(['role' => 'siswa', 'nama' => 'Siswa Uji Teknisi']);
+        $category = KategoriAlat::create(['nama_kategori' => 'Pencarian Pengembalian']);
+        $equipment = Alat::create([
+            'kode_alat' => 'MIK-SEARCH-01', 'nama_alat' => 'Mikrofon Uji', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 1, 'stok_tersedia' => 0, 'kondisi' => 'Baik', 'qr_code' => 'qr-mik-search', 'status_alat' => 'Dipinjam',
+        ]);
+        $loan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => now()->toDateString(),
+            'tanggal_kembali_rencana' => now()->addDay()->toDateString(),
+            'keperluan' => 'Pencarian teknisi',
+            'status' => 'Approved',
+        ]);
+        $loan->detail()->create(['id_alat' => $equipment->id_alat, 'jumlah' => 1]);
+
+        $this->actingAs($technician)->get(route('search', ['q' => $loan->booking_code]))
+            ->assertOk()
+            ->assertSee($loan->booking_code)
+            ->assertSee('Mikrofon Uji')
+            ->assertSee(route('technician.returns', ['q' => $loan->booking_code]), false)
+            ->assertSee('Proses pengembalian');
+        $this->get(route('search', ['q' => $equipment->kode_alat]))
+            ->assertOk()
+            ->assertSee($loan->booking_code)
+            ->assertSee('Mikrofon Uji');
+        $this->getJson(route('search.suggestions', ['q' => $equipment->kode_alat]))
+            ->assertOk()
+            ->assertJsonFragment([
+                'type' => 'Transaksi',
+                'title' => $loan->booking_code,
+                'subtitle' => $loan->status_label.' · '.$student->nama,
+                'url' => route('technician.returns', ['q' => $loan->booking_code]),
+            ]);
+    }
+
     public function test_global_search_suggestions_return_equipment_categories_and_admin_students(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

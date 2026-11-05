@@ -636,14 +636,23 @@ class LoanWorkflowTest extends TestCase
         $this->getJson(route('technician.returns.search', ['q' => $loan->booking_code]))
             ->assertOk()
             ->assertJsonPath('0.booking_code', $loan->booking_code)
-            ->assertJsonPath('0.items.0.nama', 'Alat Belum Dipinjam');
+            ->assertJsonPath('0.items.0.nama', 'Alat Belum Dipinjam')
+            ->assertJsonPath('0.items.0.status', 'Belum diserahkan')
+            ->assertJsonPath('0.items.0.dapat_dikembalikan', 0);
         $this->getJson(route('technician.returns.search', ['q' => 'NIS-LOOKUP-01']))
             ->assertOk()
             ->assertJsonPath('0.booking_code', $loan->booking_code);
-
-        $this->get(route('technician.returns'))
+        $this->getJson(route('technician.returns.search', ['q' => $equipment->kode_alat]))
             ->assertOk()
-            ->assertSee('Kode Booking atau NIS siswa');
+            ->assertJsonPath('0.booking_code', $loan->booking_code)
+            ->assertJsonPath('0.items.0.kode', $equipment->kode_alat);
+
+        $this->get(route('technician.returns', ['q' => $equipment->kode_alat]))
+            ->assertOk()
+            ->assertSee($loan->booking_code)
+            ->assertSee($equipment->kode_alat)
+            ->assertSee('Belum diserahkan oleh teknisi. Pengembalian belum dapat dicatat.')
+            ->assertSee('NIS siswa');
     }
 
     public function test_student_cannot_open_admin_routes(): void

@@ -1,9 +1,9 @@
 @extends('layouts.app')
 @section('title', 'Pengembalian Alat')
 @section('content')
-<div class="page-head"><div><h1>Proses Pengembalian</h1><p>Cari transaksi menggunakan Kode Booking atau NIS siswa, lalu proses kondisi setiap item.</p></div></div>
+<div class="page-head"><div><h1>Proses Pengembalian</h1><p>Cari dengan Kode Transaksi, Kode Alat, atau NIS siswa. Hasil menampilkan seluruh item dan status pengembaliannya.</p></div></div>
 <form class="surface p-3 mb-3 d-flex gap-2" method="get" action="{{ route('technician.returns') }}">
-    <input class="form-control" name="q" value="{{ request('q') }}" placeholder="Kode Transaksi atau NIS siswa" aria-label="Kode Transaksi atau NIS siswa">
+    <input class="form-control" name="q" value="{{ request('q') }}" placeholder="Contoh: PJM-00000004, MIK-001, atau NIS siswa" aria-label="Kode Transaksi, Kode Alat, atau NIS siswa">
     <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i>Cari</button>
 </form>
 @forelse($activeLoans as $loan)
@@ -20,9 +20,13 @@
         @php($returned = $detail->pengembalianDetail->sum('jumlah'))
         @php($handed = $detail->penyerahanDetail->sum('jumlah'))
         @php($assets = $detail->penyerahanDetail->whereNotNull('asset_id')->whereNotIn('asset_id', $detail->pengembalianDetail->pluck('asset_id')->filter()))
-        @if($returned < $handed)
         <div class="border rounded p-3 mb-3">
-            <div class="d-flex align-items-center gap-2 mb-3"><span class="equipment-icon overflow-hidden"><x-equipment-image :equipment="$detail->alat" alt="Foto {{ $detail->alat->nama_alat }}"></x-equipment-image></span><div><strong>{{ $detail->alat->nama_alat }}</strong><small class="d-block text-muted">{{ $detail->alat->kode_alat }} · telah diserahkan {{ $handed }}, kembali {{ $returned }}</small></div></div>
+            <div class="d-flex align-items-center gap-2 mb-3"><span class="equipment-icon overflow-hidden"><x-equipment-image :equipment="$detail->alat" alt="Foto {{ $detail->nama_alat }}"></x-equipment-image></span><div><strong>{{ $detail->nama_alat }}</strong><small class="d-block text-muted">{{ $detail->kode_alat ?? 'Kode alat arsip' }} · diajukan {{ $detail->jumlah }}, diserahkan {{ $handed }}, dikembalikan {{ $returned }}</small></div></div>
+            @if($handed === 0)
+                <div class="alert alert-warning mb-0">Belum diserahkan oleh teknisi. Pengembalian belum dapat dicatat.</div>
+            @elseif($returned >= $handed)
+                <div class="alert alert-success mb-0">Semua unit yang telah diserahkan sudah dikembalikan.</div>
+            @else
             @if($assets->isNotEmpty())
                 @foreach($assets as $handover)
                 <form class="row g-2 align-items-end border-top py-3" method="post" action="{{ route('technician.returns.store') }}" enctype="multipart/form-data" data-disable-on-submit>
@@ -47,12 +51,12 @@
                     <div class="col-12 col-md-3"><label class="form-label">Catatan</label><input class="form-control" name="catatan" maxlength="2000"><button class="btn btn-primary mt-2" type="submit" data-submitting-text="Menyimpan...">Catat pengembalian</button></div>
                 </form>
             @endif
+            @endif
         </div>
-        @endif
     @endforeach
 </section>
 @empty
-<section class="surface p-5 text-center text-muted">{{ request('q') ? 'Transaksi aktif tidak ditemukan untuk Kode Booking atau NIS tersebut.' : 'Tidak ada transaksi aktif. Cari menggunakan Kode Booking atau NIS siswa.' }}</section>
+<section class="surface p-5 text-center text-muted">{{ request('q') ? 'Transaksi aktif tidak ditemukan untuk Kode Transaksi, Kode Alat, atau NIS tersebut.' : 'Tidak ada transaksi aktif. Cari menggunakan Kode Transaksi, Kode Alat, atau NIS siswa.' }}</section>
 @endforelse
 <div class="mt-3">{{ $activeLoans->links() }}</div>
 @endsection

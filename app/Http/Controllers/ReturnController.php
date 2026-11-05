@@ -34,7 +34,9 @@ class ReturnController extends Controller
         ])->where('status', 'Approved')
             ->when($term !== '', fn ($query) => $query->where(function ($builder) use ($term): void {
                 $builder->where('booking_code', $term)
-                    ->orWhereHas('user', fn ($userQuery) => $userQuery->where('nis_nip', $term));
+                    ->orWhereHas('user', fn ($userQuery) => $userQuery->where('nis_nip', $term))
+                    ->orWhereHas('detail.alat', fn ($equipmentQuery) => $equipmentQuery->where('kode_alat', $term))
+                    ->orWhereHas('detail', fn ($detailQuery) => $detailQuery->where('alat_snapshot_kode', $term));
             }))
             ->latest('tanggal_pengajuan')->paginate(12)->withQueryString();
 
@@ -51,7 +53,9 @@ class ReturnController extends Controller
             ->where('status', 'Approved')
             ->where(function ($query) use ($term): void {
                 $query->where('booking_code', $term)
-                    ->orWhereHas('user', fn ($userQuery) => $userQuery->where('nis_nip', $term));
+                    ->orWhereHas('user', fn ($userQuery) => $userQuery->where('nis_nip', $term))
+                    ->orWhereHas('detail.alat', fn ($equipmentQuery) => $equipmentQuery->where('kode_alat', $term))
+                    ->orWhereHas('detail', fn ($detailQuery) => $detailQuery->where('alat_snapshot_kode', $term));
             })
             ->get();
         if ($loans->isEmpty()) {
@@ -62,11 +66,22 @@ class ReturnController extends Controller
             'booking_code' => $loan->booking_code,
             'peminjam' => $loan->user->nama,
             'nis' => $loan->user->nis_nip,
-            'items' => $loan->detail->map(fn ($detail) => [
-                'nama' => $detail->alat->nama_alat,
-                'kode' => $detail->alat->kode_alat,
-                'jumlah' => $detail->jumlah,
-            ]),
+            'items' => $loan->detail->map(function ($detail): array {
+                $handed = $detail->penyerahanDetail()->sum('jumlah');
+                $returned = $detail->pengembalianDetail()->sum('jumlah');
+
+                return [
+                    'nama' => $detail->nama_alat,
+                    'kode' => $detail->kode_alat,
+                    'jumlah' => $detail->jumlah,
+                    'diserahkan' => $handed,
+                    'dikembalikan' => $returned,
+                    'dapat_dikembalikan' => max(0, $handed - $returned),
+                    'status' => $handed === 0
+                        ? 'Belum diserahkan'
+                        : ($returned >= $handed ? 'Sudah dikembalikan' : 'Menunggu pengembalian'),
+                ];
+            }),
         ]));
     }
 

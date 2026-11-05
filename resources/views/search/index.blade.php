@@ -47,7 +47,11 @@
                             <div class="panel-subtitle">{{ $loan->detail->map(fn ($detail) => $detail->nama_alat)->join(', ') ?: $loan->keperluan }}</div>
                             @if($isAdmin)<div class="panel-subtitle">{{ $loan->user?->nama }} · {{ $loan->user?->nis_nip }}</div>@endif
                         </div>
-                        <a class="btn btn-light btn-sm align-self-center" href="{{ $isAdmin ? route('admin.reports') : route('loans.mine') }}">Lihat transaksi</a>
+                        @if($isTechnician)
+                            <a class="btn btn-primary btn-sm align-self-center" href="{{ route('technician.returns', ['q' => $loan->booking_code]) }}">Proses pengembalian</a>
+                        @else
+                            <a class="btn btn-light btn-sm align-self-center" href="{{ $isAdmin ? route('admin.reports') : route('loans.mine') }}">Lihat transaksi</a>
+                        @endif
                     </div>
                 @empty
                     <p class="text-muted mb-0">Transaksi tidak ditemukan.</p>
