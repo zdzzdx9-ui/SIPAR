@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Alat;
+use App\Models\DetailPenyerahan;
 use App\Models\KategoriAlat;
 use App\Models\Peminjaman;
 use App\Models\User;
@@ -81,7 +82,7 @@ class TechnicianWorkflowTest extends TestCase
             ->assertOk()
             ->assertSee('capture="environment"', false)
             ->assertSee('data-disable-on-submit', false)
-            ->assertSee('data-submitting-text="Menyimpan..."', false)
+            ->assertSee('data-submitting-text="Menyimpan seluruh transaksi..."', false)
             ->assertSee('Kode Transaksi')
             ->assertSee($loan->booking_code)
             ->assertSee('badge text-bg-primary font-monospace', false);
@@ -141,5 +142,88 @@ class TechnicianWorkflowTest extends TestCase
         $this->assertSame('Selesai', $loan->fresh()->status);
         $this->actingAs($admin)->get('/admin/pengembalian')->assertNotFound();
         $this->actingAs($technician)->get(route('admin.equipment'))->assertForbidden();
+    }
+
+    public function test_technician_records_every_item_in_one_loan_together(): void
+    {
+        Storage::fake('public');
+        $technician = User::factory()->create(['role' => 'teknisi']);
+        $student = User::factory()->create(['role' => 'siswa']);
+        $category = KategoriAlat::create(['nama_kategori' => 'Kategori Transaksi Multi Alat']);
+        $firstEquipment = Alat::create([
+            'kode_alat' => 'MULTI-TECH-A', 'nama_alat' => 'Alat Multi A', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 1, 'stok_tersedia' => 0, 'kondisi' => 'Baik', 'qr_code' => 'multi-tech-a',
+            'status_alat' => 'Dipinjam',
+        ]);
+        $secondEquipment = Alat::create([
+            'kode_alat' => 'MULTI-TECH-B', 'nama_alat' => 'Alat Multi B', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 1, 'stok_tersedia' => 0, 'kondisi' => 'Baik', 'qr_code' => 'multi-tech-b',
+            'status_alat' => 'Dipinjam',
+        ]);
+        $loan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => now()->toDateString(),
+            'tanggal_kembali_rencana' => now()->addDays(2)->toDateString(),
+            'keperluan' => 'Satu transaksi dengan dua alat',
+            'status' => 'Approved',
+        ]);
+        $firstDetail = $loan->detail()->create(['id_alat' => $firstEquipment->id_alat, 'jumlah' => 1]);
+        $secondDetail = $loan->detail()->create(['id_alat' => $secondEquipment->id_alat, 'jumlah' => 1]);
+
+        $this->actingAs($technician)->get(route('technician.handovers'))
+            ->assertOk()
+            ->assertSee($loan->booking_code)
+            ->assertSee('Alat Multi A')
+            ->assertSee('Alat Multi B')
+            ->assertSee('items['.$firstDetail->id_detail.'][asset_ids]', false)
+            ->assertSee('items['.$secondDetail->id_detail.'][asset_ids]', false)
+            ->assertSee('Simpan seluruh penyerahan');
+
+        $this->actingAs($technician)->post(route('technician.handovers.store', $loan), [
+            'items' => [
+                $firstDetail->id_detail => [
+                    'id_detail' => $firstDetail->id_detail,
+                    'jumlah' => 1,
+                    'asset_ids' => 'MULTI-ASSET-A',
+                    'kondisi_alat' => 'Baik',
+                ],
+            ],
+            'foto_bukti' => UploadedFile::fake()->create('partial-handover.jpg', 100, 'image/jpeg'),
+        ])->assertSessionHasErrors('items');
+        $this->assertSame(0, $loan->detail()->withCount('penyerahanDetail')->get()->sum('penyerahan_detail_count'));
+
+        $this->post(route('technician.handovers.store', $loan), [
+            'items' => [
+                $firstDetail->id_detail => [
+                    'id_detail' => $firstDetail->id_detail,
+                    'jumlah' => 1,
+                    'asset_ids' => 'MULTI-ASSET-A',
+                    'kondisi_alat' => 'Baik',
+                    'catatan' => 'Kondisi baik',
+                ],
+                $secondDetail->id_detail => [
+                    'id_detail' => $secondDetail->id_detail,
+                    'jumlah' => 1,
+                    'asset_ids' => 'MULTI-ASSET-B',
+                    'kondisi_alat' => 'Baik',
+                ],
+            ],
+            'foto_bukti' => UploadedFile::fake()->create('complete-handover.jpg', 100, 'image/jpeg'),
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('detail_penyerahan', [
+            'id_detail' => $firstDetail->id_detail,
+            'asset_id' => 'MULTI-ASSET-A',
+            'id_teknisi' => $technician->id_user,
+        ]);
+        $this->assertDatabaseHas('detail_penyerahan', [
+            'id_detail' => $secondDetail->id_detail,
+            'asset_id' => 'MULTI-ASSET-B',
+            'id_teknisi' => $technician->id_user,
+        ]);
+        $this->assertSame(2, DetailPenyerahan::whereIn('id_detail', [
+            $firstDetail->id_detail,
+            $secondDetail->id_detail,
+        ])->count());
     }
 }
