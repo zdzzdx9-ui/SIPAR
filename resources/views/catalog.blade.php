@@ -15,7 +15,7 @@
 <form method="get" class="surface p-2 mb-3 d-flex gap-2" id="catalog-search"><input class="form-control border-0" name="q" value="{{ request('q') }}" placeholder="Cari nama atau kode alat..." autocomplete="off"><button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button></form>
 <div id="cart-dock" class="catalog-cart-dock d-none" role="status" aria-live="polite">
     <span><strong id="cart-count">0 jenis alat</strong><small id="cart-summary" class="d-block text-muted">Satu unit untuk setiap jenis alat</small></span>
-    <button class="btn btn-primary" id="view-cart" type="button">Lanjut ke keranjang</button>
+    <button class="btn btn-primary" id="view-cart" type="button">Lengkapi Form Peminjaman</button>
 </div>
 <div class="row g-3">
     @forelse($equipment as $item)
@@ -38,8 +38,15 @@
 </div>
 <div class="mt-3">{{ $equipment->links() }}</div>
 <section class="surface p-3 p-md-4 mt-4" id="loan-cart">
-    <h2 class="panel-title">Keranjang peminjaman</h2>
-    <p class="panel-subtitle">Pilih beberapa jenis alat; setiap jenis maksimal 1 unit per siswa. Maksimal durasi peminjaman 5 hari dan boleh dikembalikan lebih awal.</p>
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+        <div>
+            <h2 class="panel-title">Keranjang peminjaman</h2>
+            <p class="panel-subtitle mb-0">Pilih beberapa jenis alat; setiap jenis maksimal 1 unit per siswa. Maksimal durasi peminjaman 5 hari dan boleh dikembalikan lebih awal.</p>
+        </div>
+        <button class="btn btn-sm btn-outline-danger d-none" id="clear-cart" type="button">
+            <i class="bi bi-trash me-1" aria-hidden="true"></i>Kosongkan Keranjang
+        </button>
+    </div>
     <div id="cart-empty" class="text-muted py-2">Keranjang masih kosong.</div>
     <form method="post" action="{{ route('loans.create') }}" id="loan-cart-form" class="d-none" data-disable-on-submit>
         @csrf
@@ -81,6 +88,7 @@
     const cartCount = document.getElementById('cart-count');
     const cartSummary = document.getElementById('cart-summary');
     const cartSection = document.getElementById('loan-cart');
+    const clearCartButton = document.getElementById('clear-cart');
     const confirmationElement = document.getElementById('loan-submit-confirmation');
     const confirmationModal = bootstrap.Modal.getOrCreateInstance(confirmationElement);
     const confirmSubmissionButton = document.getElementById('confirm-loan-submission');
@@ -129,6 +137,7 @@
         cartEmpty.classList.toggle('d-none', !empty);
         cartForm.classList.toggle('d-none', empty);
         cartDock.classList.toggle('d-none', empty);
+        clearCartButton.classList.toggle('d-none', empty);
         cartCount.textContent = `${cart.size} jenis alat`;
         cartSummary.textContent = `Total ${cart.size} unit · maksimal 1 per jenis`;
         document.querySelectorAll('.add-to-cart').forEach(button => {
@@ -153,6 +162,12 @@
     document.getElementById('view-cart').addEventListener('click', () => {
         cartSection.scrollIntoView({behavior: 'smooth', block: 'start'});
         document.getElementById('loan-date').focus({preventScroll: true});
+    });
+
+    clearCartButton.addEventListener('click', () => {
+        if (cart.size === 0 || !window.confirm('Kosongkan semua alat dari keranjang peminjaman?')) return;
+        cart.clear();
+        renderCart();
     });
 
     document.getElementById('loan-date').addEventListener('change', event => {
