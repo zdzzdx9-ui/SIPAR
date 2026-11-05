@@ -113,6 +113,31 @@ class PageAccessTest extends TestCase
         $this->assertDatabaseHas('loans', ['id_peminjaman' => $loan->id_peminjaman]);
     }
 
+    public function test_student_loan_history_separates_notes_and_actions(): void
+    {
+        $student = User::factory()->create(['role' => 'siswa']);
+        $loan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDay()->toDateString(),
+            'keperluan' => 'Uji pemisahan catatan dan aksi',
+            'status' => 'Pending',
+        ]);
+        $equipment = Alat::query()->create([
+            'kode_alat' => 'HISTORY-ACTION', 'nama_alat' => 'Alat Riwayat', 'id_kategori' => KategoriAlat::create(['nama_kategori' => 'Riwayat'])->id_kategori,
+            'stok_total' => 1, 'stok_tersedia' => 1, 'kondisi' => 'Baik', 'qr_code' => 'history-action-qr', 'status_alat' => 'Tersedia',
+        ]);
+        $loan->detail()->create(['id_alat' => $equipment->id_alat, 'jumlah' => 1]);
+
+        $this->actingAs($student)->get(route('loans.mine'))
+            ->assertOk()
+            ->assertSee('<th scope="col">Catatan</th>', false)
+            ->assertSee('<th scope="col" class="text-center">Aksi</th>', false)
+            ->assertSee('<td class="align-middle">—</td>', false)
+            ->assertSee('action="'.route('loans.cancel', $loan).'"', false)
+            ->assertSee('<i class="bi bi-x-circle me-1"></i>Batal', false);
+    }
+
     public function test_student_without_loan_history_can_be_deleted(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
