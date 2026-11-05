@@ -3,13 +3,17 @@
 @section('content')
 <div class="page-head"><div><h1>Proses Pengembalian</h1><p>Cari transaksi menggunakan Kode Booking atau NIS siswa, lalu proses kondisi setiap item.</p></div></div>
 <form class="surface p-3 mb-3 d-flex gap-2" method="get" action="{{ route('technician.returns') }}">
-    <input class="form-control" name="q" value="{{ request('q') }}" placeholder="Kode Booking atau NIS siswa" aria-label="Kode Booking atau NIS siswa">
+    <input class="form-control" name="q" value="{{ request('q') }}" placeholder="Kode Transaksi atau NIS siswa" aria-label="Kode Transaksi atau NIS siswa">
     <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i>Cari</button>
 </form>
 @forelse($activeLoans as $loan)
 <section class="surface p-3 p-md-4 mb-3">
     <div class="d-flex justify-content-between gap-3 flex-wrap mb-3">
-        <div><h2 class="panel-title">{{ $loan->booking_code }}</h2><div class="panel-subtitle">{{ $loan->user->nama }} · NIS {{ $loan->user->nis_nip }}</div></div>
+        <div>
+            <div class="small text-muted mb-1">Kode Transaksi</div>
+            <span class="badge text-bg-primary font-monospace px-3 py-2">{{ $loan->booking_code }}</span>
+            <div class="panel-subtitle">{{ $loan->user->nama }} · NIS {{ $loan->user->nis_nip }}</div>
+        </div>
         <div class="text-end">Jatuh tempo {{ $loan->tanggal_kembali_rencana->format('d M Y') }} @if($loan->is_overdue)<span class="badge-status status-rusak">Terlambat</span>@endif</div>
     </div>
     @foreach($loan->detail as $detail)

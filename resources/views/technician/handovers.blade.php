@@ -3,13 +3,17 @@
 @section('content')
 <div class="page-head"><div><h1>Penyerahan Alat</h1><p>Cari transaksi menggunakan Kode Booking atau NIS siswa, lalu catat serial number untuk setiap item.</p></div></div>
 <form class="surface p-3 mb-3 d-flex gap-2" method="get" action="{{ route('technician.handovers') }}">
-    <input class="form-control" name="q" value="{{ request('q') }}" placeholder="Kode Booking atau NIS siswa" aria-label="Kode Booking atau NIS siswa">
+    <input class="form-control" name="q" value="{{ request('q') }}" placeholder="Kode Transaksi atau NIS siswa" aria-label="Kode Transaksi atau NIS siswa">
     <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i>Cari</button>
 </form>
 @forelse($loans as $loan)
 <section class="surface p-3 p-md-4 mb-3">
     <div class="d-flex justify-content-between gap-3 flex-wrap mb-3">
-        <div><h2 class="panel-title">{{ $loan->booking_code }}</h2><div class="panel-subtitle">{{ $loan->user->nama }} · NIS {{ $loan->user->nis_nip }}</div></div>
+        <div>
+            <div class="small text-muted mb-1">Kode Transaksi</div>
+            <span class="badge text-bg-primary font-monospace px-3 py-2">{{ $loan->booking_code }}</span>
+            <div class="panel-subtitle">{{ $loan->user->nama }} · NIS {{ $loan->user->nis_nip }}</div>
+        </div>
         <div class="text-end"><div>Jatuh tempo {{ $loan->tanggal_kembali_rencana->format('d M Y') }}</div>@if($loan->is_overdue)<span class="badge-status status-rusak">Terlambat</span>@endif</div>
     </div>
     @if($loan->operational_notes)<div class="alert alert-info py-2">{{ $loan->operational_notes }}</div>@endif

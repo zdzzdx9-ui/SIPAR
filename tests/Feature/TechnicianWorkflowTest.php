@@ -80,7 +80,10 @@ class TechnicianWorkflowTest extends TestCase
 
         $this->actingAs($technician)->get(route('technician.handovers'))
             ->assertOk()
-            ->assertSee('capture="environment"', false);
+            ->assertSee('capture="environment"', false)
+            ->assertSee('Kode Transaksi')
+            ->assertSee($loan->booking_code)
+            ->assertSee('badge text-bg-primary font-monospace', false);
         $handoverData = [
             'id_detail' => $detail->id_detail, 'jumlah' => 1, 'asset_ids' => 'LAP-TECH-001', 'kondisi_alat' => 'Baik',
         ];
@@ -93,7 +96,10 @@ class TechnicianWorkflowTest extends TestCase
         $this->assertDatabaseHas('detail_penyerahan', ['id_detail' => $detail->id_detail, 'id_teknisi' => $technician->id_user]);
         $this->actingAs($technician)->get(route('technician.returns'))
             ->assertOk()
-            ->assertSee('capture="environment"', false);
+            ->assertSee('capture="environment"', false)
+            ->assertSee('Kode Transaksi')
+            ->assertSee($loan->booking_code)
+            ->assertSee('badge text-bg-primary font-monospace', false);
         $this->actingAs($technician)->post(route('technician.returns.store'), [
             'id_peminjaman' => $loan->id_peminjaman,
             'id_detail' => $detail->id_detail,

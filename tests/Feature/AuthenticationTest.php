@@ -60,7 +60,22 @@ class AuthenticationTest extends TestCase
             ->assertSee('id="register-password-confirmation"', false)
             ->assertSee('data-password-toggle', false)
             ->assertSee('aria-pressed="false"', false)
-            ->assertSee('bi-eye', false);
+            ->assertSee('bi-eye', false)
+            ->assertSee('name="nis_nip"', false)
+            ->assertSee('name="nis_nip" value="" autocomplete="username"', false)
+            ->assertSee('name="email" type="email" value="" autocomplete="email"', false)
+            ->assertSee('name="password" type="password" required minlength="8" autocomplete="new-password"', false)
+            ->assertSee('name="password_confirmation" type="password" required minlength="8" autocomplete="new-password"', false);
+    }
+
+    public function test_login_credentials_use_browser_autocomplete_tokens(): void
+    {
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('name="identity"', false)
+            ->assertSee('autocomplete="username"', false)
+            ->assertSee('name="password" type="password"', false)
+            ->assertSee('autocomplete="current-password"', false);
     }
 
     public function test_login_urls_follow_the_https_scheme_from_the_railway_proxy(): void
