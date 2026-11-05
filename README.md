@@ -21,6 +21,8 @@ Sistem Informasi Peminjaman Alat RPL SMK Negeri 5 Surakarta. Aplikasi Laravel 12
    php artisan migrate --seed
    ```
 
+`UserSeeder` terpisah dari `DatabaseSeeder` dan tidak dijalankan otomatis saat deploy. Untuk membuat atau memperbarui akun SIPAR yang ditetapkan, isi `SIPAR_ADMIN_PASSWORD` dan `SIPAR_TEST_STUDENT_PASSWORD` melalui environment secrets, jalankan `php artisan config:clear`, lalu jalankan `php artisan db:seed --class=UserSeeder --force` satu kali. Seeder memperbarui akun dengan email yang sama, mempertahankan ID dan relasi riwayat, serta mengubah password; pastikan rotasi kredensial ini memang dikehendaki. Password yang singkat sebaiknya diganti dengan kredensial yang lebih kuat setelah akun uji dibuat. Password harus diatur sebagai secrets, tidak dimasukkan ke kode atau Git.
+
 6. Jalankan aplikasi:
 
    ```powershell
