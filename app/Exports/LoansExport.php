@@ -41,7 +41,7 @@ class LoansExport implements FromCollection, ShouldAutoSize, WithHeadings
             $fine = $returns->sum('denda') ?: ($loan->pengembalian?->denda ?? 0);
 
             return [
-                'PJM-'.str_pad((string) $loan->id_peminjaman, 5, '0', STR_PAD_LEFT),
+                $loan->booking_code,
                 $loan->user?->nama ?? '-',
                 $loan->user?->nis_nip ?? '-',
                 $details->map(fn ($detail) => $detail->alat?->nama_alat.' x '.$detail->jumlah)->filter()->implode(', '),

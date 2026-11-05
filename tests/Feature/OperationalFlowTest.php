@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Alat;
 use App\Models\DetailPeminjaman;
+use App\Models\DetailPenyerahan;
 use App\Models\ItemUnit;
 use App\Models\KategoriAlat;
 use App\Models\Peminjaman;
@@ -78,14 +79,15 @@ class OperationalFlowTest extends TestCase
         $unitLoan = Peminjaman::whereHas('detail', fn ($query) => $query->where('id_alat', $unitEquipment->id_alat))->firstOrFail();
         $this->actingAs($admin)->post(route('admin.approvals.approve', $unitLoan))->assertRedirect();
         $this->assertSame('Approved', $unitLoan->fresh()->status);
-        $this->assertDatabaseHas('detail_peminjaman_item_unit', [
+        $this->assertDatabaseMissing('detail_peminjaman_item_unit', [
             'id_detail' => $unitLoan->detail->first()->id_detail,
             'item_unit_id' => $unitEquipment->itemUnits()->value('item_unit_id'),
-            'assigned_by' => $admin->id_user,
         ]);
-        $this->assertDatabaseHas('item_units', ['alat_id' => $unitEquipment->id_alat, 'status' => 'Dipinjam']);
+        $this->assertDatabaseHas('item_units', ['alat_id' => $unitEquipment->id_alat, 'status' => 'Tersedia']);
         $this->actingAs($technician)->get(route('technician.handovers'))
-            ->assertOk()->assertSee('Alat Unit')->assertDontSee('Alat Legacy');
+            ->assertOk()->assertSee('Alat Unit')->assertDontSee('Alat Legacy')
+            ->assertSee($unitLoan->booking_code)
+            ->assertSee('Kode Booking atau NIS siswa');
         $this->get('/teknisi/verifikasi')->assertNotFound();
     }
 
@@ -115,8 +117,8 @@ class OperationalFlowTest extends TestCase
 
         $this->actingAs($technician)->post(route('technician.handovers.store', $loan), [
             'id_detail' => $detail->id_detail,
-            'item_unit_ids' => [$unit->item_unit_id],
-            'jumlah' => 1,
+            'asset_ids' => $unit->asset_id,
+            'jumlah' => '1',
             'kondisi_alat' => 'Baik',
             'foto_bukti' => UploadedFile::fake()->create('handover.jpg', 10, 'image/jpeg'),
         ])->assertRedirect();
@@ -126,5 +128,93 @@ class OperationalFlowTest extends TestCase
             'item_unit_id' => $unit->item_unit_id,
             'jumlah' => 1,
         ]);
+    }
+
+    public function test_student_admin_and_technician_complete_asset_id_lifecycle_with_all_return_conditions(): void
+    {
+        Storage::fake('public');
+        $category = KategoriAlat::create(['nama_kategori' => 'Siklus Fisik']);
+        $equipment = Alat::create([
+            'kode_alat' => 'FULL-UNIT-01', 'nama_alat' => 'Alat Siklus Lengkap', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 4, 'stok_tersedia' => 4, 'stok_maintenance' => 0, 'stok_rusak' => 0,
+            'kondisi' => 'Baik', 'qr_code' => 'full-unit-qr', 'status_alat' => 'Tersedia',
+        ]);
+        $units = collect(['FULL-A', 'FULL-B', 'FULL-C', 'FULL-D'])->map(fn ($assetId) => ItemUnit::create([
+            'alat_id' => $equipment->id_alat,
+            'asset_id' => $assetId,
+            'qr_code' => 'qr-'.$assetId,
+            'condition' => 'Baik',
+            'status' => 'Tersedia',
+        ]));
+        $admin = User::factory()->create(['role' => 'admin']);
+        $technician = User::factory()->create(['role' => 'teknisi']);
+        $loans = collect();
+
+        foreach (range(1, 4) as $studentNumber) {
+            $student = User::factory()->create(['role' => 'siswa']);
+            $this->actingAs($student)->post(route('loans.create'), [
+                'items' => [['id_alat' => (string) $equipment->id_alat, 'jumlah' => '1']],
+                'tanggal_pinjam' => now()->toDateString(),
+                'tanggal_kembali_rencana' => now()->addDays(2)->toDateString(),
+                'keperluan' => 'Simulasi siklus Asset ID '.$studentNumber,
+            ])->assertRedirect(route('loans.mine'));
+            $loans->push(Peminjaman::where('id_user', $student->id_user)->latest('id_peminjaman')->firstOrFail());
+        }
+
+        $this->assertSame(4, $loans->where('status', 'Pending')->count());
+        $this->assertSame(4, $equipment->fresh()->stok_tersedia);
+
+        foreach ($loans as $loan) {
+            $this->actingAs($admin)->post(route('admin.approvals.approve', $loan))->assertRedirect();
+        }
+        $this->assertSame(0, $equipment->fresh()->stok_tersedia);
+        $this->assertSame(4, ItemUnit::where('alat_id', $equipment->id_alat)->where('status', 'Tersedia')->count());
+
+        foreach (['Baik', 'Maintenance', 'Rusak', 'Hilang'] as $index => $condition) {
+            $loan = $loans[$index]->fresh();
+            $detail = $loan->detail()->firstOrFail();
+            $unit = $units[$index];
+            $this->actingAs($technician)->post(route('technician.handovers.store', $loan), [
+                'id_detail' => (string) $detail->id_detail,
+                'asset_ids' => $unit->asset_id,
+                'jumlah' => '1',
+                'kondisi_alat' => 'Baik',
+                'foto_bukti' => UploadedFile::fake()->create('handover-'.$index.'.jpg', 10, 'image/jpeg'),
+            ])->assertRedirect();
+
+            $this->post(route('technician.returns.store'), [
+                'id_peminjaman' => (string) $loan->id_peminjaman,
+                'booking_code' => $loan->booking_code,
+                'id_detail' => (string) $detail->id_detail,
+                'item_unit_id' => (string) $unit->item_unit_id,
+                'asset_id' => $unit->asset_id,
+                'jumlah' => '1',
+                'kode_alat' => $equipment->kode_alat,
+                'kondisi_alat' => $condition,
+                'foto_bukti' => UploadedFile::fake()->create('return-'.$index.'.jpg', 10, 'image/jpeg'),
+            ])->assertRedirect(route('technician.returns'));
+        }
+
+        $equipment->refresh();
+        $this->assertSame(3, $equipment->stok_total);
+        $this->assertSame(1, $equipment->stok_tersedia);
+        $this->assertSame(1, $equipment->stok_maintenance);
+        $this->assertSame(1, $equipment->stok_rusak);
+        foreach ($loans as $index => $loan) {
+            $this->assertSame('Selesai', $loan->fresh()->status);
+            $this->assertSame(
+                ['Baik', 'Maintenance', 'Rusak', 'Hilang'][$index],
+                $loan->detail->first()->fresh()->item_conditions[$units[$index]->asset_id]
+            );
+            $this->assertDatabaseHas('pengembalian', [
+                'id_peminjaman' => $loan->id_peminjaman,
+                'kondisi_alat' => ['Baik', 'Maintenance', 'Rusak', 'Hilang'][$index],
+            ]);
+        }
+        $this->assertDatabaseHas('item_units', [
+            'item_unit_id' => $units[3]->item_unit_id,
+            'status' => 'Hilang',
+        ]);
+        $this->assertSame(3, $equipment->itemUnits()->where('status', '!=', 'Hilang')->count());
     }
 }

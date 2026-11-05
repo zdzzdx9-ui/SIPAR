@@ -50,10 +50,11 @@ class Alat extends Model
             return;
         }
 
-        $this->stok_total = $units->count();
+        $activeUnits = $units->where('status', '!=', 'Hilang');
+        $this->stok_total = $activeUnits->count();
         $this->stok_tersedia = $units->where('status', 'Tersedia')->where('condition', 'Baik')->count();
-        $this->stok_maintenance = $units->where('condition', 'Maintenance')->count();
-        $this->stok_rusak = $units->where('condition', 'Rusak')->count();
+        $this->stok_maintenance = $activeUnits->where('status', 'Tersedia')->where('condition', 'Maintenance')->count();
+        $this->stok_rusak = $activeUnits->where('status', 'Tersedia')->where('condition', 'Rusak')->count();
         $this->syncStatusFromStock();
     }
 }

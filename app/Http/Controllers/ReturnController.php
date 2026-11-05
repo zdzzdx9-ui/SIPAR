@@ -17,11 +17,24 @@ use Illuminate\View\View;
 
 class ReturnController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $query = Peminjaman::with(['user', 'detail.alat', 'detail.pengembalianDetail', 'detail.itemUnits'])
-            ->where('status', 'Approved');
-        $activeLoans = $query->latest('tanggal_pengajuan')->paginate(12);
+        $term = $request->string('q')->trim()->toString();
+        Peminjaman::where('status', 'Approved')
+            ->whereDate('tanggal_kembali_rencana', '<', today())
+            ->update(['overdue_flag' => true, 'reminder_flag' => true]);
+        $activeLoans = Peminjaman::with([
+            'user',
+            'detail.alat',
+            'detail.pengembalianDetail',
+            'detail.penyerahanDetail',
+            'detail.itemUnits',
+        ])->where('status', 'Approved')
+            ->when($term !== '', fn ($query) => $query->where(function ($builder) use ($term): void {
+                $builder->where('booking_code', $term)
+                    ->orWhereHas('user', fn ($userQuery) => $userQuery->where('nis_nip', $term));
+            }))
+            ->latest('tanggal_pengajuan')->paginate(12)->withQueryString();
 
         return view('technician.returns', compact('activeLoans'));
     }
@@ -30,65 +43,39 @@ class ReturnController extends Controller
     {
         $term = $request->string('q')->trim()->toString();
         if ($term === '') {
-            return response()->json(['message' => 'Masukkan kode atau nama alat.'], 422);
+            return response()->json(['message' => 'Masukkan Kode Booking atau NIS siswa.'], 422);
         }
-        $equipment = Alat::where('kode_alat', $term)
-            ->orWhere('nama_alat', 'like', '%'.$term.'%')
-            ->first();
-        if (! $equipment) {
-            return response()->json(['message' => 'Alat tidak ditemukan. Gunakan kode atau nama alat yang benar.'], 404);
-        }
-
-        $loansQuery = Peminjaman::with(['user', 'detail.alat', 'detail.pengembalianDetail', 'detail.itemUnits'])
+        $loans = Peminjaman::with(['user', 'detail.alat'])
             ->where('status', 'Approved')
-            ->whereHas('detail', fn ($query) => $query->where('id_alat', $equipment->id_alat))
-            ;
-        $loans = $loansQuery->get()
-            ->flatMap(function (Peminjaman $loan) use ($equipment) {
-                return $loan->detail
-                    ->where('id_alat', $equipment->id_alat)
-                    ->map(function ($detail) use ($loan) {
-                        $remaining = max(0, $detail->jumlah - $detail->pengembalianDetail->sum('jumlah'));
-                        if ($remaining === 0) {
-                            return null;
-                        }
-
-                        return [
-                            'id' => $loan->id_peminjaman,
-                            'id_detail' => $detail->id_detail,
-                            'sisa' => $remaining,
-                            'kode' => 'PJM-'.str_pad((string) $loan->id_peminjaman, 5, '0', STR_PAD_LEFT),
-                            'peminjam' => $loan->user->nama,
-                            'nis_nip' => $loan->user->nis_nip,
-                            'jatuh_tempo' => $loan->tanggal_kembali_rencana->format('d M Y'),
-                            'units' => $detail->itemUnits->where('status', 'Dipinjam')->map(fn ($unit) => [
-                                'id' => $unit->item_unit_id,
-                                'asset_id' => $unit->asset_id,
-                            ])->values(),
-                        ];
-                    })
-                    ->filter();
+            ->where(function ($query) use ($term): void {
+                $query->where('booking_code', $term)
+                    ->orWhereHas('user', fn ($userQuery) => $userQuery->where('nis_nip', $term));
             })
-            ->values();
+            ->get();
+        if ($loans->isEmpty()) {
+            return response()->json(['message' => 'Transaksi aktif tidak ditemukan. Periksa Kode Booking atau NIS siswa.'], 404);
+        }
 
-        $response = [
-            'alat' => $equipment->nama_alat,
-            'kode_alat' => $equipment->kode_alat,
-            'status' => $equipment->status_alat,
-            'stok_tersedia' => $equipment->stok_tersedia,
-            'stok_total' => $equipment->stok_total,
-            'peminjaman' => $loans,
-        ];
-
-        return response()->json($response);
+        return response()->json($loans->map(fn (Peminjaman $loan) => [
+            'booking_code' => $loan->booking_code,
+            'peminjam' => $loan->user->nama,
+            'nis' => $loan->user->nis_nip,
+            'items' => $loan->detail->map(fn ($detail) => [
+                'nama' => $detail->alat->nama_alat,
+                'kode' => $detail->alat->kode_alat,
+                'jumlah' => $detail->jumlah,
+            ]),
+        ]));
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'id_peminjaman' => ['required', 'integer', 'exists:peminjaman,id_peminjaman'],
-            'id_detail' => ['nullable', 'integer', 'exists:detail_peminjaman,id_detail'],
+            'id_peminjaman' => ['required', 'integer', 'exists:loans,id_peminjaman'],
+            'booking_code' => ['nullable', 'string', 'max:32'],
+            'id_detail' => ['nullable', 'integer', 'exists:loan_items,id_detail'],
             'item_unit_id' => ['nullable', 'integer', 'exists:item_units,item_unit_id'],
+            'asset_id' => ['nullable', 'string', 'max:80'],
             'jumlah' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'kode_alat' => ['required', 'string', 'exists:alat,kode_alat'],
             'tanggal_kembali_aktual' => ['nullable', 'date'],
@@ -96,6 +83,9 @@ class ReturnController extends Controller
             'foto_bukti' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'catatan' => ['nullable', 'string', 'max:2000'],
         ]);
+        if (isset($data['jumlah'])) {
+            $data['jumlah'] = (int) $data['jumlah'];
+        }
         if ($request->hasFile('foto_bukti')) {
             $data['foto_bukti'] = $request->file('foto_bukti')->store('bukti/pengembalian', 'public');
         }
@@ -110,6 +100,9 @@ class ReturnController extends Controller
                 if ($loan->status !== 'Approved' || $loan->pengembalian()->exists()) {
                     throw ValidationException::withMessages(['id_peminjaman' => 'Transaksi ini sudah selesai atau tidak sedang dipinjam.']);
                 }
+                if (! empty($data['booking_code']) && $loan->booking_code !== $data['booking_code']) {
+                    throw ValidationException::withMessages(['booking_code' => 'Kode Booking tidak sesuai dengan transaksi.']);
+                }
                 $equipment = Alat::where('kode_alat', $data['kode_alat'])->lockForUpdate()->firstOrFail();
                 $detailQuery = $loan->detail()->where('id_alat', $equipment->id_alat);
                 if (! empty($data['id_detail'])) {
@@ -118,6 +111,18 @@ class ReturnController extends Controller
                 $detail = $detailQuery->lockForUpdate()->first();
                 if (! $detail) {
                     throw ValidationException::withMessages(['kode_alat' => 'Kode alat tidak sesuai dengan item pada transaksi ini.']);
+                }
+                if (! empty($data['asset_id'])) {
+                    $handedAsset = $detail->penyerahanDetail()
+                        ->where('asset_id', $data['asset_id'])
+                        ->whereDoesntHave('detail.pengembalianDetail', fn ($query) => $query->where('asset_id', $data['asset_id']))
+                        ->exists();
+                    if (! $handedAsset) {
+                        throw ValidationException::withMessages(['asset_id' => 'Asset ID tidak tercatat diserahkan atau sudah dikembalikan.']);
+                    }
+                    if (($data['jumlah'] ?? 1) !== 1) {
+                        throw ValidationException::withMessages(['jumlah' => 'Pengembalian Asset ID harus satu unit per proses.']);
+                    }
                 }
                 $assignedUnits = $detail->itemUnits()->where('status', 'Dipinjam')->lockForUpdate()->get();
                 $hasAssignedUnits = $assignedUnits->isNotEmpty();
@@ -128,7 +133,7 @@ class ReturnController extends Controller
                 if (! empty($data['item_unit_id'])) {
                     $itemUnit = ItemUnit::whereKey($data['item_unit_id'])
                         ->where('status', 'Dipinjam')
-                        ->whereHas('details', fn ($query) => $query->where('detail_peminjaman.id_detail', $detail->id_detail))
+                        ->whereHas('details', fn ($query) => $query->where('loan_items.id_detail', $detail->id_detail))
                         ->lockForUpdate()
                         ->first();
                     if (! $itemUnit) {
@@ -177,6 +182,7 @@ class ReturnController extends Controller
                 DetailPengembalian::create([
                     'id_detail' => $detail->id_detail,
                     'item_unit_id' => $itemUnit?->item_unit_id,
+                    'asset_id' => $data['asset_id'] ?? $itemUnit?->asset_id,
                     'jumlah' => $quantity,
                     'tanggal_kembali_aktual' => $returnedAt,
                     'kondisi_alat' => $data['kondisi_alat'],
@@ -185,27 +191,38 @@ class ReturnController extends Controller
                     'catatan' => $data['catatan'] ?? null,
                     'id_teknisi' => $data['id_teknisi'],
                 ]);
+                if (! empty($data['asset_id'])) {
+                    $itemConditions = $detail->item_conditions ?? [];
+                    $itemConditions[$data['asset_id']] = $data['kondisi_alat'];
+                    $detail->update(['item_conditions' => $itemConditions]);
+                }
                 if ($itemUnit) {
-                    $itemUnit->update([
+                    $itemUnit->update($data['kondisi_alat'] === 'Hilang' ? [
+                        'status' => 'Hilang',
+                    ] : [
                         'status' => 'Tersedia',
-                        'condition' => $data['kondisi_alat'] === 'Baik' ? 'Baik' : ($data['kondisi_alat'] === 'Maintenance' ? 'Maintenance' : 'Rusak'),
+                        'condition' => $data['kondisi_alat'],
                     ]);
                 }
 
                 $equipment->refresh();
-                if ($data['kondisi_alat'] === 'Baik') {
+                if ($itemUnit) {
+                    $equipment->syncStockFromItemUnits();
+                } elseif ($data['kondisi_alat'] === 'Baik') {
                     $equipment->stok_tersedia += $quantity;
-                } elseif ($data['kondisi_alat'] === 'Maintenance' || $data['kondisi_alat'] === 'Rusak') {
+                } elseif ($data['kondisi_alat'] === 'Maintenance') {
                     $equipment->stok_maintenance += $quantity;
-                    if ($data['kondisi_alat'] === 'Rusak') {
-                        $equipment->kondisi = 'Rusak';
-                    }
+                } elseif ($data['kondisi_alat'] === 'Rusak') {
+                    $equipment->stok_rusak += $quantity;
+                    $equipment->kondisi = 'Rusak';
                 } elseif ($data['kondisi_alat'] === 'Hilang') {
                     $equipment->stok_total = max(0, $equipment->stok_total - $quantity);
                 } else {
                     $equipment->stok_total = max(0, $equipment->stok_total - $quantity);
                 }
-                $equipment->syncStatusFromStock();
+                if (! $itemUnit) {
+                    $equipment->syncStatusFromStock();
+                }
                 $equipment->save();
 
                 $completed = $willComplete;
@@ -213,7 +230,9 @@ class ReturnController extends Controller
                     $allReturns = DetailPengembalian::whereIn('id_detail', $loanDetails->pluck('id_detail'))->get();
                     $condition = $allReturns->contains('kondisi_alat', 'Hilang')
                         ? 'Hilang'
-                        : ($allReturns->contains('kondisi_alat', 'Rusak') ? 'Rusak' : 'Baik');
+                        : ($allReturns->contains('kondisi_alat', 'Rusak')
+                            ? 'Rusak'
+                            : ($allReturns->contains('kondisi_alat', 'Maintenance') ? 'Maintenance' : 'Baik'));
                     $notes = $allReturns->pluck('catatan')->filter()->unique()->implode("\n");
 
                     Pengembalian::create([

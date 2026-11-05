@@ -19,10 +19,25 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::updateOrCreate(['email' => 'admin@sipar.sch.id'], [
-            'nama' => 'Agus Toolman', 'nis_nip' => 'ADMIN',
-            'password' => Hash::make('ADMIN123'), 'role' => 'admin',
-        ]);
+        Alat::whereIn('nama_alat', ['Crimping Tool Set', 'Keyboard Mekanik'])
+            ->whereDoesntHave('detailPeminjaman')
+            ->delete();
+
+        $adminEmail = env('ADMIN_EMAIL', 'admin@sipar.sch.id');
+        if (! User::where('email', $adminEmail)->exists()) {
+            $adminPassword = env('ADMIN_PASSWORD');
+            if (! is_string($adminPassword) || strlen($adminPassword) < 10) {
+                throw new RuntimeException('ADMIN_PASSWORD wajib diatur dan minimal 10 karakter sebelum akun admin pertama dibuat.');
+            }
+
+            User::create([
+                'nama' => 'Admin SIPAR',
+                'nis_nip' => env('ADMIN_USERNAME', 'ADMIN'),
+                'email' => $adminEmail,
+                'password' => Hash::make($adminPassword),
+                'role' => 'admin',
+            ]);
+        }
         $technicianPassword = env('TECHNICIAN_PASSWORD');
         if (! is_string($technicianPassword) || strlen($technicianPassword) < 10) {
             throw new RuntimeException('TECHNICIAN_PASSWORD wajib diatur dan minimal 10 karakter sebelum seeder dijalankan.');

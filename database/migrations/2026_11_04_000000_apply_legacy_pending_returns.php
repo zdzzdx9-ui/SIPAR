@@ -2,12 +2,16 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        DB::transaction(function (): void {
+        $loansTable = Schema::hasTable('loans') ? 'loans' : 'peminjaman';
+        $loanItemsTable = Schema::hasTable('loan_items') ? 'loan_items' : 'detail_peminjaman';
+
+        DB::transaction(function () use ($loansTable, $loanItemsTable): void {
             $now = now();
             $touchedLoanIds = [];
             $pendingReturns = DB::table('detail_pengembalian')
@@ -16,7 +20,7 @@ return new class extends Migration
                 ->get();
 
             foreach ($pendingReturns as $return) {
-                $detail = DB::table('detail_peminjaman')->where('id_detail', $return->id_detail)->first();
+                $detail = DB::table($loanItemsTable)->where('id_detail', $return->id_detail)->first();
                 $equipment = DB::table('alat')->where('id_alat', $detail->id_alat)->first();
                 $available = (int) $equipment->stok_tersedia;
                 $maintenance = (int) $equipment->stok_maintenance;
@@ -25,8 +29,10 @@ return new class extends Migration
 
                 if ($return->kondisi_alat === 'Baik') {
                     $available += (int) $return->jumlah;
-                } elseif ($return->kondisi_alat === 'Maintenance' || $return->kondisi_alat === 'Rusak') {
+                } elseif ($return->kondisi_alat === 'Maintenance') {
                     $maintenance += (int) $return->jumlah;
+                } elseif ($return->kondisi_alat === 'Rusak') {
+                    $damaged += (int) $return->jumlah;
                 } else {
                     $total = max(0, $total - (int) $return->jumlah);
                 }
@@ -43,21 +49,23 @@ return new class extends Migration
                     'stok_total' => $total,
                     'stok_tersedia' => $available,
                     'stok_maintenance' => $maintenance,
+                    'stok_rusak' => $damaged,
                     'status_alat' => $status,
                     'kondisi' => $return->kondisi_alat === 'Rusak' ? 'Rusak' : $equipment->kondisi,
                     'updated_at' => $now,
                 ]);
 
                 if ($return->item_unit_id) {
+                    $unitUpdate = [
+                        'status' => $return->kondisi_alat === 'Hilang' ? 'Hilang' : 'Tersedia',
+                        'updated_at' => $now,
+                    ];
+                    if ($return->kondisi_alat !== 'Hilang') {
+                        $unitUpdate['condition'] = $return->kondisi_alat;
+                    }
                     DB::table('item_units')->where('item_unit_id', $return->item_unit_id)
                         ->where('status', 'Dipinjam')
-                        ->update([
-                            'status' => 'Tersedia',
-                            'condition' => $return->kondisi_alat === 'Baik'
-                                ? 'Baik'
-                                : ($return->kondisi_alat === 'Maintenance' ? 'Maintenance' : 'Rusak'),
-                            'updated_at' => $now,
-                        ]);
+                        ->update($unitUpdate);
                 }
 
                 DB::table('detail_pengembalian')
@@ -67,12 +75,12 @@ return new class extends Migration
             }
 
             foreach (array_unique($touchedLoanIds) as $loanId) {
-                $loan = DB::table('peminjaman')->where('id_peminjaman', $loanId)->first();
+                $loan = DB::table($loansTable)->where('id_peminjaman', $loanId)->first();
                 if (! $loan || $loan->status !== 'Approved') {
                     continue;
                 }
 
-                $details = DB::table('detail_peminjaman')->where('id_peminjaman', $loanId)->get();
+                $details = DB::table($loanItemsTable)->where('id_peminjaman', $loanId)->get();
                 $complete = $details->every(function ($detail): bool {
                     $returned = DB::table('detail_pengembalian')
                         ->where('id_detail', $detail->id_detail)
@@ -90,7 +98,9 @@ return new class extends Migration
                     ->get();
                 $condition = $returns->contains('kondisi_alat', 'Hilang')
                     ? 'Hilang'
-                    : ($returns->contains('kondisi_alat', 'Rusak') ? 'Rusak' : 'Baik');
+                    : ($returns->contains('kondisi_alat', 'Rusak')
+                        ? 'Rusak'
+                        : ($returns->contains('kondisi_alat', 'Maintenance') ? 'Maintenance' : 'Baik'));
                 if (! DB::table('pengembalian')->where('id_peminjaman', $loanId)->exists()) {
                     $notes = $returns->pluck('catatan')->filter()->unique()->implode("\n");
                     DB::table('pengembalian')->insert([
@@ -103,7 +113,7 @@ return new class extends Migration
                         'updated_at' => $now,
                     ]);
                 }
-                DB::table('peminjaman')->where('id_peminjaman', $loanId)->update([
+                DB::table($loansTable)->where('id_peminjaman', $loanId)->update([
                     'status' => 'Selesai',
                     'updated_at' => $now,
                 ]);

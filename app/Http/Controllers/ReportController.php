@@ -91,7 +91,7 @@ class ReportController extends Controller
             $fine = $detailReturns->sum('denda') ?: ($loan->pengembalian?->denda ?? 0);
 
             return [
-                'id' => 'PJM-'.str_pad((string) $loan->id_peminjaman, 5, '0', STR_PAD_LEFT),
+                'id' => $loan->booking_code,
                 'nama' => $loan->user?->nama ?? '-',
                 'nis_nip' => $loan->user?->nis_nip ?? '-',
                 'alat' => $equipment !== '' ? $equipment : '-',

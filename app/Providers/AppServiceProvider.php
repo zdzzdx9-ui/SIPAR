@@ -30,10 +30,10 @@ class AppServiceProvider extends ServiceProvider
             $technicianReturnCount = 0;
             if (auth()->check() && auth()->user()->role === 'teknisi') {
                 $technicianHandoverCount = DetailPeminjaman::whereHas('peminjaman', fn ($query) => $query->where('status', 'Approved'))
-                    ->whereRaw('detail_peminjaman.jumlah > (
+                    ->whereRaw('loan_items.jumlah > (
                         SELECT COALESCE(SUM(detail_penyerahan.jumlah), 0)
                         FROM detail_penyerahan
-                        WHERE detail_penyerahan.id_detail = detail_peminjaman.id_detail
+                        WHERE detail_penyerahan.id_detail = loan_items.id_detail
                     )')
                     ->count();
 
@@ -41,11 +41,11 @@ class AppServiceProvider extends ServiceProvider
                     ->whereHas('detail', fn ($query) => $query->whereRaw('(
                         SELECT COALESCE(SUM(detail_penyerahan.jumlah), 0)
                         FROM detail_penyerahan
-                        WHERE detail_penyerahan.id_detail = detail_peminjaman.id_detail
+                        WHERE detail_penyerahan.id_detail = loan_items.id_detail
                     ) > (
                         SELECT COALESCE(SUM(detail_pengembalian.jumlah), 0)
                         FROM detail_pengembalian
-                        WHERE detail_pengembalian.id_detail = detail_peminjaman.id_detail
+                        WHERE detail_pengembalian.id_detail = loan_items.id_detail
                     )'))
                     ->count();
             }

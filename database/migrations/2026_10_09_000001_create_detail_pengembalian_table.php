@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('id_detail')->constrained('detail_peminjaman', 'id_detail')->restrictOnDelete();
             $table->unsignedInteger('jumlah');
             $table->timestamp('tanggal_kembali_aktual');
-            $table->enum('kondisi_alat', ['Baik', 'Rusak', 'Hilang']);
+            $table->enum('kondisi_alat', ['Baik', 'Maintenance', 'Rusak', 'Hilang']);
             $table->decimal('denda', 12, 2)->default(0);
             $table->text('catatan')->nullable();
             $table->timestamps();

@@ -52,15 +52,16 @@ class SearchController extends Controller
             ->where(fn (Builder $query) => $query
                 ->where('keperluan', 'like', $like)
                 ->orWhere('status', 'like', $like)
+                ->orWhere('booking_code', 'like', $like)
                 ->when(preg_match('/^(?:PJM-)?\d+$/i', $term), fn (Builder $query) => $query->orWhere('id_peminjaman', (int) preg_replace('/^PJM-/i', '', $term))))
             ->latest('tanggal_pengajuan')
             ->take(4)
             ->get()
             ->map(fn (Peminjaman $loan): array => [
                 'type' => 'Transaksi',
-                'title' => 'PJM-'.str_pad((string) $loan->id_peminjaman, 5, '0', STR_PAD_LEFT),
+                'title' => $loan->booking_code,
                 'subtitle' => $loan->status_label.' · '.$loan->user->nama,
-                'url' => route('search', ['q' => 'PJM-'.$loan->id_peminjaman]),
+                'url' => route('search', ['q' => $loan->booking_code]),
             ]);
 
         if ($request->user()->role === 'admin') {
@@ -130,6 +131,7 @@ class SearchController extends Controller
                 ->where(fn (Builder $query) => $query
                     ->where('keperluan', 'like', $like)
                     ->orWhere('status', 'like', $like)
+                    ->orWhere('booking_code', $term)
                     ->when($loanId !== null, fn (Builder $query) => $query->orWhere('id_peminjaman', $loanId))
                     ->orWhereHas('detail.alat', fn (Builder $equipmentQuery) => $equipmentQuery
                         ->where('nama_alat', 'like', $like)

@@ -3,6 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\Alat;
+use App\Models\KategoriAlat;
+use App\Models\Peminjaman;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -77,7 +80,7 @@ class AuthenticationTest extends TestCase
             ->assertSee('id="login-support"></span>', false);
     }
 
-    public function test_seeder_updates_existing_admin_to_requested_credentials(): void
+    public function test_seeder_does_not_overwrite_existing_admin_credentials(): void
     {
         User::factory()->create([
             'nama' => 'Admin Lama',
@@ -90,9 +93,50 @@ class AuthenticationTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $admin = User::where('email', 'admin@sipar.sch.id')->firstOrFail();
-        $this->assertSame('ADMIN', $admin->nis_nip);
-        $this->assertTrue(Hash::check('ADMIN123', $admin->password));
+        $this->assertSame('ADMIN001', $admin->nis_nip);
+        $this->assertTrue(Hash::check('password123', $admin->password));
         $this->assertSame(1, User::where('role', 'admin')->count());
+    }
+
+    public function test_seeder_creates_first_admin_with_configured_secret(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $admin = User::where('email', 'admin@sipar.sch.id')->firstOrFail();
+        $this->assertSame('ADMIN', $admin->nis_nip);
+        $this->assertTrue(Hash::check('test-admin-password', $admin->password));
+    }
+
+    public function test_seeder_removes_unreferenced_dummy_equipment(): void
+    {
+        $category = KategoriAlat::firstOrCreate(['nama_kategori' => 'Perkakas']);
+        $equipment = [];
+        foreach (['Crimping Tool Set', 'Keyboard Mekanik'] as $name) {
+            $equipment[$name] = Alat::create([
+                'kode_alat' => 'DUMMY-'.str_replace(' ', '-', strtoupper($name)),
+                'nama_alat' => $name,
+                'id_kategori' => $category->id_kategori,
+                'stok_total' => 1,
+                'stok_tersedia' => 1,
+                'kondisi' => 'Baik',
+                'qr_code' => 'qr-'.str_replace(' ', '-', strtolower($name)),
+                'status_alat' => 'Tersedia',
+            ]);
+        }
+        $student = User::factory()->create(['role' => 'siswa']);
+        $loan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => now()->toDateString(),
+            'tanggal_kembali_rencana' => now()->addDay()->toDateString(),
+            'keperluan' => 'Riwayat alat dummy lama',
+            'status' => 'Selesai',
+        ]);
+        $loan->detail()->create(['id_alat' => $equipment['Crimping Tool Set']->id_alat, 'jumlah' => 1]);
+
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertDatabaseHas('alat', ['nama_alat' => 'Crimping Tool Set']);
+        $this->assertDatabaseMissing('alat', ['nama_alat' => 'Keyboard Mekanik']);
     }
 
     public function test_login_rejects_a_role_that_does_not_match_the_account(): void

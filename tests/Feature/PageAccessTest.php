@@ -7,6 +7,7 @@ use App\Models\KategoriAlat;
 use App\Models\Peminjaman;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -67,9 +68,60 @@ class PageAccessTest extends TestCase
             $this->get($url)->assertOk();
         }
         $this->get(route('catalog'))
-            ->assertSee('id="loan-modal-form"', false)
-            ->assertSee('name="items[0][jumlah]" min="1" max="1" value="1" readonly', false)
-            ->assertSee('Kirim pengajuan');
+            ->assertSee('class="btn btn-primary btn-sm add-to-cart"', false)
+            ->assertSee('id="loan-cart-form"', false)
+            ->assertSee('name="tanggal_kembali_rencana"', false)
+            ->assertSee('Keranjang peminjaman')
+            ->assertSee('Ajukan seluruh keranjang');
+    }
+
+    public function test_student_with_loan_history_cannot_be_deleted(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $student = User::factory()->create(['role' => 'siswa']);
+        $loan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => now()->toDateString(),
+            'tanggal_kembali_rencana' => now()->addDay()->toDateString(),
+            'keperluan' => 'Riwayat harus dipertahankan',
+            'status' => 'Selesai',
+        ]);
+
+        $this->actingAs($admin)->delete(route('admin.students.delete', $student))
+            ->assertSessionHasErrors('siswa');
+
+        $this->assertDatabaseHas('users', ['id_user' => $student->id_user]);
+        $this->assertDatabaseHas('loans', ['id_peminjaman' => $loan->id_peminjaman]);
+    }
+
+    public function test_student_without_loan_history_can_be_deleted(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $student = User::factory()->create(['role' => 'siswa']);
+
+        $this->actingAs($admin)->delete(route('admin.students.delete', $student))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseMissing('users', ['id_user' => $student->id_user]);
+    }
+
+    public function test_database_restricts_deleting_user_with_loan_history(): void
+    {
+        $student = User::factory()->create(['role' => 'siswa']);
+        Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => now()->toDateString(),
+            'tanggal_kembali_rencana' => now()->addDay()->toDateString(),
+            'keperluan' => 'FK protection',
+            'status' => 'Selesai',
+        ]);
+
+        try {
+            $student->delete();
+            $this->fail('Deleting a student with loan history should be rejected by the database.');
+        } catch (QueryException) {
+            $this->assertDatabaseHas('users', ['id_user' => $student->id_user]);
+        }
     }
 
     public function test_student_dashboard_summary_counts_all_their_loans(): void

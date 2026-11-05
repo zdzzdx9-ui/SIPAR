@@ -6,6 +6,7 @@ use App\Models\Alat;
 use App\Models\DetailPeminjaman;
 use App\Models\Peminjaman;
 use App\Models\ItemUnit;
+use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -36,9 +37,9 @@ class LoanController extends Controller
         }
 
         $data = $request->validate([
-            'items' => ['required', 'array', 'min:1', 'max:1'],
+            'items' => ['required', 'array', 'min:1'],
             'items.*.id_alat' => ['required', 'integer', 'distinct', 'exists:alat,id_alat'],
-            'items.*.jumlah' => ['required', 'integer', 'in:1'],
+            'items.*.jumlah' => ['required', 'integer', 'min:1', 'max:10000'],
             'tanggal_pinjam' => ['required', 'date', 'after_or_equal:today', 'before_or_equal:today'],
             'tanggal_kembali_rencana' => ['required', 'date', 'after_or_equal:tanggal_pinjam', 'before_or_equal:'.now()->addDays(5)->toDateString()],
             'keperluan' => ['required', 'string', 'max:2000'],
@@ -46,6 +47,7 @@ class LoanController extends Controller
 
         try {
             DB::transaction(function () use ($request, $data) {
+                User::whereKey($request->user()->id_user)->lockForUpdate()->firstOrFail();
                 $requestedItems = collect($data['items'])->keyBy(fn (array $item) => (int) $item['id_alat']);
                 $equipmentList = Alat::whereIn('id_alat', $requestedItems->keys())->orderBy('id_alat')->lockForUpdate()->get();
 
@@ -54,10 +56,10 @@ class LoanController extends Controller
                     ->whereHas('peminjaman', fn ($query) => $query
                         ->where('id_user', $request->user()->id_user)
                         ->whereIn('status', ['Pending', 'Approved']))
-                    ->whereRaw('detail_peminjaman.jumlah > (
+                    ->whereRaw('loan_items.jumlah > (
                         SELECT COALESCE(SUM(detail_pengembalian.jumlah), 0)
                         FROM detail_pengembalian
-                        WHERE detail_pengembalian.id_detail = detail_peminjaman.id_detail
+                        WHERE detail_pengembalian.id_detail = loan_items.id_detail
                     )')
                     ->first();
                 if ($activeDetail) {
@@ -142,8 +144,18 @@ class LoanController extends Controller
                     throw ValidationException::withMessages(['status' => 'Pengajuan ini sudah diproses.']);
                 }
 
-                foreach ($loan->detail as $detail) {
-                    $equipment = Alat::whereKey($detail->id_alat)->lockForUpdate()->firstOrFail();
+                $details = $loan->detail()->orderBy('id_alat')->lockForUpdate()->get();
+                $equipmentList = Alat::whereIn('id_alat', $details->pluck('id_alat'))
+                    ->orderBy('id_alat')
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('id_alat');
+
+                foreach ($details as $detail) {
+                    $equipment = $equipmentList->get($detail->id_alat);
+                    if (! $equipment) {
+                        throw ValidationException::withMessages(['stok' => 'Data alat pada transaksi tidak ditemukan.']);
+                    }
                     if ($equipment->status_alat !== 'Tersedia' || $equipment->stok_tersedia < $detail->jumlah) {
                         throw ValidationException::withMessages(['stok' => "Stok {$equipment->nama_alat} tidak lagi mencukupi."]);
                     }
@@ -161,18 +173,22 @@ class LoanController extends Controller
                                 'stok' => "Unit fisik {$equipment->nama_alat} yang berkondisi baik tidak mencukupi.",
                             ]);
                         }
-                        $detail->itemUnits()->attach($units->pluck('item_unit_id')->all(), [
-                            'assigned_by' => $request->user()->id_user,
-                        ]);
-                        ItemUnit::whereIn('item_unit_id', $units->pluck('item_unit_id'))->update(['status' => 'Dipinjam']);
                     }
+                }
 
+                foreach ($details as $detail) {
+                    $equipment = $equipmentList->get($detail->id_alat);
                     $equipment->stok_tersedia -= $detail->jumlah;
                     $equipment->syncStatusFromStock();
                     $equipment->save();
                 }
 
-                $loan->update(['status' => 'Approved']);
+                $loan->update([
+                    'status' => 'Approved',
+                    'operational_notes' => 'Lokasi pengambilan: Lab / Ruang Inventaris. Jam operasional teknisi: 12.00 - 13.00 WIB.',
+                    'overdue_flag' => false,
+                    'reminder_flag' => false,
+                ]);
             });
         } catch (QueryException $exception) {
             report($exception);

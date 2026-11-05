@@ -53,7 +53,7 @@ return new class extends Migration
             $table->id('id_pengembalian');
             $table->foreignId('id_peminjaman')->unique()->constrained('peminjaman', 'id_peminjaman')->cascadeOnDelete();
             $table->timestamp('tanggal_kembali_aktual')->useCurrent();
-            $table->enum('kondisi_alat', ['Baik', 'Rusak', 'Hilang']);
+            $table->enum('kondisi_alat', ['Baik', 'Maintenance', 'Rusak', 'Hilang']);
             $table->decimal('denda', 12, 2)->default(0);
             $table->text('catatan')->nullable();
             $table->timestamps();

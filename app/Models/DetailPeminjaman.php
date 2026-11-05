@@ -9,11 +9,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class DetailPeminjaman extends Model
 {
-    protected $table = 'detail_peminjaman';
+    protected $table = 'loan_items';
 
     protected $primaryKey = 'id_detail';
 
-    protected $fillable = ['id_peminjaman', 'id_alat', 'jumlah'];
+    protected $fillable = ['id_peminjaman', 'id_alat', 'jumlah', 'asset_ids', 'item_conditions'];
+
+    protected $casts = ['jumlah' => 'integer', 'asset_ids' => 'array', 'item_conditions' => 'array'];
 
     public function peminjaman(): BelongsTo
     {

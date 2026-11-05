@@ -104,7 +104,7 @@ class ReportExportTest extends TestCase
                 'ID', 'Nama Siswa', 'NIS/NIP', 'Alat', 'Jumlah', 'Tanggal Pinjam',
                 'Rencana Kembali', 'Status', 'Kembali Aktual', 'Denda (Rp)', 'Catatan',
             ], $sheet->rangeToArray('A1:K1', null, true, false)[0]);
-            $this->assertSame('PJM-'.str_pad((string) $approvedLoan->id_peminjaman, 5, '0', STR_PAD_LEFT), $sheet->getCell('A2')->getValue());
+            $this->assertSame($approvedLoan->booking_code, $sheet->getCell('A2')->getValue());
             $this->assertSame('Siswa XLSX', $sheet->getCell('B2')->getValue());
             $this->assertSame('XLSX-001', $sheet->getCell('C2')->getValue());
             $this->assertSame('LAN Tester Export x 2', $sheet->getCell('D2')->getValue());

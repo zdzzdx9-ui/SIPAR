@@ -3,12 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\Alat;
+use App\Models\ItemUnit;
 use App\Models\KategoriAlat;
 use App\Models\Peminjaman;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\MasterDataController;
 use Tests\TestCase;
 
 class StockStateTest extends TestCase
@@ -65,6 +68,31 @@ class StockStateTest extends TestCase
 
         $this->assertSame('alat/lama.jpg', $equipment->fresh()->foto);
         Storage::disk('public')->assertExists('alat/lama.jpg');
+    }
+
+    public function test_equipment_edit_uses_locked_current_stock_not_stale_route_model(): void
+    {
+        $category = KategoriAlat::create(['nama_kategori' => 'Jaringan']);
+        $equipment = Alat::create([
+            'kode_alat' => 'STALE-STOCK', 'nama_alat' => 'Router Stok', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 3, 'stok_tersedia' => 3, 'stok_maintenance' => 0, 'stok_rusak' => 0,
+            'kondisi' => 'Baik', 'qr_code' => 'qr-stale-stock', 'status_alat' => 'Tersedia',
+        ]);
+        $staleEquipment = $equipment->fresh();
+        Alat::whereKey($equipment->id_alat)->update(['stok_tersedia' => 2]);
+
+        $request = Request::create('/admin/alat/'.$equipment->id_alat, 'PUT', [
+            'kode_alat' => $equipment->kode_alat,
+            'nama_alat' => $equipment->nama_alat,
+            'id_kategori' => $category->id_kategori,
+            'stok_total' => 3,
+            'kondisi' => 'Baik',
+            'status_alat' => 'Tersedia',
+        ]);
+        (new MasterDataController())->updateEquipment($request, $staleEquipment);
+
+        $this->assertSame(2, $equipment->fresh()->stok_tersedia);
+        $this->assertSame(1, $equipment->fresh()->stok_total - $equipment->fresh()->stok_tersedia);
     }
 
     public function test_missing_equipment_photo_uses_fallback_in_admin_and_catalog(): void
@@ -131,6 +159,8 @@ class StockStateTest extends TestCase
             'stok_total' => 5,
             'kondisi' => 'Baik',
             'status_alat' => 'Maintenance',
+            'perbaiki_dari' => 'Baik',
+            'jumlah_diperbaiki' => 3,
         ])->assertRedirect();
 
         $this->assertSame(0, $equipment->fresh()->stok_tersedia);
@@ -143,8 +173,24 @@ class StockStateTest extends TestCase
             'nama_alat' => $equipment->nama_alat,
             'id_kategori' => $category->id_kategori,
             'stok_total' => 5,
+            'kondisi' => 'Baik',
+            'status_alat' => 'Tersedia',
+            'perbaiki_dari' => 'Maintenance',
+            'jumlah_diperbaiki' => 3,
+        ])->assertRedirect();
+
+        $this->assertSame(3, $equipment->fresh()->stok_tersedia);
+        $this->assertSame(0, $equipment->fresh()->stok_maintenance);
+
+        $this->put(route('admin.equipment.update', $equipment), [
+            'kode_alat' => $equipment->kode_alat,
+            'nama_alat' => $equipment->nama_alat,
+            'id_kategori' => $category->id_kategori,
+            'stok_total' => 5,
             'kondisi' => 'Rusak',
             'status_alat' => 'Rusak',
+            'perbaiki_dari' => 'Baik',
+            'jumlah_diperbaiki' => 3,
         ])->assertRedirect();
 
         $this->assertSame(3, $equipment->fresh()->stok_rusak);
@@ -158,12 +204,121 @@ class StockStateTest extends TestCase
             'stok_total' => 5,
             'kondisi' => 'Baik',
             'status_alat' => 'Tersedia',
+        ])->assertSessionHasErrors('jumlah_diperbaiki');
+
+        $this->assertSame(0, $equipment->fresh()->stok_tersedia);
+        $this->assertSame(0, $equipment->fresh()->stok_maintenance);
+        $this->assertSame(3, $equipment->fresh()->stok_rusak);
+
+        $this->put(route('admin.equipment.update', $equipment), [
+            'kode_alat' => $equipment->kode_alat,
+            'nama_alat' => $equipment->nama_alat,
+            'id_kategori' => $category->id_kategori,
+            'stok_total' => 5,
+            'kondisi' => 'Baik',
+            'status_alat' => 'Tersedia',
+            'perbaiki_dari' => 'Rusak',
+            'jumlah_diperbaiki' => 3,
         ])->assertRedirect();
 
         $this->assertSame(3, $equipment->fresh()->stok_tersedia);
         $this->assertSame(0, $equipment->fresh()->stok_maintenance);
         $this->assertSame(0, $equipment->fresh()->stok_rusak);
         $this->assertSame('Tersedia', $equipment->fresh()->status_alat);
+    }
+
+    public function test_repairing_equipment_moves_only_the_explicit_quantity_to_available_stock(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $category = KategoriAlat::create(['nama_kategori' => 'Jaringan']);
+        $equipment = Alat::create([
+            'kode_alat' => 'REPAIR-PARTIAL', 'nama_alat' => 'Router Perbaikan', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 5, 'stok_tersedia' => 0, 'stok_maintenance' => 2, 'stok_rusak' => 1,
+            'kondisi' => 'Maintenance', 'qr_code' => 'qr-repair-partial', 'status_alat' => 'Maintenance',
+        ]);
+        foreach ([
+            ['asset_id' => 'REPAIR-01', 'condition' => 'Baik', 'status' => 'Dipinjam'],
+            ['asset_id' => 'REPAIR-02', 'condition' => 'Baik', 'status' => 'Dipinjam'],
+            ['asset_id' => 'REPAIR-03', 'condition' => 'Maintenance', 'status' => 'Tersedia'],
+            ['asset_id' => 'REPAIR-04', 'condition' => 'Maintenance', 'status' => 'Tersedia'],
+            ['asset_id' => 'REPAIR-05', 'condition' => 'Rusak', 'status' => 'Tersedia'],
+        ] as $unit) {
+            ItemUnit::create($unit + [
+                'alat_id' => $equipment->id_alat,
+                'qr_code' => 'qr-'.$unit['asset_id'],
+            ]);
+        }
+
+        $this->actingAs($admin)->put(route('admin.equipment.update', $equipment), [
+            'kode_alat' => $equipment->kode_alat,
+            'nama_alat' => $equipment->nama_alat,
+            'id_kategori' => $category->id_kategori,
+            'stok_total' => 5,
+            'kondisi' => 'Baik',
+            'status_alat' => 'Tersedia',
+            'perbaiki_dari' => 'Maintenance',
+            'jumlah_diperbaiki' => '1',
+        ])->assertRedirect();
+
+        $this->assertSame(1, $equipment->fresh()->stok_tersedia);
+        $this->assertSame(1, $equipment->fresh()->stok_maintenance);
+        $this->assertSame(1, $equipment->fresh()->stok_rusak);
+        $this->assertSame('Tersedia', $equipment->fresh()->status_alat);
+        $this->assertSame(1, ItemUnit::where('alat_id', $equipment->id_alat)->where('condition', 'Baik')->where('status', 'Tersedia')->count());
+        $this->assertSame(1, ItemUnit::where('alat_id', $equipment->id_alat)->where('condition', 'Maintenance')->count());
+        $this->assertSame(1, ItemUnit::where('alat_id', $equipment->id_alat)->where('condition', 'Rusak')->count());
+    }
+
+    public function test_admin_changes_only_the_requested_available_physical_units_condition(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $category = KategoriAlat::create(['nama_kategori' => 'Jaringan']);
+        $equipment = Alat::create([
+            'kode_alat' => 'UNIT-CONDITION', 'nama_alat' => 'Unit Kondisi', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 2, 'stok_tersedia' => 2, 'stok_maintenance' => 0, 'stok_rusak' => 0,
+            'kondisi' => 'Baik', 'qr_code' => 'qr-unit-condition', 'status_alat' => 'Tersedia',
+        ]);
+        foreach (['UNIT-CONDITION-A', 'UNIT-CONDITION-B'] as $assetId) {
+            ItemUnit::create([
+                'alat_id' => $equipment->id_alat,
+                'asset_id' => $assetId,
+                'qr_code' => 'qr-'.$assetId,
+                'condition' => 'Baik',
+                'status' => 'Tersedia',
+            ]);
+        }
+
+        $this->actingAs($admin)->put(route('admin.equipment.update', $equipment), [
+            'kode_alat' => $equipment->kode_alat,
+            'nama_alat' => $equipment->nama_alat,
+            'id_kategori' => $category->id_kategori,
+            'stok_total' => 2,
+            'kondisi' => 'Maintenance',
+            'status_alat' => 'Maintenance',
+            'perbaiki_dari' => 'Baik',
+            'jumlah_diperbaiki' => '1',
+        ])->assertRedirect();
+
+        $this->assertSame(1, $equipment->fresh()->stok_tersedia);
+        $this->assertSame(1, $equipment->fresh()->stok_maintenance);
+        $this->assertSame(1, ItemUnit::where('alat_id', $equipment->id_alat)->where('condition', 'Maintenance')->count());
+        $this->assertSame(1, ItemUnit::where('alat_id', $equipment->id_alat)->where('condition', 'Baik')->count());
+
+        $this->put(route('admin.equipment.update', $equipment), [
+            'kode_alat' => $equipment->kode_alat,
+            'nama_alat' => $equipment->nama_alat,
+            'id_kategori' => $category->id_kategori,
+            'stok_total' => 2,
+            'kondisi' => 'Rusak',
+            'status_alat' => 'Rusak',
+            'perbaiki_dari' => 'Baik',
+            'jumlah_diperbaiki' => '1',
+        ])->assertRedirect();
+
+        $this->assertSame(0, $equipment->fresh()->stok_tersedia);
+        $this->assertSame(1, $equipment->fresh()->stok_maintenance);
+        $this->assertSame(1, $equipment->fresh()->stok_rusak);
+        $this->assertSame('Maintenance', $equipment->fresh()->status_alat);
     }
 
     public function test_editing_an_available_item_does_not_silently_restore_maintenance_units(): void
@@ -183,6 +338,8 @@ class StockStateTest extends TestCase
             'stok_total' => 5,
             'kondisi' => 'Baik',
             'status_alat' => 'Tersedia',
+            'perbaiki_dari' => 'Rusak',
+            'jumlah_diperbaiki' => 3,
         ])->assertRedirect();
 
         $this->assertSame(2, $equipment->fresh()->stok_tersedia);

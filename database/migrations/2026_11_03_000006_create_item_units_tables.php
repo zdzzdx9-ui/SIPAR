@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('asset_id', 80)->unique();
             $table->string('qr_code', 120)->unique();
             $table->enum('condition', ['Baik', 'Maintenance', 'Rusak'])->default('Baik');
-            $table->enum('status', ['Tersedia', 'Dipinjam'])->default('Tersedia');
+            $table->enum('status', ['Tersedia', 'Dipinjam', 'Hilang'])->default('Tersedia');
             $table->timestamps();
             $table->index(['alat_id', 'condition', 'status']);
         });

@@ -49,7 +49,7 @@ class LoanWorkflowTest extends TestCase
         ])->assertRedirect(route('loans.mine'));
 
         $loan = Peminjaman::firstOrFail();
-        $this->assertDatabaseHas('detail_peminjaman', [
+        $this->assertDatabaseHas('loan_items', [
             'id_peminjaman' => $loan->id_peminjaman,
             'id_alat' => $equipment->id_alat,
             'jumlah' => 1,
@@ -58,7 +58,7 @@ class LoanWorkflowTest extends TestCase
         $this->assertSame(3, $equipment->fresh()->stok_tersedia);
     }
 
-    public function test_student_cannot_request_multiple_units_or_equipment_in_one_loan(): void
+    public function test_student_can_request_multiple_units_and_equipment_in_one_loan(): void
     {
         $category = KategoriAlat::create(['nama_kategori' => 'Jaringan']);
         $firstEquipment = Alat::create([
@@ -78,16 +78,54 @@ class LoanWorkflowTest extends TestCase
 
         $this->actingAs($student)->post(route('loans.create'), $request + [
             'items' => [['id_alat' => $firstEquipment->id_alat, 'jumlah' => 2]],
-        ])->assertSessionHasErrors('items.0.jumlah');
+        ])->assertRedirect(route('loans.mine'));
+
+        $this->assertDatabaseHas('loan_items', [
+            'id_peminjaman' => Peminjaman::firstOrFail()->id_peminjaman,
+            'id_alat' => $firstEquipment->id_alat,
+            'jumlah' => 2,
+        ]);
+        Peminjaman::query()->delete();
 
         $this->post(route('loans.create'), $request + [
             'items' => [
                 ['id_alat' => $firstEquipment->id_alat, 'jumlah' => 1],
                 ['id_alat' => $secondEquipment->id_alat, 'jumlah' => 1],
             ],
-        ])->assertSessionHasErrors('items');
+        ])->assertRedirect(route('loans.mine'));
 
+        $this->assertSame(1, Peminjaman::count());
+        $this->assertSame(2, Peminjaman::firstOrFail()->detail()->count());
+    }
+
+    public function test_loan_duration_is_limited_to_five_days_and_booking_fields_are_stored(): void
+    {
+        $category = KategoriAlat::create(['nama_kategori' => 'Durasi']);
+        $equipment = Alat::create([
+            'kode_alat' => 'DURATION-01', 'nama_alat' => 'Alat Durasi', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 2, 'stok_tersedia' => 2, 'kondisi' => 'Baik', 'qr_code' => 'duration-qr', 'status_alat' => 'Tersedia',
+        ]);
+        $student = User::factory()->create(['role' => 'siswa']);
+        $payload = [
+            'items' => [['id_alat' => $equipment->id_alat, 'jumlah' => 1]],
+            'tanggal_pinjam' => today()->toDateString(),
+            'keperluan' => 'Uji batas durasi',
+        ];
+
+        $this->actingAs($student)->post(route('loans.create'), $payload + [
+            'tanggal_kembali_rencana' => today()->addDays(6)->toDateString(),
+        ])->assertSessionHasErrors('tanggal_kembali_rencana');
         $this->assertSame(0, Peminjaman::count());
+
+        $this->post(route('loans.create'), $payload + [
+            'tanggal_kembali_rencana' => today()->addDays(5)->toDateString(),
+        ])->assertRedirect(route('loans.mine'));
+
+        $loan = Peminjaman::firstOrFail();
+        $this->assertMatchesRegularExpression('/^PJM-\\d{8}$/', $loan->booking_code);
+        $this->assertSame($student->id_user, $loan->user_id);
+        $this->assertSame(today()->toDateString(), $loan->start_date->toDateString());
+        $this->assertSame(today()->addDays(5)->toDateString(), $loan->end_date->toDateString());
     }
 
     public function test_student_cannot_request_the_same_equipment_until_active_request_is_closed(): void
@@ -161,6 +199,7 @@ class LoanWorkflowTest extends TestCase
         $this->assertSame(1, $equipment->fresh()->stok_tersedia);
         $this->assertSame(1, $secondEquipment->fresh()->stok_tersedia);
         $this->assertSame('Approved', $loan->fresh()->status);
+        $this->assertStringContainsString('12.00 - 13.00 WIB', $loan->fresh()->operational_notes);
         $technician = User::factory()->create(['role' => 'teknisi']);
         foreach ($loan->detail as $detail) {
             DetailPenyerahan::create([
@@ -188,15 +227,19 @@ class LoanWorkflowTest extends TestCase
 
         $this->assertSame('Approved', $loan->fresh()->status);
         $this->assertSame(1, $equipment->fresh()->stok_tersedia);
-        $this->assertSame(1, $equipment->fresh()->stok_maintenance);
+        $this->assertSame(0, $equipment->fresh()->stok_maintenance);
+        $this->assertSame(1, $equipment->fresh()->stok_rusak);
         $this->assertDatabaseHas('detail_pengembalian', [
             'id_detail' => $loan->detail()->where('id_alat', $equipment->id_alat)->value('id_detail'),
             'jumlah' => 1,
         ]);
-        $this->getJson(route('technician.returns.search', ['q' => $equipment->kode_alat]))
+        $this->getJson(route('technician.returns.search', ['q' => $loan->booking_code]))
             ->assertOk()
-            ->assertJsonPath('peminjaman.0.sisa', 1);
+            ->assertJsonPath('0.booking_code', $loan->booking_code)
+            ->assertJsonPath('0.items.0.kode', $equipment->kode_alat);
         $this->actingAs($technician)->get(route('technician.returns'))->assertOk();
+        $this->assertTrue($loan->fresh()->overdue_flag);
+        $this->assertTrue($loan->fresh()->reminder_flag);
         $this->actingAs($student)->get(route('loans.mine'))->assertOk();
 
         $this->actingAs($technician)->post(route('technician.returns.store'), [
@@ -211,7 +254,8 @@ class LoanWorkflowTest extends TestCase
 
         $this->assertSame('Approved', $loan->fresh()->status);
         $this->assertSame(2, $equipment->fresh()->stok_tersedia);
-        $this->assertSame(1, $equipment->fresh()->stok_maintenance);
+        $this->assertSame(0, $equipment->fresh()->stok_maintenance);
+        $this->assertSame(1, $equipment->fresh()->stok_rusak);
 
         $this->post(route('technician.returns.store'), [
             'id_peminjaman' => $loan->id_peminjaman,
@@ -225,7 +269,8 @@ class LoanWorkflowTest extends TestCase
         ])->assertRedirect(route('technician.returns'));
 
         $this->assertSame(2, $equipment->fresh()->stok_tersedia);
-        $this->assertSame(1, $equipment->fresh()->stok_maintenance);
+        $this->assertSame(0, $equipment->fresh()->stok_maintenance);
+        $this->assertSame(1, $equipment->fresh()->stok_rusak);
         $this->assertSame(2, $secondEquipment->fresh()->stok_tersedia);
         $this->assertSame('Selesai', $loan->fresh()->status);
         $this->assertDatabaseHas('pengembalian', ['id_peminjaman' => $loan->id_peminjaman, 'denda' => 10000]);
@@ -338,7 +383,7 @@ class LoanWorkflowTest extends TestCase
         $this->assertSame(3, $equipment->fresh()->stok_tersedia);
         $this->assertSame(0, $equipment->fresh()->stok_maintenance);
         $this->assertSame(0, $equipment->fresh()->stok_rusak);
-        $this->assertDatabaseHas('peminjaman', [
+        $this->assertDatabaseHas('loans', [
             'id_peminjaman' => $loan->id_peminjaman,
             'catatan_admin' => 'Jadwal penggunaan alat tidak tersedia.',
         ]);
@@ -424,9 +469,26 @@ class LoanWorkflowTest extends TestCase
         $this->assertSame(1, $detail->pengembalianDetail()->sum('jumlah'));
         $this->assertSame('Approved', $loan->fresh()->status);
         $this->assertDatabaseMissing('pengembalian', ['id_peminjaman' => $loan->id_peminjaman]);
+
+        $this->post(route('technician.returns.store'), [
+            'id_peminjaman' => (string) $loan->id_peminjaman,
+            'id_detail' => (string) $detail->id_detail,
+            'jumlah' => '1',
+            'kode_alat' => $equipment->kode_alat,
+            'kondisi_alat' => 'Maintenance',
+            'foto_bukti' => UploadedFile::fake()->create('return-maintenance.jpg', 10, 'image/jpeg'),
+        ])->assertRedirect(route('technician.returns'));
+
+        $this->assertSame(1, $equipment->fresh()->stok_tersedia);
+        $this->assertSame(1, $equipment->fresh()->stok_maintenance);
+        $this->assertDatabaseHas('pengembalian', [
+            'id_peminjaman' => $loan->id_peminjaman,
+            'kondisi_alat' => 'Maintenance',
+        ]);
+        $this->assertSame('Selesai', $loan->fresh()->status);
     }
 
-    public function test_return_search_distinguishes_unknown_and_unborrowed_equipment(): void
+    public function test_return_search_looks_up_active_transactions_by_booking_code_or_student_nis(): void
     {
         $technician = User::factory()->create(['role' => 'teknisi']);
         $category = KategoriAlat::create(['nama_kategori' => 'Jaringan']);
@@ -438,19 +500,28 @@ class LoanWorkflowTest extends TestCase
 
         $this->actingAs($technician)->getJson(route('technician.returns.search', ['q' => 'alat-tidak-dikenal']))
             ->assertNotFound()
-            ->assertJsonPath('message', 'Alat tidak ditemukan. Gunakan kode atau nama alat yang benar.');
+            ->assertJsonPath('message', 'Transaksi aktif tidak ditemukan. Periksa Kode Booking atau NIS siswa.');
 
-        $this->getJson(route('technician.returns.search', ['q' => $equipment->kode_alat]))
+        $student = User::factory()->create(['role' => 'siswa', 'nis_nip' => 'NIS-LOOKUP-01']);
+        $loan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => now()->toDateString(),
+            'tanggal_kembali_rencana' => now()->addDay()->toDateString(),
+            'keperluan' => 'Lookup via NIS',
+            'status' => 'Approved',
+        ]);
+        $loan->detail()->create(['id_alat' => $equipment->id_alat, 'jumlah' => 1]);
+        $this->getJson(route('technician.returns.search', ['q' => $loan->booking_code]))
             ->assertOk()
-            ->assertJsonPath('alat', 'Alat Belum Dipinjam')
-            ->assertJsonPath('status', 'Tersedia')
-            ->assertJsonPath('stok_tersedia', 1)
-            ->assertJsonPath('stok_total', 1)
-            ->assertJsonPath('peminjaman', []);
+            ->assertJsonPath('0.booking_code', $loan->booking_code)
+            ->assertJsonPath('0.items.0.nama', 'Alat Belum Dipinjam');
+        $this->getJson(route('technician.returns.search', ['q' => 'NIS-LOOKUP-01']))
+            ->assertOk()
+            ->assertJsonPath('0.booking_code', $loan->booking_code);
 
         $this->get(route('technician.returns'))
             ->assertOk()
-            ->assertSee('Alat ditemukan, tetapi tidak ada sisa transaksi peminjaman aktif', false);
+            ->assertSee('Kode Booking atau NIS siswa');
     }
 
     public function test_student_cannot_open_admin_routes(): void

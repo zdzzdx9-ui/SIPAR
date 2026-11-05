@@ -22,7 +22,8 @@ class TechnicianWorkflowTest extends TestCase
         $category = KategoriAlat::create(['nama_kategori' => 'Kategori Migrasi Pengembalian']);
         $equipment = Alat::create([
             'kode_alat' => 'RETURN-MIGRATION', 'nama_alat' => 'Alat Migrasi', 'id_kategori' => $category->id_kategori,
-            'stok_total' => 1, 'stok_tersedia' => 0, 'kondisi' => 'Baik', 'qr_code' => 'qr-return-migration',
+            'stok_total' => 1, 'stok_tersedia' => 0, 'stok_maintenance' => 0, 'stok_rusak' => 0,
+            'kondisi' => 'Baik', 'qr_code' => 'qr-return-migration',
             'status_alat' => 'Dipinjam',
         ]);
         $student = User::factory()->create(['role' => 'siswa']);
@@ -38,7 +39,7 @@ class TechnicianWorkflowTest extends TestCase
             'id_detail' => $detail->id_detail,
             'jumlah' => 1,
             'tanggal_kembali_aktual' => now(),
-            'kondisi_alat' => 'Baik',
+            'kondisi_alat' => 'Rusak',
             'denda' => 0,
             'status_verifikasi' => 'Pending',
             'created_at' => now(),
@@ -48,7 +49,9 @@ class TechnicianWorkflowTest extends TestCase
         $migration = require base_path('database/migrations/2026_11_04_000000_apply_legacy_pending_returns.php');
         $migration->up();
 
-        $this->assertSame(1, $equipment->fresh()->stok_tersedia);
+        $this->assertSame(0, $equipment->fresh()->stok_tersedia);
+        $this->assertSame(0, $equipment->fresh()->stok_maintenance);
+        $this->assertSame(1, $equipment->fresh()->stok_rusak);
         $this->assertSame('Selesai', $loan->fresh()->status);
         $this->assertDatabaseHas('detail_pengembalian', [
             'id_detail' => $detail->id_detail,
@@ -79,7 +82,7 @@ class TechnicianWorkflowTest extends TestCase
             ->assertOk()
             ->assertSee('capture="environment"', false);
         $handoverData = [
-            'id_detail' => $detail->id_detail, 'jumlah' => 1, 'kondisi_alat' => 'Baik',
+            'id_detail' => $detail->id_detail, 'jumlah' => 1, 'asset_ids' => 'LAP-TECH-001', 'kondisi_alat' => 'Baik',
         ];
         $this->actingAs($technician)
             ->post(route('technician.handovers.store', $loan), $handoverData)
