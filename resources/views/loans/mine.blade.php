@@ -33,8 +33,8 @@
                             <div class="d-flex flex-wrap gap-2">
                                 @foreach($loan->detail as $detail)
                                     <span class="d-inline-flex align-items-center gap-1">
-                                        <span class="equipment-icon overflow-hidden"><x-equipment-image :equipment="$detail->alat" alt="Foto {{ $detail->alat->nama_alat }}"></x-equipment-image></span>
-                                        <span>{{ $detail->alat->nama_alat }} · kembali {{ $detail->pengembalianDetail->sum('jumlah') }}/{{ $detail->jumlah }}</span>
+                                        <span class="equipment-icon overflow-hidden"><x-equipment-image :equipment="$detail->alat" alt="Foto {{ $detail->nama_alat }}"></x-equipment-image></span>
+                                        <span>{{ $detail->nama_alat }} · kembali {{ $detail->pengembalianDetail->sum('jumlah') }}/{{ $detail->jumlah }}</span>
                                     </span>
                                 @endforeach
                             </div>

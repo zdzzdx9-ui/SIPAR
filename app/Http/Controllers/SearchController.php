@@ -136,6 +136,9 @@ class SearchController extends Controller
                     ->orWhereHas('detail.alat', fn (Builder $equipmentQuery) => $equipmentQuery
                         ->where('nama_alat', 'like', $like)
                         ->orWhere('kode_alat', 'like', $like))
+                    ->orWhereHas('detail', fn (Builder $detailQuery) => $detailQuery
+                        ->where('alat_snapshot_nama', 'like', $like)
+                        ->orWhere('alat_snapshot_kode', 'like', $like))
                     ->when($isAdmin, fn (Builder $query) => $query->orWhereHas('user', fn (Builder $userQuery) => $userQuery
                         ->where('nama', 'like', $like)
                         ->orWhere('nis_nip', 'like', $like))))

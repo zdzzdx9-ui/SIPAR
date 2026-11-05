@@ -133,7 +133,7 @@ class AuthenticationTest extends TestCase
         $this->assertTrue(Hash::check('test-admin-password', $admin->password));
     }
 
-    public function test_seeder_removes_unreferenced_dummy_equipment(): void
+    public function test_seeder_replaces_unofficial_equipment_and_preserves_loan_history(): void
     {
         $category = KategoriAlat::firstOrCreate(['nama_kategori' => 'Perkakas']);
         $equipment = [];
@@ -161,8 +161,15 @@ class AuthenticationTest extends TestCase
 
         $this->seed(DatabaseSeeder::class);
 
-        $this->assertDatabaseHas('alat', ['nama_alat' => 'Crimping Tool Set']);
+        $this->assertDatabaseMissing('alat', ['nama_alat' => 'Crimping Tool Set']);
         $this->assertDatabaseMissing('alat', ['nama_alat' => 'Keyboard Mekanik']);
+        $this->assertDatabaseHas('loan_items', [
+            'id_detail' => $loan->detail()->value('id_detail'),
+            'id_alat' => null,
+            'alat_snapshot_kode' => $equipment['Crimping Tool Set']->kode_alat,
+            'alat_snapshot_nama' => 'Crimping Tool Set',
+        ]);
+        $this->assertSame(13, Alat::count());
     }
 
     public function test_login_rejects_a_role_that_does_not_match_the_account(): void

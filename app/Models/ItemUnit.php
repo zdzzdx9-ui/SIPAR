@@ -10,7 +10,7 @@ class ItemUnit extends Model
 {
     protected $table = 'item_units';
     protected $primaryKey = 'item_unit_id';
-    protected $fillable = ['alat_id', 'asset_id', 'qr_code', 'condition', 'status'];
+    protected $fillable = ['alat_id', 'asset_id', 'qr_code', 'condition', 'status', 'alat_snapshot_kode', 'alat_snapshot_nama'];
 
     public function alat(): BelongsTo
     {

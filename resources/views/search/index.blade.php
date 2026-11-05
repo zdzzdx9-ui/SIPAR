@@ -44,7 +44,7 @@
                     <div class="d-flex flex-wrap justify-content-between gap-2 border-bottom py-2">
                         <div>
                             <strong>{{ $loan->booking_code }} · {{ $loan->status_label }}</strong>
-                            <div class="panel-subtitle">{{ $loan->detail->pluck('alat.nama_alat')->filter()->join(', ') ?: $loan->keperluan }}</div>
+                            <div class="panel-subtitle">{{ $loan->detail->map(fn ($detail) => $detail->nama_alat)->join(', ') ?: $loan->keperluan }}</div>
                             @if($isAdmin)<div class="panel-subtitle">{{ $loan->user?->nama }} · {{ $loan->user?->nis_nip }}</div>@endif
                         </div>
                         <a class="btn btn-light btn-sm align-self-center" href="{{ $isAdmin ? route('admin.reports') : route('loans.mine') }}">Lihat transaksi</a>

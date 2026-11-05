@@ -44,7 +44,7 @@ class LoansExport implements FromCollection, ShouldAutoSize, WithHeadings
                 $loan->booking_code,
                 $loan->user?->nama ?? '-',
                 $loan->user?->nis_nip ?? '-',
-                $details->map(fn ($detail) => $detail->alat?->nama_alat.' x '.$detail->jumlah)->filter()->implode(', '),
+                $details->map(fn ($detail) => $detail->nama_alat.' x '.$detail->jumlah)->filter()->implode(', '),
                 $details->sum('jumlah'),
                 $loan->tanggal_pinjam?->format('Y-m-d') ?? '-',
                 $loan->tanggal_kembali_rencana?->format('Y-m-d') ?? '-',

@@ -76,7 +76,13 @@ class LoanController extends Controller
                     ->first();
                 if ($activeDetail) {
                     throw ValidationException::withMessages([
-                        'items' => "Anda masih memiliki pengajuan atau peminjaman aktif untuk {$activeDetail->alat->nama_alat}. Alat yang sama baru dapat diajukan kembali setelah dikembalikan.",
+                        'items' => "Anda masih memiliki pengajuan atau peminjaman aktif untuk {$activeDetail->nama_alat}. Alat yang sama baru dapat diajukan kembali setelah dikembalikan.",
+                    ]);
+                }
+
+                if ($equipmentList->count() !== $requestedItems->count()) {
+                    throw ValidationException::withMessages([
+                        'items' => 'Data alat berubah saat pengajuan diproses. Muat ulang katalog dan coba kembali.',
                     ]);
                 }
 

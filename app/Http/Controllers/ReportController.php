@@ -76,13 +76,7 @@ class ReportController extends Controller
 
         $rows = $query->get()->map(function (Peminjaman $loan): array {
             $equipment = $loan->detail
-                ->map(function ($detail): ?string {
-                    if (! $detail->alat) {
-                        return null;
-                    }
-
-                    return $detail->alat->nama_alat.' x '.$detail->jumlah;
-                })
+                ->map(fn ($detail): string => $detail->nama_alat.' x '.$detail->jumlah)
                 ->filter()
                 ->implode(', ');
 

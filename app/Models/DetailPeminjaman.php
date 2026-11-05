@@ -13,7 +13,10 @@ class DetailPeminjaman extends Model
 
     protected $primaryKey = 'id_detail';
 
-    protected $fillable = ['id_peminjaman', 'id_alat', 'jumlah', 'asset_ids', 'item_conditions'];
+    protected $fillable = [
+        'id_peminjaman', 'id_alat', 'jumlah', 'asset_ids', 'item_conditions',
+        'alat_snapshot_kode', 'alat_snapshot_nama', 'alat_snapshot_kategori',
+    ];
 
     protected $casts = ['jumlah' => 'integer', 'asset_ids' => 'array', 'item_conditions' => 'array'];
 
@@ -25,6 +28,21 @@ class DetailPeminjaman extends Model
     public function alat(): BelongsTo
     {
         return $this->belongsTo(Alat::class, 'id_alat', 'id_alat');
+    }
+
+    public function getNamaAlatAttribute(): string
+    {
+        return $this->alat?->nama_alat ?? $this->alat_snapshot_nama ?? 'Alat arsip';
+    }
+
+    public function getKodeAlatAttribute(): ?string
+    {
+        return $this->alat?->kode_alat ?? $this->alat_snapshot_kode;
+    }
+
+    public function getKategoriAlatAttribute(): ?string
+    {
+        return $this->alat?->kategori?->nama_kategori ?? $this->alat_snapshot_kategori;
     }
 
     public function pengembalianDetail(): HasMany
