@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Alat;
 use App\Models\DetailPeminjaman;
-use App\Models\DetailPenyerahan;
 use App\Models\ItemUnit;
 use App\Models\KategoriAlat;
 use App\Models\Peminjaman;
@@ -184,6 +183,7 @@ class OperationalFlowTest extends TestCase
 
             $this->post(route('technician.returns.store'), [
                 'id_peminjaman' => (string) $loan->id_peminjaman,
+                'idempotency_key' => sprintf('00000000-0000-4000-8000-%012d', $index + 11),
                 'booking_code' => $loan->booking_code,
                 'id_detail' => (string) $detail->id_detail,
                 'item_unit_id' => (string) $unit->item_unit_id,

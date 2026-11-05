@@ -4,14 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Alat;
 use App\Models\DetailPengembalian;
+use App\Models\ItemUnit;
 use App\Models\Peminjaman;
 use App\Models\Pengembalian;
-use App\Models\ItemUnit;
 use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -76,6 +78,7 @@ class ReturnController extends Controller
             'id_detail' => ['nullable', 'integer', 'exists:loan_items,id_detail'],
             'item_unit_id' => ['nullable', 'integer', 'exists:item_units,item_unit_id'],
             'asset_id' => ['nullable', 'string', 'max:80'],
+            'idempotency_key' => ['required', 'uuid'],
             'jumlah' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'kode_alat' => ['required', 'string', 'exists:alat,kode_alat'],
             'tanggal_kembali_aktual' => ['nullable', 'date'],
@@ -94,9 +97,21 @@ class ReturnController extends Controller
 
         $fine = 0;
         $completed = false;
+        $duplicate = false;
         try {
-            DB::transaction(function () use ($data, &$fine, &$completed) {
+            DB::transaction(function () use ($data, &$fine, &$completed, &$duplicate) {
+                if (DetailPengembalian::where('idempotency_key', $data['idempotency_key'])->exists()) {
+                    $duplicate = true;
+
+                    return;
+                }
+
                 $loan = Peminjaman::whereKey($data['id_peminjaman'])->lockForUpdate()->firstOrFail();
+                if (DetailPengembalian::where('idempotency_key', $data['idempotency_key'])->exists()) {
+                    $duplicate = true;
+
+                    return;
+                }
                 if ($loan->status !== 'Approved' || $loan->pengembalian()->exists()) {
                     throw ValidationException::withMessages(['id_peminjaman' => 'Transaksi ini sudah selesai atau tidak sedang dipinjam.']);
                 }
@@ -183,6 +198,7 @@ class ReturnController extends Controller
                     'id_detail' => $detail->id_detail,
                     'item_unit_id' => $itemUnit?->item_unit_id,
                     'asset_id' => $data['asset_id'] ?? $itemUnit?->asset_id,
+                    'idempotency_key' => $data['idempotency_key'],
                     'jumlah' => $quantity,
                     'tanggal_kembali_aktual' => $returnedAt,
                     'kondisi_alat' => $data['kondisi_alat'],
@@ -245,10 +261,30 @@ class ReturnController extends Controller
                     $loan->update(['status' => 'Selesai']);
                 }
             });
+        } catch (UniqueConstraintViolationException $exception) {
+            if (DetailPengembalian::where('idempotency_key', $data['idempotency_key'])->exists()) {
+                if (! empty($data['foto_bukti'])) {
+                    Storage::disk('public')->delete($data['foto_bukti']);
+                }
+
+                return redirect()->route('technician.returns')->with('success', 'Pengembalian ini sudah tercatat; permintaan duplikat diabaikan.');
+            }
+
+            report($exception);
+
+            return back()->withErrors(['id_peminjaman' => 'Pengembalian gagal disimpan. Silakan coba kembali.']);
         } catch (QueryException $exception) {
             report($exception);
 
             return back()->withErrors(['id_peminjaman' => 'Pengembalian gagal disimpan. Silakan coba kembali.']);
+        }
+
+        if ($duplicate) {
+            if (! empty($data['foto_bukti'])) {
+                Storage::disk('public')->delete($data['foto_bukti']);
+            }
+
+            return redirect()->route('technician.returns')->with('success', 'Pengembalian ini sudah tercatat; permintaan duplikat diabaikan.');
         }
 
         $message = $completed

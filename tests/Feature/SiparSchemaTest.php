@@ -20,7 +20,7 @@ class SiparSchemaTest extends TestCase
         $this->assertTrue(Schema::hasColumns('pengembalian', ['id_pengembalian', 'id_peminjaman', 'denda']));
         $this->assertTrue(Schema::hasColumns('alat', ['stok_maintenance']));
         $this->assertTrue(Schema::hasColumns('alat', ['stok_rusak']));
-        $this->assertTrue(Schema::hasColumns('detail_pengembalian', ['id_detail_pengembalian', 'id_detail', 'jumlah', 'kondisi_alat', 'denda']));
+        $this->assertTrue(Schema::hasColumns('detail_pengembalian', ['id_detail_pengembalian', 'id_detail', 'jumlah', 'kondisi_alat', 'denda', 'idempotency_key']));
 
         $equipmentIndexes = collect(Schema::getIndexes('alat'));
         $this->assertTrue($equipmentIndexes->contains(fn (array $index): bool => ($index['unique'] ?? false) && ($index['columns'] ?? []) === ['kode_alat']));

@@ -218,6 +218,7 @@ class LoanWorkflowTest extends TestCase
 
         $this->actingAs($technician)->post(route('technician.returns.store'), [
             'id_peminjaman' => $loan->id_peminjaman,
+            'idempotency_key' => '00000000-0000-4000-8000-000000000001',
             'id_detail' => $loan->detail()->where('id_alat', $equipment->id_alat)->value('id_detail'),
             'jumlah' => 1,
             'kode_alat' => $equipment->kode_alat,
@@ -246,6 +247,7 @@ class LoanWorkflowTest extends TestCase
 
         $this->actingAs($technician)->post(route('technician.returns.store'), [
             'id_peminjaman' => $loan->id_peminjaman,
+            'idempotency_key' => '00000000-0000-4000-8000-000000000002',
             'id_detail' => $loan->detail()->where('id_alat', $equipment->id_alat)->value('id_detail'),
             'jumlah' => 1,
             'kode_alat' => $equipment->kode_alat,
@@ -261,6 +263,7 @@ class LoanWorkflowTest extends TestCase
 
         $this->post(route('technician.returns.store'), [
             'id_peminjaman' => $loan->id_peminjaman,
+            'idempotency_key' => '00000000-0000-4000-8000-000000000003',
             'id_detail' => $loan->detail()->where('id_alat', $secondEquipment->id_alat)->value('id_detail'),
             'jumlah' => 1,
             'kode_alat' => $secondEquipment->kode_alat,
@@ -308,6 +311,7 @@ class LoanWorkflowTest extends TestCase
 
         $this->actingAs($technician)->post(route('technician.returns.store'), [
             'id_peminjaman' => $loan->id_peminjaman,
+            'idempotency_key' => '00000000-0000-4000-8000-000000000004',
             'id_detail' => $detail->id_detail,
             'jumlah' => 1,
             'kode_alat' => $equipment->kode_alat,
@@ -476,6 +480,7 @@ class LoanWorkflowTest extends TestCase
 
         $this->actingAs($technician)->post(route('technician.returns.store'), [
             'id_peminjaman' => $loan->id_peminjaman,
+            'idempotency_key' => '00000000-0000-4000-8000-000000000005',
             'id_detail' => $detail->id_detail,
             'jumlah' => 2,
             'kode_alat' => $equipment->kode_alat,
@@ -515,14 +520,18 @@ class LoanWorkflowTest extends TestCase
             'kondisi_alat' => 'Baik',
         ]);
 
-        $this->actingAs($technician)->post(route('technician.returns.store'), [
+        $returnToken = '00000000-0000-4000-8000-000000000006';
+        $returnData = [
             'id_peminjaman' => $loan->id_peminjaman,
+            'idempotency_key' => $returnToken,
             'id_detail' => $detail->id_detail,
             'jumlah' => 1,
             'kode_alat' => $equipment->kode_alat,
             'kondisi_alat' => 'Baik',
             'foto_bukti' => UploadedFile::fake()->create('return-partial.jpg', 10, 'image/jpeg'),
-        ])->assertRedirect(route('technician.returns'));
+        ];
+        $this->actingAs($technician)->post(route('technician.returns.store'), $returnData)
+            ->assertRedirect(route('technician.returns'));
 
         $this->assertSame(1, $equipment->fresh()->stok_tersedia);
         $this->assertSame(1, $detail->pengembalianDetail()->sum('jumlah'));
@@ -531,6 +540,7 @@ class LoanWorkflowTest extends TestCase
 
         $this->post(route('technician.returns.store'), [
             'id_peminjaman' => (string) $loan->id_peminjaman,
+            'idempotency_key' => '00000000-0000-4000-8000-000000000007',
             'id_detail' => (string) $detail->id_detail,
             'jumlah' => '1',
             'kode_alat' => $equipment->kode_alat,
@@ -545,6 +555,59 @@ class LoanWorkflowTest extends TestCase
             'kondisi_alat' => 'Maintenance',
         ]);
         $this->assertSame('Selesai', $loan->fresh()->status);
+    }
+
+    public function test_replayed_legacy_return_request_does_not_inflate_stock(): void
+    {
+        Storage::fake('public');
+        $category = KategoriAlat::create(['nama_kategori' => 'Pengembalian Idempoten']);
+        $equipment = Alat::create([
+            'kode_alat' => 'RETURN-IDEMPOTENT', 'nama_alat' => 'Alat Idempoten', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 2, 'stok_tersedia' => 0, 'stok_maintenance' => 0, 'stok_rusak' => 0,
+            'kondisi' => 'Baik', 'qr_code' => 'qr-return-idempotent', 'status_alat' => 'Dipinjam',
+        ]);
+        $student = User::factory()->create(['role' => 'siswa']);
+        $technician = User::factory()->create(['role' => 'teknisi']);
+        $loan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDay()->toDateString(),
+            'keperluan' => 'Uji pengiriman ulang pengembalian',
+            'status' => 'Approved',
+        ]);
+        $detail = $loan->detail()->create(['id_alat' => $equipment->id_alat, 'jumlah' => 2]);
+        DetailPenyerahan::create([
+            'id_detail' => $detail->id_detail,
+            'id_teknisi' => $technician->id_user,
+            'jumlah' => 2,
+            'tanggal_penyerahan' => now(),
+            'kondisi_alat' => 'Baik',
+        ]);
+        $requestData = [
+            'id_peminjaman' => $loan->id_peminjaman,
+            'idempotency_key' => '00000000-0000-4000-8000-000000000008',
+            'id_detail' => $detail->id_detail,
+            'jumlah' => 1,
+            'kode_alat' => $equipment->kode_alat,
+            'kondisi_alat' => 'Baik',
+        ];
+
+        $this->actingAs($technician)->post(route('technician.returns.store'), $requestData + [
+            'foto_bukti' => UploadedFile::fake()->create('return-first.jpg', 10, 'image/jpeg'),
+        ])->assertRedirect(route('technician.returns'));
+        $this->post(route('technician.returns.store'), $requestData + [
+            'foto_bukti' => UploadedFile::fake()->create('return-replay.jpg', 10, 'image/jpeg'),
+        ])->assertRedirect(route('technician.returns'))
+            ->assertSessionHas('success', 'Pengembalian ini sudah tercatat; permintaan duplikat diabaikan.');
+
+        $this->assertSame(1, $equipment->fresh()->stok_tersedia);
+        $this->assertSame(1, $detail->pengembalianDetail()->sum('jumlah'));
+        $this->assertSame(1, $detail->pengembalianDetail()->count());
+        $this->assertSame(1, count(Storage::disk('public')->allFiles('bukti/pengembalian')));
+        $this->assertDatabaseHas('detail_pengembalian', [
+            'idempotency_key' => $requestData['idempotency_key'],
+            'jumlah' => 1,
+        ]);
     }
 
     public function test_return_search_looks_up_active_transactions_by_booking_code_or_student_nis(): void

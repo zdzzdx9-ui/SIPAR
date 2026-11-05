@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Alat;
-use App\Models\DetailPenyerahan;
 use App\Models\KategoriAlat;
 use App\Models\Peminjaman;
 use App\Models\User;
@@ -106,6 +105,7 @@ class TechnicianWorkflowTest extends TestCase
             ->assertSee('badge text-bg-primary font-monospace', false);
         $this->actingAs($technician)->post(route('technician.returns.store'), [
             'id_peminjaman' => $loan->id_peminjaman,
+            'idempotency_key' => '00000000-0000-4000-8000-000000000009',
             'id_detail' => $detail->id_detail,
             'jumlah' => 1,
             'kode_alat' => $equipment->kode_alat,
@@ -113,6 +113,7 @@ class TechnicianWorkflowTest extends TestCase
         ])->assertSessionHasErrors('foto_bukti');
         $this->actingAs($technician)->post(route('technician.returns.store'), [
             'id_peminjaman' => $loan->id_peminjaman,
+            'idempotency_key' => '00000000-0000-4000-8000-000000000010',
             'id_detail' => $detail->id_detail,
             'jumlah' => 1,
             'kode_alat' => $equipment->kode_alat,
@@ -121,6 +122,7 @@ class TechnicianWorkflowTest extends TestCase
         ])->assertRedirect(route('technician.returns'));
         $this->assertSame(1, $equipment->fresh()->stok_tersedia);
         $this->assertDatabaseHas('detail_pengembalian', [
+            'idempotency_key' => '00000000-0000-4000-8000-000000000010',
             'id_detail' => $detail->id_detail,
             'status_verifikasi' => 'Approved',
             'id_teknisi' => $technician->id_user,
