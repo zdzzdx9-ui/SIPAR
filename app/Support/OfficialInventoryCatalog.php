@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class OfficialInventoryCatalog
@@ -145,7 +146,7 @@ class OfficialInventoryCatalog
                         'kondisi' => 'Baik',
                         'deskripsi' => $item['description'],
                         'foto' => null,
-                        'qr_code' => (string) \Illuminate\Support\Str::uuid(),
+                        'qr_code' => (string) Str::uuid(),
                         'status_alat' => 'Tersedia',
                         'created_at' => $now,
                         'updated_at' => $now,

@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Alat;
-use App\Models\DetailPeminjaman;
 use App\Models\ItemUnit;
 use App\Models\KategoriAlat;
 use App\Models\Peminjaman;
