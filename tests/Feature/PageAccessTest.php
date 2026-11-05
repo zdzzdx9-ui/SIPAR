@@ -85,6 +85,10 @@ class PageAccessTest extends TestCase
             ->assertSee('id="loan-cart-form"', false)
             ->assertSee('data-disable-on-submit', false)
             ->assertSee('data-submitting-text="Mengajukan..."', false)
+            ->assertSee('id="loan-submit-confirmation"', false)
+            ->assertSee('Pastikan daftar alat, tanggal peminjaman, dan keperluan sudah benar.')
+            ->assertSee('Batalkan')
+            ->assertSee('Lanjutkan pengajuan')
             ->assertSee('name="tanggal_kembali_rencana"', false)
             ->assertSee('Keranjang peminjaman')
             ->assertSee('Ajukan seluruh keranjang');

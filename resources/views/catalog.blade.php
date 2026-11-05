@@ -52,6 +52,23 @@
         </div>
     </form>
 </section>
+<div class="modal fade" id="loan-submit-confirmation" tabindex="-1" aria-labelledby="loan-submit-confirmation-title" aria-describedby="loan-submit-confirmation-description" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="loan-submit-confirmation-title">Konfirmasi pengajuan peminjaman</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body">
+                <p id="loan-submit-confirmation-description" class="mb-0">Pastikan daftar alat, tanggal peminjaman, dan keperluan sudah benar. Jika dilanjutkan, pengajuan akan dikirim untuk verifikasi dan statusnya dapat dipantau melalui Riwayat Peminjaman.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batalkan</button>
+                <button type="button" class="btn btn-primary" id="confirm-loan-submission">Lanjutkan pengajuan</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 @push('scripts')
 <script>
@@ -64,6 +81,9 @@
     const cartCount = document.getElementById('cart-count');
     const cartSummary = document.getElementById('cart-summary');
     const cartSection = document.getElementById('loan-cart');
+    const confirmationElement = document.getElementById('loan-submit-confirmation');
+    const confirmationModal = bootstrap.Modal.getOrCreateInstance(confirmationElement);
+    const confirmSubmissionButton = document.getElementById('confirm-loan-submission');
 
     function renderCart() {
         cartItems.replaceChildren();
@@ -146,7 +166,21 @@
         if (endDate.value > endDate.max) endDate.value = endDate.max;
     });
     cartForm.addEventListener('submit', event => {
-        if (cart.size === 0) event.preventDefault();
+        if (cart.size === 0) {
+            event.preventDefault();
+            return;
+        }
+        if (cartForm.dataset.confirmed !== 'true') {
+            event.preventDefault();
+            confirmationModal.show();
+            return;
+        }
+        delete cartForm.dataset.confirmed;
+    });
+    confirmSubmissionButton.addEventListener('click', () => {
+        cartForm.dataset.confirmed = 'true';
+        confirmationModal.hide();
+        cartForm.requestSubmit(cartForm.querySelector('button[type="submit"]'));
     });
     let catalogSearchTimer;
     document.querySelector('#catalog-search input[name="q"]').addEventListener('input', () => {
