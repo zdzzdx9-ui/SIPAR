@@ -27,14 +27,25 @@ class UserSeeder extends Seeder
                 'password' => config('user-seeding.student_password'),
                 'role' => 'siswa',
             ],
+            [
+                'nama' => 'Teknisi SIPAR',
+                'nis_nip' => config('user-seeding.technician_username'),
+                'email' => config('user-seeding.technician_email'),
+                'password' => config('user-seeding.technician_password'),
+                'role' => 'teknisi',
+            ],
         ];
 
         foreach ($accounts as $account) {
             if (! is_string($account['password']) || $account['password'] === '') {
                 throw new RuntimeException(
-                    'Atur SIPAR_ADMIN_PASSWORD dan SIPAR_TEST_STUDENT_PASSWORD sebagai environment secrets sebelum menjalankan UserSeeder.'
+                    'Atur SIPAR_ADMIN_PASSWORD, SIPAR_TEST_STUDENT_PASSWORD, dan TECHNICIAN_PASSWORD sebagai environment secrets sebelum menjalankan UserSeeder.'
                 );
             }
+        }
+
+        if (strlen($accounts[2]['password']) < 10) {
+            throw new RuntimeException('TECHNICIAN_PASSWORD harus memiliki panjang minimal 10 karakter.');
         }
 
         DB::transaction(function () use ($accounts): void {
