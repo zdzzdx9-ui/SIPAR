@@ -67,6 +67,16 @@
         .topbar-avatar .bi{font-size:17px;line-height:1}
         .approval-card-header{flex-wrap:wrap}
         .approval-status{align-self:flex-start;display:inline-flex;align-items:center;justify-content:center;flex:none;min-height:26px;padding:5px 10px;line-height:1.2}
+        .approval-card{width:100%;min-width:0}
+        .approval-card .panel-title{font-size:17px;line-height:1.4}
+        .approval-card .panel-subtitle{font-size:12px}
+        .approval-details{font-size:14px}
+        .approval-details>.col-6,.approval-details>.col-12{min-width:0}
+        .approval-details .equipment-icon{width:44px;height:44px}
+        .approval-details strong{overflow-wrap:anywhere}
+        .approval-purpose{padding:12px 14px;border-radius:8px;background:#f3f6f8;font-size:14px;line-height:1.55;overflow-wrap:anywhere}
+        .approval-reject-form .form-control{min-width:0;min-height:38px;font-size:13px}
+        .approval-actions .btn{min-height:38px}
         .table-responsive{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
         .modal-dialog{max-width:calc(100vw - 1rem)}
         .student-edit-dialog{width:calc(100% - 1rem);max-width:480px;margin-right:auto;margin-left:auto}
@@ -91,6 +101,12 @@
             .topbar{padding-right:12px;padding-left:12px;gap:8px}
             .topbar-meta{gap:8px;white-space:nowrap}
             .content{padding-right:12px;padding-left:12px}
+            .approval-card{padding:16px!important}
+            .approval-card .panel-title{font-size:15px}
+            .approval-details{font-size:13px}
+            .approval-actions>form:first-child{width:100%}
+            .approval-actions>form:first-child .btn{width:100%}
+            .approval-reject-form{width:100%}
             .page-head{gap:10px}
             .page-head h1{line-height:1.25}
             .page-head>div:last-child{width:100%}

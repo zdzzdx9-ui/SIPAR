@@ -3,9 +3,9 @@
 @section('content')
 @php($selectedRole = old('role', 'siswa'))
 <div class="auth-frame">
-    <aside class="auth-aside">
-        <a class="brand" href="{{ route('login') }}"><img class="brand-logo" src="{{ asset('assets/logo.png') }}" alt="Logo SIPAR"><span>SIPAR<small>Peminjaman Alat RPL</small></span></a>
-        <div class="aside-copy"><small>SMK NEGERI 5 SURAKARTA · REKAYASA PERANGKAT LUNAK</small><h1>Alat praktik, lebih mudah dikelola.</h1><p>Ajukan peminjaman, pantau verifikasi, dan kembalikan alat dalam satu sistem yang tertata.</p></div>
+    <aside class="auth-aside auth-aside-login">
+        <a class="brand auth-brand-hero" href="{{ route('login') }}"><img class="brand-logo" src="{{ asset('assets/logo.png') }}" alt="Logo SIPAR"><span>SIPAR</span></a>
+        <div class="aside-copy auth-tagline"><small>SMK NEGERI 5 SURAKARTA · REKAYASA PERANGKAT LUNAK</small><p>Ajukan peminjaman, pantau verifikasi, dan kembalikan alat dalam satu sistem yang tertata.</p></div>
         <div class="aside-foot">Sistem Informasi Peminjaman Alat RPL · 2026</div>
     </aside>
     <main class="auth-main"><form class="auth-form" method="post" action="{{ route('login.store') }}">
