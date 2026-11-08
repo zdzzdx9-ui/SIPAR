@@ -424,8 +424,13 @@ class LoanWorkflowTest extends TestCase
         $this->actingAs($admin)->get(route('admin.approvals'))
             ->assertOk()
             ->assertSee('data-disable-on-submit', false)
+            ->assertSee('data-confirm-message="Apakah Anda yakin ingin menyetujui peminjaman', false)
             ->assertSee('data-submitting-text="Menyetujui..."', false)
-            ->assertSee('data-submitting-text="Menolak..."', false);
+            ->assertSee('data-submitting-text="Menolak..."', false)
+            ->assertSee('class="approval-reject-panel" id="reject-panel-', false)
+            ->assertSee(' hidden>', false)
+            ->assertSee('data-validation-message="Alasan penolakan wajib diisi dengan valid."', false)
+            ->assertSee('id="global-action-confirmation"', false);
 
         $this->actingAs($admin)
             ->post(route('admin.approvals.approve', $approvedLoan))

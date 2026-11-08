@@ -6,20 +6,22 @@
     .card-katalog:hover{transform:translateY(-4px);box-shadow:0 20px 25px -5px rgba(15, 23, 42, 0.12),0 10px 10px -5px rgba(15, 23, 42, 0.04);z-index:1}
     .card-katalog .overflow-hidden img{transition:transform .4s ease-in-out}
     .card-katalog:hover .overflow-hidden img{transform:scale(1.08)}
-    .catalog-image-frame{display:flex;align-items:center;justify-content:center;aspect-ratio:16/10;width:100%;overflow:hidden;border-radius:8px;background:#f5f8fa}
-    .catalog-image-frame>.equipment-photo{display:block;width:100%;height:100%;object-fit:contain;object-position:center;padding:8px}
+    .catalog-image-frame{display:flex;align-items:center;justify-content:center;height:180px;width:100%;overflow:hidden;border-radius:8px;background:#f8fafc}
+    .catalog-image-frame>.equipment-photo{display:block;width:100%;height:100%;object-fit:contain;object-position:center;padding:12px}
+    .card-katalog:hover .catalog-image-frame img{transform:none}
     .catalog-image-frame>.equipment-photo-placeholder{min-height:100%}
     .catalog-thumb .equipment-photo{object-fit:contain}
-    .catalog-cart-dock{position:fixed;z-index:15;right:24px;bottom:20px;display:flex;align-items:center;gap:14px;max-width:calc(100vw - 32px);padding:10px 12px 10px 16px;border:1px solid #dce5ed;border-radius:12px;background:#fff;box-shadow:0 8px 28px #10233426}
+    .loan-list-dock{position:fixed;z-index:15;right:24px;bottom:20px;display:flex;align-items:center;gap:14px;max-width:calc(100vw - 32px);padding:10px 12px 10px 16px;border:1px solid #dce5ed;border-radius:12px;background:#fff;box-shadow:0 8px 28px #10233426}
+    .loan-list-panel{scroll-margin-top:80px}
     @media(prefers-reduced-motion:reduce){.card-katalog,.card-katalog .overflow-hidden img{transition:none}.card-katalog:hover,.card-katalog:hover .overflow-hidden img{transform:none}}
-    @media(max-width:575.98px){.catalog-cart-dock{right:12px;bottom:12px;left:12px;justify-content:space-between}}
+    @media(max-width:575.98px){.loan-list-dock{right:12px;bottom:12px;left:12px;justify-content:space-between}}
 </style>
 @endpush
 @section('content')
 <div class="page-head"><div><h1>Katalog Alat</h1><p>Pilih beberapa jenis alat, lalu ajukan semuanya dalam satu transaksi.</p></div></div>
-<div id="cart-dock" class="catalog-cart-dock d-none" role="status" aria-live="polite">
-    <span><strong id="cart-count">0 jenis alat</strong><small id="cart-summary" class="d-block text-muted">Satu unit untuk setiap jenis alat</small></span>
-    <button class="btn btn-primary" id="view-cart" type="button">Lengkapi Form Peminjaman</button>
+<div id="loan-list-dock" class="loan-list-dock d-none" role="status" aria-live="polite">
+    <span><strong id="loan-list-count">0 jenis alat dipilih</strong><small id="loan-list-summary" class="d-block text-muted">Maksimal satu unit untuk setiap jenis alat</small></span>
+    <button class="btn btn-primary" id="view-loan-list" type="button">Lengkapi Form Peminjaman</button>
 </div>
 <div class="row g-3">
     @forelse($equipment as $item)
@@ -32,7 +34,7 @@
             <div class="d-flex justify-content-between align-items-center border-top mt-3 pt-3"><span class="text-muted">Stok <strong class="text-dark">{{ $item->stok_tersedia }}</strong></span><div class="d-flex align-items-center gap-2">
                 @if($activeStatus)<span class="text-muted">{{ $activeStatus === 'Pending' ? 'Sudah diajukan' : 'Sedang dipinjam' }}</span>
                 @elseif($item->status_alat !== 'Tersedia' || $item->stok_tersedia < 1)<span class="text-muted">Tidak tersedia</span>@endif
-                <button class="btn btn-primary btn-sm add-to-cart" type="button" data-id="{{ $item->id_alat }}" data-name="{{ $item->nama_alat }}" data-code="{{ $item->kode_alat }}" data-unavailable="{{ $unavailable ? '1' : '0' }}" data-unavailable-label="{{ $activeStatus ? 'Sudah diajukan' : 'Tidak tersedia' }}" @disabled($unavailable)>{{ $activeStatus ? 'Sudah diajukan' : ($unavailable ? 'Tidak tersedia' : 'Tambah ke keranjang') }}</button>
+                <button class="btn btn-primary btn-sm loan-item-toggle" type="button" data-id="{{ $item->id_alat }}" data-name="{{ $item->nama_alat }}" data-code="{{ $item->kode_alat }}" data-unavailable="{{ $unavailable ? '1' : '0' }}" data-unavailable-label="{{ $activeStatus ? 'Sudah diajukan' : 'Tidak tersedia' }}" @disabled($unavailable) aria-pressed="false">{{ $activeStatus ? 'Sudah diajukan' : ($unavailable ? 'Tidak tersedia' : 'Pilih Alat') }}</button>
             </div></div>
         </article>
     </div>
@@ -40,67 +42,43 @@
     <div class="col-12"><div class="surface p-5 text-center text-muted">Alat tidak ditemukan.</div></div>
     @endforelse
 </div>
-<section class="surface p-3 p-md-4 mt-4" id="loan-cart">
+<section class="surface p-3 p-md-4 mt-4 loan-list-panel" id="loan-list">
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
         <div>
-            <h2 class="panel-title">Keranjang peminjaman</h2>
+            <h2 class="panel-title">Daftar Pinjam</h2>
             <p class="panel-subtitle mb-0">Pilih beberapa jenis alat; setiap jenis maksimal 1 unit per siswa. Maksimal durasi peminjaman 5 hari dan boleh dikembalikan lebih awal.</p>
         </div>
-        <button class="btn btn-sm btn-outline-danger d-none" id="clear-cart" type="button">
-            <i class="bi bi-trash me-1" aria-hidden="true"></i>Bersihkan Keranjang
-        </button>
     </div>
-    <div id="cart-empty" class="text-muted py-2">Keranjang masih kosong.</div>
-    <form method="post" action="{{ route('loans.create') }}" id="loan-cart-form" class="d-none" data-disable-on-submit>
+    <div id="loan-list-empty" class="text-muted py-2">Belum ada alat yang dipilih.</div>
+    <form method="post" action="{{ route('loans.create') }}" id="loan-request-form" class="d-none" data-disable-on-submit data-confirm-title="Konfirmasi pengajuan peminjaman" data-confirm-message="Pastikan daftar alat, tanggal peminjaman, dan keperluan sudah benar. Apakah Anda yakin ingin mengajukan peminjaman?">
         @csrf
-        <div id="cart-items" class="mb-3"></div>
+        <div id="loan-list-items" class="mb-3"></div>
         <div class="row g-3">
             <div class="col-12 col-sm-6"><label class="form-label" for="loan-date">Tanggal pinjam</label><input class="form-control" id="loan-date" type="date" name="tanggal_pinjam" min="{{ now()->toDateString() }}" value="{{ now()->toDateString() }}" required></div>
             <div class="col-12 col-sm-6"><label class="form-label" for="return-date">Rencana kembali</label><input class="form-control" id="return-date" type="date" name="tanggal_kembali_rencana" min="{{ now()->toDateString() }}" max="{{ now()->addDays(5)->toDateString() }}" value="{{ now()->addDays(5)->toDateString() }}" required></div>
             <div class="col-12"><label class="form-label" for="loan-purpose">Keperluan</label><textarea class="form-control" id="loan-purpose" name="keperluan" rows="3" maxlength="2000" required placeholder="Jelaskan keperluan alat..."></textarea></div>
-            <div class="col-12"><button class="btn btn-primary" type="submit" data-submitting-text="Mengajukan..."><i class="bi bi-send me-1"></i>Ajukan seluruh keranjang</button></div>
+            <div class="col-12"><button class="btn btn-primary" type="submit" data-submitting-text="Mengajukan..."><i class="bi bi-send me-1"></i>Ajukan Daftar Pinjam</button></div>
         </div>
     </form>
 </section>
-<div class="modal fade" id="loan-submit-confirmation" tabindex="-1" aria-labelledby="loan-submit-confirmation-title" aria-describedby="loan-submit-confirmation-description" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title fs-5" id="loan-submit-confirmation-title">Konfirmasi pengajuan peminjaman</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
-            </div>
-            <div class="modal-body">
-                <p id="loan-submit-confirmation-description" class="mb-0">Pastikan daftar alat, tanggal peminjaman, dan keperluan sudah benar. Jika dilanjutkan, pengajuan akan dikirim untuk verifikasi dan statusnya dapat dipantau melalui Riwayat Peminjaman.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batalkan</button>
-                <button type="button" class="btn btn-primary" id="confirm-loan-submission">Lanjutkan pengajuan</button>
-            </div>
-        </div>
-    </div>
-</div>
 @endsection
 @push('scripts')
 <script>
 (() => {
-    const cart = new Map();
-    const cartItems = document.getElementById('cart-items');
-    const cartEmpty = document.getElementById('cart-empty');
-    const cartForm = document.getElementById('loan-cart-form');
-    const cartDock = document.getElementById('cart-dock');
-    const cartCount = document.getElementById('cart-count');
-    const cartSummary = document.getElementById('cart-summary');
-    const cartSection = document.getElementById('loan-cart');
-    const clearCartButton = document.getElementById('clear-cart');
-    const confirmationElement = document.getElementById('loan-submit-confirmation');
-    const confirmationModal = bootstrap.Modal.getOrCreateInstance(confirmationElement);
-    const confirmSubmissionButton = document.getElementById('confirm-loan-submission');
+    const selectedItems = new Map();
+    const loanListItems = document.getElementById('loan-list-items');
+    const loanListEmpty = document.getElementById('loan-list-empty');
+    const loanForm = document.getElementById('loan-request-form');
+    const loanListDock = document.getElementById('loan-list-dock');
+    const loanListCount = document.getElementById('loan-list-count');
+    const loanListSummary = document.getElementById('loan-list-summary');
+    const loanListSection = document.getElementById('loan-list');
 
-    function renderCart() {
-        cartItems.replaceChildren();
-        [...cart.values()].forEach((item, index) => {
+    function renderLoanList() {
+        loanListItems.replaceChildren();
+        [...selectedItems.values()].forEach((item, index) => {
             const row = document.createElement('div');
-            row.className = 'd-flex align-items-center gap-2 border-bottom py-2';
+            row.className = 'd-flex flex-wrap align-items-center gap-2 border-bottom py-2';
             const label = document.createElement('div');
             label.className = 'flex-grow-1';
             const name = document.createElement('strong');
@@ -114,13 +92,13 @@
             quantityLabel.className = 'badge text-bg-light';
             quantityLabel.textContent = '1 unit';
             const remove = document.createElement('button');
-            remove.className = 'btn btn-light btn-sm text-danger';
+            remove.className = 'btn btn-outline-secondary btn-sm';
             remove.type = 'button';
-            remove.setAttribute('aria-label', `Hapus ${item.name} dari keranjang`);
-            remove.innerHTML = '<i class="bi bi-trash" aria-hidden="true"></i>';
+            remove.textContent = 'Batalkan Pilihan';
+            remove.setAttribute('aria-label', `Batalkan pilihan ${item.name}`);
             remove.addEventListener('click', () => {
-                cart.delete(item.id);
-                renderCart();
+                selectedItems.delete(item.id);
+                renderLoanList();
             });
             row.append(label, quantityLabel, remove);
 
@@ -133,44 +111,43 @@
             quantityInput.name = `items[${index}][jumlah]`;
             quantityInput.value = '1';
             row.append(idInput, quantityInput);
-            cartItems.append(row);
+            loanListItems.append(row);
         });
 
-        const empty = cart.size === 0;
-        cartEmpty.classList.toggle('d-none', !empty);
-        cartForm.classList.toggle('d-none', empty);
-        cartDock.classList.toggle('d-none', empty);
-        clearCartButton.classList.toggle('d-none', empty);
-        cartCount.textContent = `${cart.size} jenis alat`;
-        cartSummary.textContent = `Total ${cart.size} unit · maksimal 1 per jenis`;
-        document.querySelectorAll('.add-to-cart').forEach(button => {
-            const selected = cart.has(Number(button.dataset.id));
+        const empty = selectedItems.size === 0;
+        loanListEmpty.classList.toggle('d-none', !empty);
+        loanForm.classList.toggle('d-none', empty);
+        loanListDock.classList.toggle('d-none', empty);
+        loanListCount.textContent = `${selectedItems.size} jenis alat dipilih`;
+        loanListSummary.textContent = `Total ${selectedItems.size} unit · maksimal 1 per jenis`;
+        document.querySelectorAll('.loan-item-toggle').forEach(button => {
+            const selected = selectedItems.has(Number(button.dataset.id));
             const unavailable = button.dataset.unavailable === '1';
-            button.disabled = selected || unavailable;
+            button.disabled = unavailable;
+            button.setAttribute('aria-pressed', String(selected));
+            button.classList.toggle('btn-primary', !selected);
+            button.classList.toggle('btn-outline-secondary', selected);
             button.textContent = selected
-                ? 'Sudah ditambahkan'
+                ? 'Batalkan Pilihan'
                 : unavailable
                     ? button.dataset.unavailableLabel
-                    : 'Tambah ke keranjang';
+                    : 'Pilih Alat';
         });
     }
 
-    document.querySelectorAll('.add-to-cart:not(:disabled)').forEach(button => button.addEventListener('click', () => {
+    document.querySelectorAll('.loan-item-toggle:not(:disabled)').forEach(button => button.addEventListener('click', () => {
         const id = Number(button.dataset.id);
-        if (cart.has(id)) return;
-        cart.set(id, {id, name: button.dataset.name, code: button.dataset.code});
-        renderCart();
+        if (selectedItems.has(id)) {
+            selectedItems.delete(id);
+        } else {
+            selectedItems.set(id, {id, name: button.dataset.name, code: button.dataset.code});
+        }
+        renderLoanList();
     }));
 
-    document.getElementById('view-cart').addEventListener('click', () => {
-        cartSection.scrollIntoView({behavior: 'smooth', block: 'start'});
+    document.getElementById('view-loan-list').addEventListener('click', () => {
+        loanListSection.scrollIntoView({behavior: 'smooth', block: 'start'});
         document.getElementById('loan-date').focus({preventScroll: true});
-    });
-
-    clearCartButton.addEventListener('click', () => {
-        if (cart.size === 0 || !window.confirm('Bersihkan semua alat dari keranjang peminjaman?')) return;
-        cart.clear();
-        renderCart();
     });
 
     document.getElementById('loan-date').addEventListener('change', event => {
@@ -183,27 +160,10 @@
         if (endDate.value < minEnd) endDate.value = minEnd;
         if (endDate.value > endDate.max) endDate.value = endDate.max;
     });
-    cartForm.addEventListener('submit', event => {
-        if (cart.size === 0) {
+    loanForm.addEventListener('submit', event => {
+        if (selectedItems.size === 0) {
             event.preventDefault();
-            return;
         }
-        if (cartForm.dataset.confirmed !== 'true') {
-            event.preventDefault();
-            confirmationModal.show();
-            return;
-        }
-        delete cartForm.dataset.confirmed;
-    });
-    confirmSubmissionButton.addEventListener('click', () => {
-        cartForm.dataset.confirmed = 'true';
-        confirmationModal.hide();
-        cartForm.requestSubmit(cartForm.querySelector('button[type="submit"]'));
-    });
-    let catalogSearchTimer;
-    document.querySelector('#catalog-search input[name="q"]').addEventListener('input', () => {
-        clearTimeout(catalogSearchTimer);
-        catalogSearchTimer = setTimeout(() => document.getElementById('catalog-search').requestSubmit(), 350);
     });
 })();
 </script>

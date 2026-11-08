@@ -34,7 +34,7 @@
             @else
             @if($assets->isNotEmpty())
                 @foreach($assets as $handover)
-                <form class="row g-2 align-items-end border-top py-3" method="post" action="{{ route('technician.returns.store') }}" enctype="multipart/form-data" data-disable-on-submit>
+                <form class="row g-2 align-items-end border-top py-3" method="post" action="{{ route('technician.returns.store') }}" enctype="multipart/form-data" data-disable-on-submit data-confirm-title="Konfirmasi pengembalian alat" data-confirm-message="Pastikan kondisi dan foto bukti pengembalian sudah benar. Apakah Anda yakin ingin mencatat pengembalian aset {{ $handover->asset_id }}?" data-confirm-label="Ya, Kembalikan">
                     @csrf
                     <input type="hidden" name="idempotency_key" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
                     <input type="hidden" name="id_peminjaman" value="{{ $loan->id_peminjaman }}"><input type="hidden" name="booking_code" value="{{ $loan->booking_code }}"><input type="hidden" name="id_detail" value="{{ $detail->id_detail }}"><input type="hidden" name="kode_alat" value="{{ $detail->alat->kode_alat }}"><input type="hidden" name="asset_id" value="{{ $handover->asset_id }}"><input type="hidden" name="item_unit_id" value="{{ $handover->item_unit_id }}"><input type="hidden" name="jumlah" value="1">
@@ -46,7 +46,7 @@
                 @endforeach
             @else
                 @php($remaining = max(0, $handed - $returned))
-                <form class="row g-2 align-items-end border-top pt-3" method="post" action="{{ route('technician.returns.store') }}" enctype="multipart/form-data" data-disable-on-submit>
+                <form class="row g-2 align-items-end border-top pt-3" method="post" action="{{ route('technician.returns.store') }}" enctype="multipart/form-data" data-disable-on-submit data-confirm-title="Konfirmasi pengembalian alat" data-confirm-message="Pastikan jumlah dan kondisi alat yang diterima sudah benar. Apakah Anda yakin ingin mencatat pengembalian ini?" data-confirm-label="Ya, Kembalikan">
                     @csrf
                     <input type="hidden" name="idempotency_key" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
                     <input type="hidden" name="id_peminjaman" value="{{ $loan->id_peminjaman }}"><input type="hidden" name="booking_code" value="{{ $loan->booking_code }}"><input type="hidden" name="id_detail" value="{{ $detail->id_detail }}"><input type="hidden" name="kode_alat" value="{{ $detail->alat->kode_alat }}">

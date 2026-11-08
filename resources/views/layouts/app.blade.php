@@ -218,8 +218,92 @@
 @else
     @yield('content')
 @endif
+<div class="modal fade" id="global-action-confirmation" tabindex="-1" aria-labelledby="global-action-confirmation-title" aria-describedby="global-action-confirmation-message" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="global-action-confirmation-title">Konfirmasi tindakan</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body" id="global-action-confirmation-message"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="global-action-confirmation-submit">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+</div>
 @include('components.mobile-scroll-indicator')
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(() => {
+    const modalElement = document.getElementById('global-action-confirmation');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    const title = document.getElementById('global-action-confirmation-title');
+    const message = document.getElementById('global-action-confirmation-message');
+    const confirmButton = document.getElementById('global-action-confirmation-submit');
+    let pendingForm = null;
+
+    document.addEventListener('submit', event => {
+        const form = event.target;
+        if (!(form instanceof HTMLFormElement) || !form.dataset.confirmMessage) return;
+        if (form.dataset.confirmed === 'true') {
+            delete form.dataset.confirmed;
+            return;
+        }
+
+        event.preventDefault();
+        pendingForm = form;
+        title.textContent = form.dataset.confirmTitle || 'Konfirmasi tindakan';
+        message.textContent = form.dataset.confirmMessage;
+        confirmButton.textContent = form.dataset.confirmLabel || 'Ya, Lanjutkan';
+        modal.show();
+    }, true);
+
+    confirmButton.addEventListener('click', () => {
+        if (!pendingForm) return;
+        const form = pendingForm;
+        pendingForm = null;
+        form.dataset.confirmed = 'true';
+        modal.hide();
+        form.requestSubmit();
+    });
+
+    modalElement.addEventListener('hidden.bs.modal', () => {
+        pendingForm = null;
+        confirmButton.textContent = 'Ya, Lanjutkan';
+    });
+
+    document.addEventListener('invalid', event => {
+        const field = event.target;
+        if (!(field instanceof HTMLElement) || !(field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement)) return;
+        if (field.form) delete field.form.dataset.confirmed;
+
+        const validity = field.validity;
+        let validationMessage = field.dataset.validationMessage;
+        if (!validationMessage && validity.valueMissing) validationMessage = 'Bagian ini wajib diisi.';
+        if (!validationMessage && validity.badInput) validationMessage = 'Masukkan nilai dengan format yang valid.';
+        if (!validationMessage && validity.typeMismatch && field.type === 'email') validationMessage = 'Masukkan alamat email yang valid.';
+        if (!validationMessage && validity.typeMismatch) validationMessage = 'Masukkan data dengan format yang valid.';
+        if (!validationMessage && validity.patternMismatch) validationMessage = 'Masukkan data sesuai format yang diminta.';
+        if (!validationMessage && (validity.rangeOverflow || validity.rangeUnderflow || validity.stepMismatch)) validationMessage = 'Masukkan nilai sesuai batas yang ditentukan.';
+        if (!validationMessage && (validity.tooLong || validity.tooShort)) validationMessage = 'Panjang isian tidak sesuai ketentuan.';
+        if (!validationMessage && !validity.valid) validationMessage = 'Periksa kembali isian ini.';
+        if (validationMessage) field.setCustomValidity(validationMessage);
+    }, true);
+
+    document.addEventListener('input', event => {
+        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) {
+            event.target.setCustomValidity('');
+        }
+    });
+    document.addEventListener('change', event => {
+        if (event.target instanceof HTMLSelectElement || event.target instanceof HTMLInputElement) {
+            event.target.setCustomValidity('');
+        }
+    });
+})();
+</script>
 @stack('scripts')
 <script>
 document.querySelectorAll('form[data-disable-on-submit]').forEach(form => {

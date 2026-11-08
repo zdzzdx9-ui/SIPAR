@@ -20,7 +20,7 @@
         @if($loan->operational_notes)<div class="alert alert-info py-2">{{ $loan->operational_notes }}</div>@endif
 
         @if($pendingDetails->isNotEmpty())
-            <form class="border rounded p-3" method="post" action="{{ route('technician.handovers.store', $loan) }}" enctype="multipart/form-data" data-disable-on-submit>
+            <form class="border rounded p-3" method="post" action="{{ route('technician.handovers.store', $loan) }}" enctype="multipart/form-data" data-disable-on-submit data-confirm-title="Konfirmasi penyerahan alat" data-confirm-message="Pastikan nomor aset, kondisi, dan foto bukti sudah benar. Apakah Anda yakin ingin mencatat penyerahan alat untuk {{ $loan->booking_code }}?" data-confirm-label="Ya, Serahkan">
                 @csrf
                 @foreach($loan->detail as $detail)
                     @php($handed = $detail->penyerahanDetail->sum('jumlah'))

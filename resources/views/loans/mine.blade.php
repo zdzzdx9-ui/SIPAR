@@ -52,7 +52,7 @@
                         <td class="align-middle">{{ $note ?? '—' }}</td>
                         <td class="align-middle text-center">
                             @if($loan->status === 'Pending')
-                                <form class="d-inline-block" method="post" action="{{ route('loans.cancel', $loan) }}" onsubmit="return confirm('Batalkan pengajuan ini?')">
+                                <form class="d-inline-block" method="post" action="{{ route('loans.cancel', $loan) }}" data-confirm-title="Konfirmasi pembatalan pengajuan" data-confirm-message="Apakah Anda yakin ingin membatalkan pengajuan {{ $loan->booking_code }}?" data-confirm-label="Ya, Batalkan">
                                     @csrf
                                     <button class="btn btn-sm btn-light text-danger text-nowrap" type="submit"><i class="bi bi-x-circle me-1"></i>Batal</button>
                                 </form>

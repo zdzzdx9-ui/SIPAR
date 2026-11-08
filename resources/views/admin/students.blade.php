@@ -20,7 +20,7 @@
 						<td>
 							<div class="d-flex gap-1">
 								<button class="btn btn-light btn-sm" type="button" title="Ubah data siswa" aria-label="Ubah siswa {{ $student->nama }}" data-bs-toggle="modal" data-bs-target="#editStudent-{{ $student->id_user }}"><i class="bi bi-pencil"></i></button>
-								<form method="post" action="{{ route('admin.students.delete', $student) }}" onsubmit="return confirm('Hapus akun siswa ini?')">
+								<form method="post" action="{{ route('admin.students.delete', $student) }}" data-confirm-title="Konfirmasi penghapusan akun" data-confirm-message="Akun siswa {{ $student->nama }} akan dihapus. Apakah Anda yakin ingin melanjutkan?" data-confirm-label="Ya, Hapus">
 									@csrf @method('DELETE')
 									<button class="btn btn-light btn-sm text-danger" type="submit" title="Hapus siswa {{ $student->nama }}" aria-label="Hapus siswa {{ $student->nama }}"><i class="bi bi-trash"></i></button>
 								</form>
