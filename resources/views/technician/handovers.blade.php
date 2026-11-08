@@ -4,7 +4,7 @@
 <div class="page-head"><div><h1>Penyerahan Alat</h1><p>Cari transaksi menggunakan Kode Booking atau NIS siswa. Semua alat dalam satu transaksi dicatat dan disimpan bersama.</p></div></div>
 <form class="surface p-3 mb-3 responsive-search" method="get" action="{{ route('technician.handovers') }}">
     <input class="form-control" name="q" value="{{ request('q') }}" placeholder="Kode Transaksi atau NIS siswa" aria-label="Kode Transaksi atau NIS siswa">
-    <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i>Cari</button>
+    <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1" aria-hidden="true"></i>Cari</button>
 </form>
 @forelse($loans as $loan)
     @php($pendingDetails = $loan->detail->filter(fn ($detail) => $detail->penyerahanDetail->sum('jumlah') < $detail->jumlah))

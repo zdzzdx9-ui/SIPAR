@@ -47,6 +47,7 @@ class AuthenticationTest extends TestCase
             ->assertSee('Lupa password? Hubungi Admin SIPAR.')
             ->assertSee('login-options d-flex justify-content-between align-items-center', false)
             ->assertSee('text-muted whitespace-nowrap', false)
+            ->assertSeeInOrder(['class="role-switch"', '<h2>Masuk ke akun</h2>'], false)
             ->assertSee('Daftar sebagai siswa')
             ->assertSee('SMK Negeri 5 Surakarta')
             ->assertSee('Rekayasa Perangkat Lunak')

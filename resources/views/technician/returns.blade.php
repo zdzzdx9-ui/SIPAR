@@ -4,7 +4,7 @@
 <div class="page-head"><div><h1>Proses Pengembalian</h1><p>Cari dengan Kode Transaksi, Kode Alat, atau NIS siswa. Hasil menampilkan seluruh item dan status pengembaliannya.</p></div></div>
 <form class="surface p-3 mb-3 responsive-search" method="get" action="{{ route('technician.returns') }}">
     <input class="form-control" name="q" value="{{ request('q') }}" placeholder="Contoh: PJM-00000004, MIK-001, atau NIS siswa" aria-label="Kode Transaksi, Kode Alat, atau NIS siswa">
-    <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i>Cari</button>
+    <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1" aria-hidden="true"></i>Cari</button>
 </form>
 @forelse($activeLoans as $loan)
 <section class="surface p-3 p-md-4 mb-3">
