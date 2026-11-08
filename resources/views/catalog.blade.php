@@ -2,17 +2,20 @@
 @section('title', 'Katalog Alat')
 @push('head')
 <style>
+    .card-katalog{transition:all 0.3s ease;box-shadow:0 4px 6px -1px rgba(15, 23, 42, 0.08),0 2px 4px -1px rgba(15, 23, 42, 0.04)}
+    .card-katalog:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 20px 25px -5px rgba(15, 23, 42, 0.12),0 10px 10px -5px rgba(15, 23, 42, 0.04);z-index:1}
     .catalog-image-frame{display:flex;align-items:center;justify-content:center;aspect-ratio:16/10;width:100%;overflow:hidden;border-radius:8px;background:#f5f8fa}
     .catalog-image-frame>.equipment-photo{display:block;width:100%;height:100%;object-fit:contain;object-position:center;padding:8px}
     .catalog-image-frame>.equipment-photo-placeholder{min-height:100%}
     .catalog-thumb .equipment-photo{object-fit:contain}
     .catalog-cart-dock{position:fixed;z-index:15;right:24px;bottom:20px;display:flex;align-items:center;gap:14px;max-width:calc(100vw - 32px);padding:10px 12px 10px 16px;border:1px solid #dce5ed;border-radius:12px;background:#fff;box-shadow:0 8px 28px #10233426}
+    @media(prefers-reduced-motion:reduce){.card-katalog{transition:none}.card-katalog:hover{transform:none}}
     @media(max-width:575.98px){.catalog-cart-dock{right:12px;bottom:12px;left:12px;justify-content:space-between}}
 </style>
 @endpush
 @section('content')
 <div class="page-head"><div><h1>Katalog Alat</h1><p>Pilih beberapa jenis alat, lalu ajukan semuanya dalam satu transaksi.</p></div></div>
-<form method="get" class="surface p-2 mb-3 d-flex gap-2" id="catalog-search"><input class="form-control border-0" name="q" value="{{ request('q') }}" placeholder="Cari nama atau kode alat..." autocomplete="off"><button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button></form>
+<form method="get" class="surface p-2 mb-3 responsive-search" id="catalog-search"><input class="form-control border-0" name="q" value="{{ request('q') }}" placeholder="Cari nama atau kode alat..." autocomplete="off"><button class="btn btn-primary" type="submit" aria-label="Cari alat"><i class="bi bi-search"></i></button></form>
 <div id="cart-dock" class="catalog-cart-dock d-none" role="status" aria-live="polite">
     <span><strong id="cart-count">0 jenis alat</strong><small id="cart-summary" class="d-block text-muted">Satu unit untuk setiap jenis alat</small></span>
     <button class="btn btn-primary" id="view-cart" type="button">Lengkapi Form Peminjaman</button>
@@ -22,9 +25,9 @@
     @php($activeStatus = $activeEquipmentStatuses->get($item->id_alat))
     @php($unavailable = $item->status_alat !== 'Tersedia' || $item->stok_tersedia < 1 || $activeStatus)
     <div class="col-sm-6 col-xl-4">
-        <article class="surface card-item h-100 d-flex flex-column">
+        <article class="surface card-item card-katalog h-100 d-flex flex-column">
             <div class="catalog-image-frame mb-3"><x-equipment-image :equipment="$item" alt="Foto {{ $item->nama_alat }}"></x-equipment-image></div>
-            <div class="d-flex align-items-start gap-3"><span class="equipment-icon overflow-hidden catalog-thumb"><x-equipment-image :equipment="$item" alt="Foto {{ $item->nama_alat }}"></x-equipment-image></span><div class="flex-grow-1"><h2 class="panel-title">{{ $item->nama_alat }}</h2><div class="panel-subtitle">{{ $item->kode_alat }} · {{ $item->kategori->nama_kategori }}</div></div></div>
+            <div class="d-flex align-items-start gap-3"><span class="equipment-icon overflow-hidden catalog-thumb"><x-equipment-image :equipment="$item" alt="Foto {{ $item->nama_alat }}"></x-equipment-image></span><div class="flex-grow-1"><h2 class="panel-title">{{ $item->nama_alat }}</h2><div class="panel-subtitle">{{ $item->kode_alat }} · {{ $item->kategori->nama_kategori }}</div><p class="small text-muted mb-0 mt-2">{{ $item->deskripsi ?: 'Peralatan '.$item->kategori->nama_kategori.' untuk mendukung kegiatan praktik.' }}</p></div></div>
             <div class="d-flex justify-content-between align-items-center border-top mt-3 pt-3"><span class="text-muted">Stok <strong class="text-dark">{{ $item->stok_tersedia }}</strong></span><div class="d-flex align-items-center gap-2">
                 @if($activeStatus)<span class="text-muted">{{ $activeStatus === 'Pending' ? 'Sudah diajukan' : 'Sedang dipinjam' }}</span>
                 @elseif($item->status_alat !== 'Tersedia' || $item->stok_tersedia < 1)<span class="text-muted">Tidak tersedia</span>@endif
@@ -44,7 +47,7 @@
             <p class="panel-subtitle mb-0">Pilih beberapa jenis alat; setiap jenis maksimal 1 unit per siswa. Maksimal durasi peminjaman 5 hari dan boleh dikembalikan lebih awal.</p>
         </div>
         <button class="btn btn-sm btn-outline-danger d-none" id="clear-cart" type="button">
-            <i class="bi bi-trash me-1" aria-hidden="true"></i>Kosongkan Keranjang
+            <i class="bi bi-trash me-1" aria-hidden="true"></i>Bersihkan Keranjang
         </button>
     </div>
     <div id="cart-empty" class="text-muted py-2">Keranjang masih kosong.</div>
@@ -165,7 +168,7 @@
     });
 
     clearCartButton.addEventListener('click', () => {
-        if (cart.size === 0 || !window.confirm('Kosongkan semua alat dari keranjang peminjaman?')) return;
+        if (cart.size === 0 || !window.confirm('Bersihkan semua alat dari keranjang peminjaman?')) return;
         cart.clear();
         renderCart();
     });

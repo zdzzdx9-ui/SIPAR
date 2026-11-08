@@ -85,6 +85,18 @@ class Peminjaman extends Model
             && $this->tanggal_kembali_rencana->lt(today());
     }
 
+    public function getOverdueDaysAttribute(): int
+    {
+        return $this->is_overdue
+            ? (int) $this->tanggal_kembali_rencana->diffInDays(today())
+            : 0;
+    }
+
+    public function getEstimatedFineAttribute(): int
+    {
+        return $this->overdue_days * 5000;
+    }
+
     public function pengembalian(): HasOne
     {
         return $this->hasOne(Pengembalian::class, 'id_peminjaman', 'id_peminjaman');

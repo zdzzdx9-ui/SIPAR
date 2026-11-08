@@ -14,7 +14,7 @@ class ReportController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Peminjaman::with(['user', 'detail.alat', 'pengembalian'])->latest('tanggal_pengajuan');
+        $query = Peminjaman::with(['user', 'detail.alat', 'detail.pengembalianDetail', 'pengembalian'])->latest('tanggal_pengajuan');
         if ($request->filled('dari')) {
             $query->whereDate('tanggal_pengajuan', '>=', $request->date('dari'));
         }
@@ -83,6 +83,7 @@ class ReportController extends Controller
             $detailReturns = $loan->detail->flatMap(fn ($detail) => $detail->pengembalianDetail);
             $latestReturn = $detailReturns->max('tanggal_kembali_aktual') ?? $loan->pengembalian?->tanggal_kembali_aktual;
             $fine = $detailReturns->sum('denda') ?: ($loan->pengembalian?->denda ?? 0);
+            $hasRecordedReturn = $detailReturns->isNotEmpty() || $loan->pengembalian !== null;
 
             return [
                 'id' => $loan->booking_code,
@@ -91,9 +92,12 @@ class ReportController extends Controller
                 'alat' => $equipment !== '' ? $equipment : '-',
                 'tanggal_pinjam' => $loan->tanggal_pinjam?->format('d/m/Y') ?? '-',
                 'tanggal_kembali_rencana' => $loan->tanggal_kembali_rencana?->format('d/m/Y') ?? '-',
-                'status' => $loan->status_label ?? '-',
+                'status' => $loan->is_overdue
+                    ? "Terlambat {$loan->overdue_days} hari"
+                    : ($loan->status_label ?? '-'),
                 'tanggal_kembali_aktual' => $latestReturn?->format('d/m/Y H:i') ?? '-',
-                'denda' => number_format((float) $fine, 0, ',', '.'),
+                'denda' => ($loan->is_overdue && ! $hasRecordedReturn ? 'Estimasi ' : '')
+                    .number_format((float) ($hasRecordedReturn ? $fine : $loan->estimated_fine), 0, ',', '.'),
             ];
         });
 

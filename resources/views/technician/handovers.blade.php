@@ -2,7 +2,7 @@
 @section('title', 'Penyerahan Alat')
 @section('content')
 <div class="page-head"><div><h1>Penyerahan Alat</h1><p>Cari transaksi menggunakan Kode Booking atau NIS siswa. Semua alat dalam satu transaksi dicatat dan disimpan bersama.</p></div></div>
-<form class="surface p-3 mb-3 d-flex gap-2" method="get" action="{{ route('technician.handovers') }}">
+<form class="surface p-3 mb-3 responsive-search" method="get" action="{{ route('technician.handovers') }}">
     <input class="form-control" name="q" value="{{ request('q') }}" placeholder="Kode Transaksi atau NIS siswa" aria-label="Kode Transaksi atau NIS siswa">
     <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i>Cari</button>
 </form>
@@ -15,7 +15,7 @@
                 <span class="badge text-bg-primary font-monospace px-3 py-2">{{ $loan->booking_code }}</span>
                 <div class="panel-subtitle">{{ $loan->user->nama }} · NIS {{ $loan->user->nis_nip }}</div>
             </div>
-            <div class="text-end"><div>Jatuh tempo {{ $loan->tanggal_kembali_rencana->format('d M Y') }}</div>@if($loan->is_overdue)<span class="badge-status status-rusak">Terlambat</span>@endif</div>
+            <div class="text-end"><div>Jatuh tempo {{ $loan->tanggal_kembali_rencana->format('d M Y') }}</div>@if($loan->is_overdue)<span class="badge-status status-rusak">Terlambat {{ $loan->overdue_days }} hari</span>@endif</div>
         </div>
         @if($loan->operational_notes)<div class="alert alert-info py-2">{{ $loan->operational_notes }}</div>@endif
 

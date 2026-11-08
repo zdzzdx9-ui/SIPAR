@@ -31,6 +31,9 @@
         .page-head{flex-wrap:wrap;align-items:flex-start}
         .page-head>div:last-child{max-width:100%;flex-wrap:wrap}
         .topbar-search{min-width:0}
+        .responsive-search{display:flex;align-items:center;gap:.5rem;min-width:0}
+        .responsive-search .form-control{flex:1 1 0;min-width:0}
+        .responsive-search .btn{flex:0 0 auto;white-space:nowrap}
         .topbar-profile{display:flex;align-items:center;gap:13px;color:inherit;text-decoration:none}
         .topbar-profile:hover{color:var(--blue)}
         .topbar-search input{min-width:0;padding-right:38px}
@@ -180,7 +183,7 @@
     <main class="workspace">
         <header class="topbar">
             <button class="mobile-nav-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNavigation" aria-controls="mobileNavigation" aria-label="Buka navigasi"><i class="bi bi-list"></i></button>
-            <form class="topbar-search" method="get" action="{{ request()->routeIs('catalog') ? route('catalog') : route('search') }}" role="search" autocomplete="off">
+            <form class="topbar-search responsive-search" method="get" action="{{ request()->routeIs('catalog') ? route('catalog') : route('search') }}" role="search" autocomplete="off">
                 <input class="form-control form-control-sm" type="search" name="q" value="{{ request('q') }}" placeholder="{{ request()->routeIs('catalog') ? 'Cari nama atau kode alat...' : 'Cari alat, transaksi, atau siswa...' }}" aria-label="Cari">
                 <button class="btn btn-primary" type="submit" aria-label="Cari"><i class="bi bi-search"></i></button>
                 <div class="search-suggestions" id="search-suggestions" role="listbox" aria-label="Saran pencarian"></div>

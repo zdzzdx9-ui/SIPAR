@@ -61,6 +61,7 @@ class PageAccessTest extends TestCase
         Alat::create([
             'kode_alat' => 'LAN-002', 'nama_alat' => 'LAN Tester', 'id_kategori' => $category->id_kategori,
             'stok_total' => 2, 'stok_tersedia' => 2, 'kondisi' => 'Baik', 'qr_code' => 'qr-student-test', 'status_alat' => 'Tersedia',
+            'deskripsi' => 'Alat pengujian kabel jaringan.',
         ]);
 
         $this->actingAs($student);
@@ -81,6 +82,9 @@ class PageAccessTest extends TestCase
             ->assertSee('id="new-password-confirmation"', false)
             ->assertSee('data-password-toggle', false);
         $this->get(route('catalog'))
+            ->assertSee('class="surface p-2 mb-3 responsive-search"', false)
+            ->assertSee('Alat pengujian kabel jaringan.')
+            ->assertSee('card-katalog', false)
             ->assertSee('class="btn btn-primary btn-sm add-to-cart"', false)
             ->assertSee('id="loan-cart-form"', false)
             ->assertSee('data-disable-on-submit', false)
@@ -88,7 +92,7 @@ class PageAccessTest extends TestCase
             ->assertSee('id="view-cart"', false)
             ->assertSee('Lengkapi Form Peminjaman')
             ->assertSee('id="clear-cart"', false)
-            ->assertSee('Kosongkan Keranjang')
+            ->assertSee('Bersihkan Keranjang')
             ->assertSee('id="loan-submit-confirmation"', false)
             ->assertSee('Pastikan daftar alat, tanggal peminjaman, dan keperluan sudah benar.')
             ->assertSee('Batalkan')

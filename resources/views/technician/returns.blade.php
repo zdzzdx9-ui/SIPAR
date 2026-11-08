@@ -2,7 +2,7 @@
 @section('title', 'Pengembalian Alat')
 @section('content')
 <div class="page-head"><div><h1>Proses Pengembalian</h1><p>Cari dengan Kode Transaksi, Kode Alat, atau NIS siswa. Hasil menampilkan seluruh item dan status pengembaliannya.</p></div></div>
-<form class="surface p-3 mb-3 d-flex gap-2" method="get" action="{{ route('technician.returns') }}">
+<form class="surface p-3 mb-3 responsive-search" method="get" action="{{ route('technician.returns') }}">
     <input class="form-control" name="q" value="{{ request('q') }}" placeholder="Contoh: PJM-00000004, MIK-001, atau NIS siswa" aria-label="Kode Transaksi, Kode Alat, atau NIS siswa">
     <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i>Cari</button>
 </form>
@@ -14,7 +14,12 @@
             <span class="badge text-bg-primary font-monospace px-3 py-2">{{ $loan->booking_code }}</span>
             <div class="panel-subtitle">{{ $loan->user->nama }} · NIS {{ $loan->user->nis_nip }}</div>
         </div>
-        <div class="text-end">Jatuh tempo {{ $loan->tanggal_kembali_rencana->format('d M Y') }} @if($loan->is_overdue)<span class="badge-status status-rusak">Terlambat</span>@endif</div>
+        <div class="text-end">Jatuh tempo {{ $loan->tanggal_kembali_rencana->format('d M Y') }}
+            @if($loan->is_overdue)
+                <span class="badge-status status-rusak">Terlambat {{ $loan->overdue_days }} hari</span>
+                <small class="d-block text-muted mt-1">Denda berjalan Rp {{ number_format($loan->estimated_fine, 0, ',', '.') }} · Rp5.000/hari</small>
+            @endif
+        </div>
     </div>
     @foreach($loan->detail as $detail)
         @php($returned = $detail->pengembalianDetail->sum('jumlah'))

@@ -39,6 +39,7 @@ class LoansExport implements FromCollection, ShouldAutoSize, WithHeadings
             $returns = $details->flatMap(fn ($detail) => $detail->pengembalianDetail);
             $latestReturn = $returns->max('tanggal_kembali_aktual') ?? $loan->pengembalian?->tanggal_kembali_aktual;
             $fine = $returns->sum('denda') ?: ($loan->pengembalian?->denda ?? 0);
+            $hasRecordedReturn = $returns->isNotEmpty() || $loan->pengembalian !== null;
 
             return [
                 $loan->booking_code,
@@ -48,9 +49,9 @@ class LoansExport implements FromCollection, ShouldAutoSize, WithHeadings
                 $details->sum('jumlah'),
                 $loan->tanggal_pinjam?->format('Y-m-d') ?? '-',
                 $loan->tanggal_kembali_rencana?->format('Y-m-d') ?? '-',
-                $loan->status_label ?? '-',
+                $loan->is_overdue ? "Terlambat {$loan->overdue_days} hari" : ($loan->status_label ?? '-'),
                 $latestReturn?->format('Y-m-d H:i') ?? '-',
-                (float) $fine,
+                (float) ($hasRecordedReturn ? $fine : $loan->estimated_fine),
                 $loan->catatan_admin ?? $loan->pengembalian?->catatan ?? '-',
             ];
         });

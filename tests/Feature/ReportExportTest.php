@@ -42,7 +42,7 @@ class ReportExportTest extends TestCase
             'id_user' => $student->id_user,
             'tanggal_pengajuan' => '2026-10-15 10:00:00',
             'tanggal_pinjam' => '2026-10-15',
-            'tanggal_kembali_rencana' => '2026-10-17',
+            'tanggal_kembali_rencana' => now()->addDay()->toDateString(),
             'keperluan' => 'Tes unduhan XLSX',
             'status' => 'Approved',
             'catatan_admin' => 'Catatan export',

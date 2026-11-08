@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Peminjaman;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -44,6 +45,9 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password123'), 'role' => 'siswa',
         ]);
 
-        $this->call(OfficialInventorySeeder::class);
+        if (! Peminjaman::where('booking_code', OverdueLoanDemoSeeder::BOOKING_CODE)->exists()) {
+            $this->call(OfficialInventorySeeder::class);
+        }
+        $this->call(OverdueLoanDemoSeeder::class);
     }
 }
