@@ -174,7 +174,7 @@ class AuthenticationTest extends TestCase
             'alat_snapshot_kode' => $equipment['Crimping Tool Set']->kode_alat,
             'alat_snapshot_nama' => 'Crimping Tool Set',
         ]);
-        $this->assertSame(13, Alat::count());
+        $this->assertSame(14, Alat::count());
     }
 
     public function test_login_rejects_a_role_that_does_not_match_the_account(): void

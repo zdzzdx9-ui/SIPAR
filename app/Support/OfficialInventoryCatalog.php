@@ -26,7 +26,8 @@ class OfficialInventoryCatalog
             ['code' => 'PRK-003', 'name' => 'Bor tembok', 'category' => 'Perkakas', 'stock' => 1, 'description' => 'Perkakas listrik untuk membuat lubang pada dinding atau material keras menggunakan mata bor yang sesuai. Gunakan dengan pengawasan dan perlengkapan keselamatan.'],
             ['code' => 'PRK-004', 'name' => 'Bor mini listrik', 'category' => 'Perkakas', 'stock' => 1, 'description' => 'Perkakas bor berukuran ringkas untuk pekerjaan detail dan membuat lubang kecil pada bahan yang sesuai dengan mata bornya.'],
             ['code' => 'MUL-002', 'name' => 'Spiker', 'category' => 'Multimedia', 'stock' => 1, 'description' => 'Perangkat keluaran suara untuk memperdengarkan audio dari komputer atau sumber suara yang kompatibel.'],
-            ['code' => 'MUL-003', 'name' => 'Mic + sound', 'category' => 'Multimedia', 'stock' => 1, 'description' => 'Perangkat mikrofon dan audio untuk menangkap serta memperdengarkan suara dalam presentasi atau kegiatan multimedia; pastikan konektor dan perangkat pendukung sesuai.'],
+            ['code' => 'MUL-003', 'name' => 'Mikrofon', 'category' => 'Multimedia', 'stock' => 1, 'description' => 'Perangkat input audio untuk menangkap suara pembicara dalam presentasi dan kegiatan praktik multimedia.'],
+            ['code' => 'MUL-004', 'name' => 'Sound System', 'category' => 'Multimedia', 'stock' => 1, 'description' => 'Perangkat audio untuk memperkuat dan memperdengarkan suara dari mikrofon atau sumber audio yang kompatibel.'],
         ];
     }
 

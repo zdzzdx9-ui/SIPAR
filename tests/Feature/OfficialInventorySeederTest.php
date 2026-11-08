@@ -55,7 +55,7 @@ class OfficialInventorySeederTest extends TestCase
         $this->seed(OfficialInventorySeeder::class);
 
         $inventory = Alat::with('kategori')->orderBy('kode_alat')->get();
-        $this->assertCount(13, $inventory);
+        $this->assertCount(14, $inventory);
         $this->assertSame(
             collect(OfficialInventoryCatalog::items())
                 ->sortBy('code')
@@ -70,7 +70,17 @@ class OfficialInventorySeederTest extends TestCase
                 $item->deskripsi,
             ])->all()
         );
-        $this->assertSame(13, Alat::count());
+        $this->assertSame(14, Alat::count());
+        $this->assertDatabaseHas('alat', [
+            'kode_alat' => 'MUL-003',
+            'nama_alat' => 'Mikrofon',
+            'stok_total' => 1,
+        ]);
+        $this->assertDatabaseHas('alat', [
+            'kode_alat' => 'MUL-004',
+            'nama_alat' => 'Sound System',
+            'stok_total' => 1,
+        ]);
         $this->assertDatabaseHas('loan_items', [
             'id_detail' => $detail->id_detail,
             'id_alat' => null,
@@ -106,6 +116,103 @@ class OfficialInventorySeederTest extends TestCase
             $equipment->fresh()->deskripsi
         );
         $this->assertSame($availableStock, $equipment->fresh()->stok_tersedia);
+    }
+
+    public function test_split_migration_preserves_legacy_history_as_snapshots_and_creates_two_products(): void
+    {
+        $legacyEquipment = Alat::where('kode_alat', 'MUL-003')->firstOrFail();
+        Alat::where('kode_alat', 'MUL-004')->delete();
+        $legacyEquipment->update([
+            'nama_alat' => 'Mic + sound',
+            'deskripsi' => 'Perangkat mikrofon dan audio lama.',
+        ]);
+
+        $student = User::factory()->create(['role' => 'siswa']);
+        $loan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => today(),
+            'tanggal_kembali_rencana' => today()->addDay(),
+            'keperluan' => 'Riwayat perangkat audio gabungan',
+            'status' => 'Rejected',
+        ]);
+        $detail = $loan->detail()->create([
+            'id_alat' => $legacyEquipment->id_alat,
+            'jumlah' => 1,
+        ]);
+        $unit = ItemUnit::create([
+            'alat_id' => $legacyEquipment->id_alat,
+            'asset_id' => 'LEGACY-AUDIO-01',
+            'qr_code' => 'legacy-audio-qr',
+            'condition' => 'Baik',
+            'status' => 'Tersedia',
+        ]);
+        $detail->itemUnits()->attach($unit->item_unit_id);
+
+        $migration = require database_path('migrations/2026_11_08_000001_split_microphone_sound_inventory.php');
+        $migration->up();
+
+        $this->assertSame(14, Alat::count());
+        $this->assertDatabaseHas('alat', [
+            'kode_alat' => 'MUL-003',
+            'nama_alat' => 'Mikrofon',
+            'stok_total' => 1,
+            'stok_tersedia' => 1,
+        ]);
+        $this->assertDatabaseHas('alat', [
+            'kode_alat' => 'MUL-004',
+            'nama_alat' => 'Sound System',
+            'stok_total' => 1,
+            'stok_tersedia' => 1,
+        ]);
+        $this->assertDatabaseHas('loan_items', [
+            'id_detail' => $detail->id_detail,
+            'id_alat' => null,
+            'alat_snapshot_kode' => 'MUL-003',
+            'alat_snapshot_nama' => 'Mic + sound',
+            'alat_snapshot_kategori' => 'Multimedia',
+        ]);
+        $this->assertDatabaseHas('item_units', [
+            'item_unit_id' => $unit->item_unit_id,
+            'alat_id' => null,
+            'alat_snapshot_kode' => 'MUL-003',
+            'alat_snapshot_nama' => 'Mic + sound',
+        ]);
+        $this->assertDatabaseHas('detail_peminjaman_item_unit', [
+            'id_detail' => $detail->id_detail,
+            'item_unit_id' => $unit->item_unit_id,
+        ]);
+        $this->assertSame('Mic + sound', $detail->fresh()->nama_alat);
+    }
+
+    public function test_split_migration_stops_if_legacy_audio_product_has_an_active_loan(): void
+    {
+        $legacyEquipment = Alat::where('kode_alat', 'MUL-003')->firstOrFail();
+        Alat::where('kode_alat', 'MUL-004')->delete();
+        $legacyEquipment->update(['nama_alat' => 'Mic + sound']);
+        $student = User::factory()->create(['role' => 'siswa']);
+        $loan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => today(),
+            'tanggal_kembali_rencana' => today()->addDay(),
+            'keperluan' => 'Transaksi aktif perangkat audio',
+            'status' => 'Approved',
+        ]);
+        $detail = $loan->detail()->create([
+            'id_alat' => $legacyEquipment->id_alat,
+            'jumlah' => 1,
+        ]);
+
+        $migration = require database_path('migrations/2026_11_08_000001_split_microphone_sound_inventory.php');
+        try {
+            $migration->up();
+            $this->fail('Migrasi seharusnya berhenti saat ada peminjaman aktif alat lama.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('transaksi Pending atau Approved', $exception->getMessage());
+        }
+
+        $this->assertSame('Mic + sound', $legacyEquipment->fresh()->nama_alat);
+        $this->assertSame($legacyEquipment->id_alat, $detail->fresh()->id_alat);
+        $this->assertDatabaseMissing('alat', ['kode_alat' => 'MUL-004']);
     }
 
     public function test_seeder_aborts_without_changing_inventory_when_an_active_loan_exists(): void
