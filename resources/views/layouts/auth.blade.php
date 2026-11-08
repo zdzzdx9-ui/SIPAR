@@ -129,6 +129,7 @@
 <body>
     @yield('content')
     <footer class="auth-global-footer"><span><strong>SIPAR</strong> · Sistem Informasi Peminjaman Alat RPL</span><span class="d-block">SMK Negeri 5 Surakarta · © {{ now()->year }}</span></footer>
+    @include('components.mobile-scroll-indicator')
     <script>
         document.querySelectorAll('[data-password-toggle]').forEach(toggle => {
             toggle.addEventListener('click', () => {
