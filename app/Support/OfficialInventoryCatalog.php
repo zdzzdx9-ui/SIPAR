@@ -14,19 +14,19 @@ class OfficialInventoryCatalog
     public static function items(): array
     {
         return [
-            ['code' => 'KOM-001', 'name' => 'Laptop Hp', 'category' => 'Komputer', 'stock' => 3, 'description' => 'Laptop untuk pemrograman, pengolahan dokumen, dan kegiatan praktik komputer.'],
-            ['code' => 'SIM-001', 'name' => 'Flashdisk', 'category' => 'Penyimpanan', 'stock' => 10, 'description' => 'Media penyimpanan portabel untuk menyimpan dan memindahkan berkas.'],
-            ['code' => 'KOM-002', 'name' => 'Mouse', 'category' => 'Komputer', 'stock' => 20, 'description' => 'Perangkat input untuk menggerakkan kursor dan mengoperasikan komputer.'],
-            ['code' => 'KOM-003', 'name' => 'Keyboard', 'category' => 'Komputer', 'stock' => 10, 'description' => 'Perangkat input untuk mengetik dan memberi perintah pada komputer.'],
-            ['code' => 'MUL-001', 'name' => 'Proyektor', 'category' => 'Multimedia', 'stock' => 3, 'description' => 'Menampilkan materi atau presentasi dari komputer ke layar yang lebih besar.'],
-            ['code' => 'KOM-004', 'name' => 'Monitor', 'category' => 'Komputer', 'stock' => 3, 'description' => 'Layar untuk menampilkan keluaran visual dari komputer.'],
-            ['code' => 'PRK-001', 'name' => 'Obeng mini', 'category' => 'Perkakas', 'stock' => 1, 'description' => 'Set obeng berukuran kecil untuk pekerjaan perakitan dan perbaikan perangkat.'],
-            ['code' => 'MIK-001', 'name' => 'Arduino uno', 'category' => 'Mikrokontroler', 'stock' => 30, 'description' => 'Papan mikrokontroler untuk praktik rangkaian dan pemrograman elektronika dasar.'],
-            ['code' => 'PRK-002', 'name' => 'Solder', 'category' => 'Perkakas', 'stock' => 1, 'description' => 'Perkakas pemanas untuk menyambungkan komponen elektronik dengan timah solder.'],
-            ['code' => 'PRK-003', 'name' => 'Bor tembok', 'category' => 'Perkakas', 'stock' => 1, 'description' => 'Perkakas listrik untuk membuat lubang pada dinding atau material keras.'],
-            ['code' => 'PRK-004', 'name' => 'Bor mini listrik', 'category' => 'Perkakas', 'stock' => 1, 'description' => 'Bor berukuran ringkas untuk pekerjaan detail pada kegiatan praktik.'],
-            ['code' => 'MUL-002', 'name' => 'Spiker', 'category' => 'Multimedia', 'stock' => 1, 'description' => 'Perangkat keluaran audio untuk memutar suara dari komputer atau perangkat lain.'],
-            ['code' => 'MUL-003', 'name' => 'Mic + sound', 'category' => 'Multimedia', 'stock' => 1, 'description' => 'Perangkat mikrofon dan audio untuk presentasi atau kegiatan multimedia.'],
+            ['code' => 'KOM-001', 'name' => 'Laptop Hp', 'category' => 'Komputer', 'stock' => 3, 'description' => 'Komputer portabel untuk praktik pemrograman, pengembangan perangkat lunak, pengolahan dokumen, dan presentasi.'],
+            ['code' => 'SIM-001', 'name' => 'Flashdisk', 'category' => 'Penyimpanan', 'stock' => 10, 'description' => 'Media penyimpanan USB portabel untuk menyimpan, mencadangkan, dan memindahkan berkas pembelajaran atau proyek.'],
+            ['code' => 'KOM-002', 'name' => 'Mouse', 'category' => 'Komputer', 'stock' => 20, 'description' => 'Perangkat penunjuk untuk menggerakkan kursor, memilih objek, dan menjalankan perintah pada komputer.'],
+            ['code' => 'KOM-003', 'name' => 'Keyboard', 'category' => 'Komputer', 'stock' => 10, 'description' => 'Perangkat input untuk mengetik kode program, teks, dan perintah saat menggunakan komputer.'],
+            ['code' => 'MUL-001', 'name' => 'Proyektor', 'category' => 'Multimedia', 'stock' => 3, 'description' => 'Perangkat presentasi untuk menampilkan keluaran visual dari komputer pada layar atau permukaan yang lebih luas.'],
+            ['code' => 'KOM-004', 'name' => 'Monitor', 'category' => 'Komputer', 'stock' => 3, 'description' => 'Layar keluaran visual untuk menampilkan antarmuka, materi, dan hasil kerja komputer.'],
+            ['code' => 'PRK-001', 'name' => 'Obeng mini', 'category' => 'Perkakas', 'stock' => 1, 'description' => 'Set obeng berukuran kecil untuk membuka dan memasang sekrup pada perangkat atau komponen berukuran kecil.'],
+            ['code' => 'MIK-001', 'name' => 'Arduino uno', 'category' => 'Mikrokontroler', 'stock' => 30, 'description' => 'Papan mikrokontroler untuk latihan pemrograman dasar, membaca input sensor, dan mengendalikan komponen pada rangkaian elektronika.'],
+            ['code' => 'PRK-002', 'name' => 'Solder', 'category' => 'Perkakas', 'stock' => 1, 'description' => 'Alat pemanas untuk melelehkan timah dan menyambungkan komponen elektronik pada papan rangkaian. Gunakan dengan pengawasan dan perlengkapan keselamatan.'],
+            ['code' => 'PRK-003', 'name' => 'Bor tembok', 'category' => 'Perkakas', 'stock' => 1, 'description' => 'Perkakas listrik untuk membuat lubang pada dinding atau material keras menggunakan mata bor yang sesuai. Gunakan dengan pengawasan dan perlengkapan keselamatan.'],
+            ['code' => 'PRK-004', 'name' => 'Bor mini listrik', 'category' => 'Perkakas', 'stock' => 1, 'description' => 'Perkakas bor berukuran ringkas untuk pekerjaan detail dan membuat lubang kecil pada bahan yang sesuai dengan mata bornya.'],
+            ['code' => 'MUL-002', 'name' => 'Spiker', 'category' => 'Multimedia', 'stock' => 1, 'description' => 'Perangkat keluaran suara untuk memperdengarkan audio dari komputer atau sumber suara yang kompatibel.'],
+            ['code' => 'MUL-003', 'name' => 'Mic + sound', 'category' => 'Multimedia', 'stock' => 1, 'description' => 'Perangkat mikrofon dan audio untuk menangkap serta memperdengarkan suara dalam presentasi atau kegiatan multimedia; pastikan konektor dan perangkat pendukung sesuai.'],
         ];
     }
 

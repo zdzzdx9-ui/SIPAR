@@ -59,7 +59,7 @@ class OfficialInventorySeederTest extends TestCase
         $this->assertSame(
             collect(OfficialInventoryCatalog::items())
                 ->sortBy('code')
-                ->map(fn (array $item): array => [$item['code'], $item['name'], $item['stock'], $item['stock']])
+                ->map(fn (array $item): array => [$item['code'], $item['name'], $item['stock'], $item['stock'], $item['description']])
                 ->values()
                 ->all(),
             $inventory->map(fn (Alat $item): array => [
@@ -67,6 +67,7 @@ class OfficialInventorySeederTest extends TestCase
                 $item->nama_alat,
                 $item->stok_total,
                 $item->stok_tersedia,
+                $item->deskripsi,
             ])->all()
         );
         $this->assertSame(13, Alat::count());
@@ -89,6 +90,22 @@ class OfficialInventorySeederTest extends TestCase
         $this->actingAs($admin)->get(route('admin.reports'))
             ->assertOk()
             ->assertSee('Kamera Fiktif');
+    }
+
+    public function test_description_migration_updates_only_official_inventory_descriptions(): void
+    {
+        $equipment = Alat::where('kode_alat', 'KOM-001')->firstOrFail();
+        $availableStock = $equipment->stok_tersedia;
+        $equipment->update(['deskripsi' => 'Deskripsi lama']);
+
+        $migration = require database_path('migrations/2026_11_08_000000_update_official_inventory_descriptions.php');
+        $migration->up();
+
+        $this->assertSame(
+            collect(OfficialInventoryCatalog::items())->firstWhere('code', 'KOM-001')['description'],
+            $equipment->fresh()->deskripsi
+        );
+        $this->assertSame($availableStock, $equipment->fresh()->stok_tersedia);
     }
 
     public function test_seeder_aborts_without_changing_inventory_when_an_active_loan_exists(): void
