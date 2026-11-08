@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Alat;
 use App\Models\KategoriAlat;
 use App\Models\Peminjaman;
+use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -48,6 +48,10 @@ class AuthenticationTest extends TestCase
             ->assertSee('login-options d-flex justify-content-between align-items-center', false)
             ->assertSee('text-muted whitespace-nowrap', false)
             ->assertSee('Daftar sebagai siswa')
+            ->assertSee('SMK Negeri 5 Surakarta')
+            ->assertSee('Rekayasa Perangkat Lunak')
+            ->assertSee('auth-global-footer', false)
+            ->assertSee('Sistem Informasi Peminjaman Alat RPL')
             ->assertSee('data-password-toggle', false)
             ->assertDontSee('Akun demo tersedia setelah menjalankan seeder.');
     }
@@ -62,6 +66,7 @@ class AuthenticationTest extends TestCase
             ->assertSee('aria-pressed="false"', false)
             ->assertSee('bi-eye', false)
             ->assertSee('name="nis_nip"', false)
+            ->assertSee('auth-global-footer', false)
             ->assertSee('name="nis_nip" value="" autocomplete="username"', false)
             ->assertSee('name="email" type="email" value="" autocomplete="email"', false)
             ->assertSee('name="password" type="password" required minlength="8" autocomplete="new-password"', false)

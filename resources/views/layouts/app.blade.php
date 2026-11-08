@@ -66,6 +66,14 @@
         .search-suggestion-title{display:block;font-size:12px;font-weight:700}
         .search-suggestion-subtitle{display:block;color:var(--muted);font-size:10px}
         .search-suggestion-empty{padding:12px;color:var(--muted);font-size:12px;text-align:center}
+        .search-field-icon{position:absolute;top:50%;left:15px;z-index:1;transform:translateY(-50%);color:#82919e;font-size:15px;pointer-events:none}
+        .topbar-search .form-control{min-height:42px;padding-left:40px;padding-right:52px;border-radius:9px;background:#f7f9fb;font-size:13px}
+        .topbar-search button{top:3px;right:3px;width:36px;height:36px;border-radius:7px}
+        .workspace{display:flex;flex-direction:column}
+        .content{width:100%;flex:1 0 auto}
+        .app-footer{width:100%;max-width:1600px;margin:auto auto 0;padding:14px 30px 18px;color:#7a8995;font-size:11px;line-height:1.5}
+        .app-footer-inner{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--line);padding-top:12px}
+        .app-footer strong{color:#40596a;font-weight:700}
         .topbar-avatar{display:grid;width:34px;height:34px;flex:none;place-items:center;border-radius:50%;background:#e8f2ff;color:#0868ce}
         .topbar-avatar .bi{font-size:17px;line-height:1}
         .approval-card-header{flex-wrap:wrap}
@@ -92,6 +100,15 @@
         .mobile-drawer .brand{padding:0 8px 8px}
         .mobile-drawer .nav-caption{padding-top:13px}
         .mobile-drawer .side-user{margin-top:auto}
+        @media(max-width:991.98px){.app-footer{padding:12px 16px 16px}}
+        @media(max-width:575.98px){
+            .topbar-search input{height:42px;padding-left:36px;padding-right:44px;font-size:12px}
+            .topbar-search>.search-field-icon{left:11px;font-size:14px}
+            .topbar-search button{top:3px;right:3px;width:36px;height:36px}
+            .app-footer{padding:10px 12px 14px;font-size:10px}
+            .app-footer-inner{flex-direction:column;align-items:flex-start;gap:3px}
+        }
+        @media print{.app-footer{display:none!important}}
         @media(max-width:991.98px){
             .sidebar{display:none}
             .workspace{margin-left:0}
@@ -184,6 +201,7 @@
         <header class="topbar">
             <button class="mobile-nav-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNavigation" aria-controls="mobileNavigation" aria-label="Buka navigasi"><i class="bi bi-list"></i></button>
             <form class="topbar-search responsive-search" method="get" action="{{ request()->routeIs('catalog') ? route('catalog') : route('search') }}" role="search" autocomplete="off">
+                <i class="bi bi-search search-field-icon" aria-hidden="true"></i>
                 <input class="form-control form-control-sm" type="search" name="q" value="{{ request('q') }}" placeholder="{{ request()->routeIs('catalog') ? 'Cari nama atau kode alat...' : 'Cari alat, transaksi, atau siswa...' }}" aria-label="Cari">
                 <button class="btn btn-primary" type="submit" aria-label="Cari"><i class="bi bi-search"></i></button>
                 <div class="search-suggestions" id="search-suggestions" role="listbox" aria-label="Saran pencarian"></div>
@@ -195,6 +213,9 @@
             @if($errors->any())<div class="alert alert-danger alert-dismissible fade show" role="alert"><ul class="mb-0 ps-3">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button></div>@endif
             @yield('content')
         </div>
+        <footer class="app-footer">
+            <div class="app-footer-inner"><span><strong>SIPAR</strong> · Sistem Informasi Peminjaman Alat RPL</span><span>SMK Negeri 5 Surakarta · © {{ now()->year }}</span></div>
+        </footer>
     </main>
 </div>
 @else

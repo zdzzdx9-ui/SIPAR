@@ -4,11 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Alat;
 use App\Models\DetailPeminjaman;
-use App\Models\Peminjaman;
 use App\Models\ItemUnit;
+use App\Models\Peminjaman;
 use App\Models\User;
 use Illuminate\Database\QueryException;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +21,7 @@ class LoanController extends Controller
         $equipment = Alat::with('kategori')->when($request->string('q')->trim()->isNotEmpty(), function ($query) use ($request) {
             $term = '%'.$request->string('q')->trim().'%';
             $query->where(fn ($builder) => $builder->where('nama_alat', 'like', $term)->orWhere('kode_alat', 'like', $term));
-        })->orderBy('nama_alat')->paginate(12)->withQueryString();
+        })->orderBy('nama_alat')->get();
 
         $activeEquipmentStatuses = DetailPeminjaman::with('peminjaman:id_peminjaman,status')
             ->whereHas('peminjaman', fn ($query) => $query
@@ -161,7 +160,7 @@ class LoanController extends Controller
     public function approve(Request $request, Peminjaman $peminjaman): RedirectResponse
     {
         try {
-            DB::transaction(function () use ($request, $peminjaman) {
+            DB::transaction(function () use ($peminjaman) {
                 $loan = Peminjaman::whereKey($peminjaman->id_peminjaman)->lockForUpdate()->firstOrFail();
                 if ($loan->status !== 'Pending') {
                     throw ValidationException::withMessages(['status' => 'Pengajuan ini sudah diproses.']);
@@ -236,5 +235,4 @@ class LoanController extends Controller
 
         return back()->with('success', 'Pengajuan ditolak dan catatan tersimpan.');
     }
-
 }

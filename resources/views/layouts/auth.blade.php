@@ -13,19 +13,21 @@
     </style>
     <style>
         :root{--auth-ink:#132c3a;--auth-muted:#667987;--auth-line:#dce5eb;--auth-blue:#0877d8;--auth-blue-dark:#075da8;--auth-surface:#f3f6f7}
-        body{background:#eaf0f2;color:var(--auth-ink);padding:24px}
-        .auth-frame{width:min(100%,1280px);min-height:min(820px,calc(100svh - 48px));grid-template-columns:minmax(0,1.05fr) minmax(480px,.95fr);max-width:1280px;margin:auto;border:1px solid #dce5e9;border-radius:14px;box-shadow:0 24px 64px rgba(19,44,58,.12)}
+        body{min-height:100svh;display:flex;flex-direction:column;align-items:center;background:#eaf0f2;color:var(--auth-ink);padding:24px}
+        .auth-frame{flex:1;width:min(100%,1280px);min-height:min(820px,calc(100svh - 104px));grid-template-columns:minmax(0,1.05fr) minmax(480px,.95fr);max-width:1280px;margin:auto;border:1px solid #dce5e9;border-radius:14px;box-shadow:0 24px 64px rgba(19,44,58,.12)}
         .auth-aside{isolation:isolate;background-color:#122b3a;background-image:url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1800&q=85');background-position:center;background-size:cover;padding:clamp(32px,5vw,72px)}
         .auth-aside::before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(120deg,rgba(9,44,57,.48) 0%,rgba(11,70,81,.32) 52%,rgba(7,36,56,.45) 100%)}
         .auth-aside::after{content:none}
-        .auth-aside>.brand,.auth-aside>.aside-copy,.auth-aside>.aside-foot{position:relative;z-index:1}
-        .auth-aside .auth-brand-hero{display:flex;flex-direction:column;align-items:center;gap:14px;padding:0;color:#fff;font-size:clamp(34px,4vw,48px);line-height:1}
-        .auth-aside .auth-brand-hero .brand-logo{width:clamp(92px,11vw,132px);height:clamp(92px,11vw,132px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.2))}
+        .auth-aside>.brand,.auth-aside>.auth-school,.auth-aside>.aside-copy,.auth-aside>.aside-foot{position:relative;z-index:1}
+        .auth-aside .auth-brand-hero{display:flex;flex-direction:column;align-items:center;gap:12px;padding:0;color:#fff;font-size:clamp(34px,4vw,46px);line-height:1;letter-spacing:.015em}
+        .auth-aside .auth-brand-hero .brand-logo{width:clamp(76px,9vw,108px);height:clamp(76px,9vw,108px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.2))}
+        .auth-school{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:-30px;text-align:center}
+        .auth-school strong{font:700 clamp(14px,1.5vw,17px)/1.35 Manrope,sans-serif;color:#fff;text-shadow:0 1px 8px rgba(4,20,29,.65)}
+        .auth-school span{font-size:12px;font-weight:600;letter-spacing:.045em;text-transform:uppercase;color:#e3edf2;text-shadow:0 1px 8px rgba(4,20,29,.65)}
         .auth-aside .auth-tagline{max-width:560px;text-align:center}
-        .auth-aside .auth-tagline small{font-size:11px}
-        .auth-aside .auth-tagline p{max-width:540px;margin:14px auto 0;font-size:clamp(16px,1.7vw,20px);font-weight:600;line-height:1.55}
+        .auth-aside .auth-tagline p{max-width:490px;margin:0 auto;font-size:clamp(15px,1.55vw,19px);font-weight:500;line-height:1.6}
         .auth-aside .aside-foot{position:absolute;right:clamp(32px,5vw,72px);bottom:clamp(24px,4vw,48px);left:clamp(32px,5vw,72px);text-align:center}
-        .auth-aside-login{justify-content:center;align-items:center;gap:clamp(38px,8vh,92px)}
+        .auth-aside-login{justify-content:center;align-items:center;gap:clamp(30px,5vh,58px)}
         .brand{gap:12px;padding-bottom:0;font-size:16px}
         .auth-aside .brand small{font:500 10px/1.35 'DM Sans',sans-serif;color:#fff;text-shadow:0 1px 8px rgba(4,20,29,.6)}
         .brand-logo{width:44px;height:44px}
@@ -69,6 +71,9 @@
         .help-note a{color:var(--auth-blue-dark);font-weight:700;text-decoration:none}
         .help-note a:hover{text-decoration:underline}
         .auth-form .alert{border-radius:7px;font-size:12px}
+        .auth-global-footer{width:min(100%,1280px);padding:13px 10px 0;color:#70818d;text-align:center;font-size:11px;line-height:1.5}
+        .auth-global-footer strong{color:#3f5867;font-weight:700}
+        .auth-global-footer .bi{margin-right:5px;color:var(--auth-blue-dark)}
         @keyframes auth-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
         @media(max-width:991.98px){
             .auth-frame{grid-template-columns:minmax(0,1fr) minmax(430px,.95fr)}
@@ -78,21 +83,21 @@
             .auth-form{padding:30px}
         }
         @media(max-width:767.98px){
-            body{display:block;min-height:100svh;padding:12px;background:#eaf0f2}
-            .auth-frame{width:100%;min-height:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto;margin:0 auto;border-radius:12px;box-shadow:0 12px 32px rgba(19,44,58,.1)}
+            body{display:flex;min-height:100svh;padding:12px;background:#eaf0f2}
+            .auth-frame{flex:none;width:100%;min-height:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto;margin:0 auto;border-radius:12px;box-shadow:0 12px 32px rgba(19,44,58,.1)}
             .auth-aside{min-height:240px;padding:20px 22px 24px;border-radius:11px 11px 0 0}
-            .auth-aside-login{min-height:370px;padding:30px 22px 58px;gap:22px}
-            .auth-aside .auth-brand-hero{gap:9px;font-size:36px}
-            .auth-aside .auth-brand-hero .brand-logo{width:88px;height:88px}
-            .auth-aside .auth-tagline p{margin-top:10px;font-size:14px}
-            .auth-aside .auth-tagline small{font-size:9px}
-            .auth-aside .auth-brand-hero+.auth-tagline{margin:0}
-            .auth-aside .aside-foot{display:block;right:22px;bottom:15px;left:22px;padding-top:10px;font-size:9px}
-            .auth-aside .aside-copy{margin-top:29px}
+            .auth-aside-login{min-height:320px;padding:24px 22px 42px;gap:15px}
+            .auth-aside .auth-brand-hero{gap:8px;font-size:34px}
+            .auth-aside .auth-brand-hero .brand-logo{width:76px;height:76px}
+            .auth-school{gap:2px;margin-top:-8px}
+            .auth-school strong{font-size:14px}
+            .auth-school span{font-size:10px}
+            .auth-aside .auth-tagline p{max-width:440px;font-size:13px;line-height:1.5}
+            .auth-aside .aside-foot{display:none}
+            .auth-aside .aside-copy{margin-top:0}
             .aside-copy small{font-size:10px}
             .aside-copy h1{max-width:520px;font-size:23px;margin:8px 0}
             .aside-copy p{display:block;max-width:520px;font-size:13px;font-weight:600;line-height:1.5;margin:0}
-            .aside-foot{display:none}
             .auth-main{position:relative;z-index:2;display:block;margin-top:-18px;padding:0 16px 20px;background:transparent}
             .auth-form{width:100%;max-width:440px;margin:0 auto;padding:24px;background:#fff;border:1px solid #e0e7eb;border-radius:10px;box-shadow:0 10px 26px rgba(19,44,58,.1);animation:none}
             .auth-form h2{font-size:22px}
@@ -100,21 +105,20 @@
             .role-switch button{font-size:12px}
             .login-options{align-items:center;gap:8px;margin-bottom:20px!important}
             .login-options #login-support{font-size:11px;text-align:right}
+            .auth-global-footer{padding:2px 6px 6px;font-size:10px}
         }
         @media(max-width:380px){
             .auth-aside{min-height:226px;padding-right:18px;padding-left:18px}
-            .auth-aside-login{min-height:350px;padding-right:18px;padding-left:18px}
-            .auth-aside .auth-brand-hero .brand-logo{width:78px;height:78px}
-            .auth-aside .auth-tagline p{font-size:13px}
+            .auth-aside-login{min-height:300px;padding-right:18px;padding-left:18px}
+            .auth-aside .auth-brand-hero .brand-logo{width:68px;height:68px}
+            .auth-aside .auth-tagline p{font-size:12px}
             .auth-main{padding-right:12px;padding-left:12px}
             .auth-form{padding:20px}
             .role-switch button{padding-right:6px;padding-left:6px;font-size:11px}
             .login-options #login-support{font-size:10px}
         }
         @media(max-width:767.98px) and (max-height:640px){
-            .auth-aside{min-height:205px;padding-top:16px;padding-bottom:18px}
-            .auth-aside .aside-copy{margin-top:20px}
-            .aside-copy h1{font-size:21px}
+            .auth-aside{min-height:275px;padding-top:16px;padding-bottom:18px}
             .auth-main{padding-top:18px}
             .auth-form>p{margin-bottom:15px}
             .role-switch{margin-bottom:16px}
@@ -124,6 +128,7 @@
 </head>
 <body>
     @yield('content')
+    <footer class="auth-global-footer"><span><strong>SIPAR</strong> · Sistem Informasi Peminjaman Alat RPL</span><span class="d-block">SMK Negeri 5 Surakarta · © {{ now()->year }}</span></footer>
     <script>
         document.querySelectorAll('[data-password-toggle]').forEach(toggle => {
             toggle.addEventListener('click', () => {

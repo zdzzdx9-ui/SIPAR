@@ -3,11 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\Alat;
+use App\Models\DetailPenyerahan;
 use App\Models\KategoriAlat;
 use App\Models\Peminjaman;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -28,6 +29,9 @@ class PageAccessTest extends TestCase
         $this->get(route('dashboard'))
             ->assertOk()
             ->assertSee('action="'.route('search').'"', false)
+            ->assertSee('search-field-icon', false)
+            ->assertSee('app-footer', false)
+            ->assertSee('SMK Negeri 5 Surakarta')
             ->assertSee('data-bs-target="#mobileNavigation"', false)
             ->assertSee('id="mobileNavigation"', false)
             ->assertSee(route('admin.categories'), false)
@@ -83,6 +87,7 @@ class PageAccessTest extends TestCase
             ->assertSee('data-password-toggle', false);
         $this->get(route('catalog'))
             ->assertSee('class="surface p-2 mb-3 responsive-search"', false)
+            ->assertSee('search-field-icon', false)
             ->assertSee('Alat pengujian kabel jaringan.')
             ->assertSee('card-katalog', false)
             ->assertSee('class="btn btn-primary btn-sm add-to-cart"', false)
@@ -99,7 +104,36 @@ class PageAccessTest extends TestCase
             ->assertSee('Lanjutkan pengajuan')
             ->assertSee('name="tanggal_kembali_rencana"', false)
             ->assertSee('Keranjang peminjaman')
-            ->assertSee('Ajukan seluruh keranjang');
+            ->assertSee('Ajukan seluruh keranjang')
+            ->assertDontSee('Sebelumnya')
+            ->assertDontSee('Berikutnya')
+            ->assertSee('app-footer', false);
+    }
+
+    public function test_student_catalog_displays_all_equipment_without_pagination(): void
+    {
+        $student = User::factory()->create(['role' => 'siswa']);
+        $category = KategoriAlat::create(['nama_kategori' => 'Katalog Satu Halaman']);
+        foreach (range(1, 13) as $number) {
+            Alat::create([
+                'kode_alat' => sprintf('SINGLE-%02d', $number),
+                'nama_alat' => sprintf('Alat Halaman Sama %02d', $number),
+                'id_kategori' => $category->id_kategori,
+                'stok_total' => 1,
+                'stok_tersedia' => 1,
+                'kondisi' => 'Baik',
+                'qr_code' => sprintf('single-page-%02d', $number),
+                'status_alat' => 'Tersedia',
+            ]);
+        }
+
+        $response = $this->actingAs($student)->get(route('catalog'))->assertOk();
+        foreach (range(1, 13) as $number) {
+            $response->assertSee(sprintf('Alat Halaman Sama %02d', $number));
+        }
+        $response->assertDontSee('Sebelumnya')
+            ->assertDontSee('Berikutnya')
+            ->assertDontSee('page=2');
     }
 
     public function test_student_with_loan_history_cannot_be_deleted(): void
@@ -222,7 +256,7 @@ class PageAccessTest extends TestCase
             ->assertSee('text-bg-warning', false)
             ->assertSee('>1</span>', false);
 
-        \App\Models\DetailPenyerahan::create([
+        DetailPenyerahan::create([
             'id_detail' => $detail->id_detail,
             'id_teknisi' => $technician->id_user,
             'jumlah' => 1,
@@ -301,5 +335,4 @@ class PageAccessTest extends TestCase
 
         $this->assertSame($statuses, Peminjaman::orderBy('id_peminjaman')->pluck('status')->all());
     }
-
 }
