@@ -26,7 +26,7 @@
             }
 
             const trackHeight = indicator.clientHeight;
-            const thumbHeight = Math.max(28, trackHeight * window.innerHeight / document.documentElement.scrollHeight);
+            const thumbHeight = Math.min(64, Math.max(36, trackHeight * window.innerHeight / document.documentElement.scrollHeight));
             const availableTravel = trackHeight - thumbHeight;
             const progress = Math.min(1, Math.max(0, window.scrollY / scrollableHeight));
 
