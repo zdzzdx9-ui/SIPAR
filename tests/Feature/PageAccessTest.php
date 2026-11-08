@@ -57,7 +57,8 @@ class PageAccessTest extends TestCase
         $this->get(route('profile'))
             ->assertSee('id="current-password"', false)
             ->assertSee('id="new-password-confirmation"', false)
-            ->assertSee('data-password-toggle', false);
+            ->assertSee('data-password-toggle', false)
+            ->assertDontSee('class="topbar-search', false);
         $this->get('/admin/pengembalian/verifikasi')->assertNotFound();
         $this->get('/admin/pengembalian')->assertNotFound();
         $this->get('/admin/pengembalian/cari')->assertNotFound();
@@ -89,9 +90,11 @@ class PageAccessTest extends TestCase
             ->assertSee('id="current-password"', false)
             ->assertSee('id="new-password"', false)
             ->assertSee('id="new-password-confirmation"', false)
-            ->assertSee('data-password-toggle', false);
+            ->assertSee('data-password-toggle', false)
+            ->assertDontSee('class="topbar-search', false);
         $this->get(route('catalog'))
-            ->assertSee('class="surface p-2 mb-3 responsive-search"', false)
+            ->assertSee('<form class="topbar-search responsive-search"', false)
+            ->assertDontSee('id="catalog-search"', false)
             ->assertSee('bi-search', false)
             ->assertDontSee('search-field-icon', false)
             ->assertSee('Alat pengujian kabel jaringan.')
@@ -184,6 +187,8 @@ class PageAccessTest extends TestCase
             ->assertOk()
             ->assertSee('<th scope="col">Catatan</th>', false)
             ->assertSee('<th scope="col" class="text-center">Aksi</th>', false)
+            ->assertSee('class="loan-equipment-image rounded-3 bg-light"', false)
+            ->assertSee('object-fit:contain', false)
             ->assertSee('<td class="align-middle">—</td>', false)
             ->assertSee('action="'.route('loans.cancel', $loan).'"', false)
             ->assertSee('<i class="bi bi-x-circle me-1"></i>Batal', false);
@@ -276,6 +281,9 @@ class PageAccessTest extends TestCase
             ->assertOk()
             ->assertSee('Pengembalian Alat')
             ->assertSee('>1</span>', false);
+        $this->get(route('profile'))
+            ->assertOk()
+            ->assertDontSee('class="topbar-search', false);
     }
 
     public function test_profile_identity_is_locked_and_password_can_be_changed(): void

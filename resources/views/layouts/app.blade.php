@@ -196,11 +196,13 @@
     <div class="workspace d-flex flex-column flex-grow-1 min-w-0">
         <header class="topbar">
             <button class="mobile-nav-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNavigation" aria-controls="mobileNavigation" aria-label="Buka navigasi"><i class="bi bi-list"></i></button>
-            <form class="topbar-search responsive-search" method="get" action="{{ request()->routeIs('catalog') ? route('catalog') : route('search') }}" role="search" autocomplete="off">
-                <input class="form-control form-control-sm" type="search" name="q" value="{{ request('q') }}" placeholder="{{ request()->routeIs('catalog') ? 'Cari nama atau kode alat...' : 'Cari alat, transaksi, atau siswa...' }}" aria-label="Cari">
-                <button class="btn btn-primary" type="submit" aria-label="Cari"><i class="bi bi-search" aria-hidden="true"></i></button>
-                <div class="search-suggestions" id="search-suggestions" role="listbox" aria-label="Saran pencarian"></div>
-            </form>
+            @unless(request()->is('profil*'))
+                <form class="topbar-search responsive-search" method="get" action="{{ request()->routeIs('catalog') ? route('catalog') : route('search') }}" role="search" autocomplete="off">
+                    <input class="form-control form-control-sm" type="search" name="q" value="{{ request('q') }}" placeholder="{{ request()->routeIs('catalog') ? 'Cari nama atau kode alat...' : 'Cari alat, transaksi, atau siswa...' }}" aria-label="Cari">
+                    <button class="btn btn-primary" type="submit" aria-label="Cari"><i class="bi bi-search" aria-hidden="true"></i></button>
+                    <div class="search-suggestions" id="search-suggestions" role="listbox" aria-label="Saran pencarian"></div>
+                </form>
+            @endunless
             <div class="topbar-meta"><i class="bi bi-calendar3"></i><span>{{ now()->translatedFormat('d M Y') }}</span><a class="topbar-profile" href="{{ route('profile') }}" aria-label="Buka profil saya"><span class="topbar-name">{{ auth()->user()->nama }}</span><span class="topbar-avatar" aria-hidden="true"><i class="bi bi-person-fill"></i></span></a></div>
         </header>
         <main class="content flex-grow-1">

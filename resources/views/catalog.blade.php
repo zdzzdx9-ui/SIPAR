@@ -10,18 +10,13 @@
     .catalog-image-frame>.equipment-photo{display:block;width:100%;height:100%;object-fit:contain;object-position:center;padding:8px}
     .catalog-image-frame>.equipment-photo-placeholder{min-height:100%}
     .catalog-thumb .equipment-photo{object-fit:contain}
-    #catalog-search{position:relative;min-height:54px;padding:7px!important;border-radius:10px}
-    #catalog-search .form-control{min-height:40px;padding-left:10px!important;padding-right:10px;border:0!important;background:transparent;font-size:13px}
-    #catalog-search .form-control:focus{box-shadow:none}
-    #catalog-search .btn{min-width:54px;height:40px;display:grid;place-items:center;border-radius:8px}
     .catalog-cart-dock{position:fixed;z-index:15;right:24px;bottom:20px;display:flex;align-items:center;gap:14px;max-width:calc(100vw - 32px);padding:10px 12px 10px 16px;border:1px solid #dce5ed;border-radius:12px;background:#fff;box-shadow:0 8px 28px #10233426}
     @media(prefers-reduced-motion:reduce){.card-katalog,.card-katalog .overflow-hidden img{transition:none}.card-katalog:hover,.card-katalog:hover .overflow-hidden img{transform:none}}
-    @media(max-width:575.98px){.catalog-cart-dock{right:12px;bottom:12px;left:12px;justify-content:space-between}#catalog-search{min-height:50px}}
+    @media(max-width:575.98px){.catalog-cart-dock{right:12px;bottom:12px;left:12px;justify-content:space-between}}
 </style>
 @endpush
 @section('content')
 <div class="page-head"><div><h1>Katalog Alat</h1><p>Pilih beberapa jenis alat, lalu ajukan semuanya dalam satu transaksi.</p></div></div>
-<form method="get" class="surface p-2 mb-3 responsive-search" id="catalog-search" role="search"><input class="form-control border-0" name="q" value="{{ request('q') }}" placeholder="Cari nama atau kode alat..." aria-label="Cari nama atau kode alat" autocomplete="off"><button class="btn btn-primary" type="submit" aria-label="Cari alat"><i class="bi bi-search" aria-hidden="true"></i></button></form>
 <div id="cart-dock" class="catalog-cart-dock d-none" role="status" aria-live="polite">
     <span><strong id="cart-count">0 jenis alat</strong><small id="cart-summary" class="d-block text-muted">Satu unit untuk setiap jenis alat</small></span>
     <button class="btn btn-primary" id="view-cart" type="button">Lengkapi Form Peminjaman</button>
