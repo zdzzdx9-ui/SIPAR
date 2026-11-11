@@ -2,19 +2,19 @@
 @section('title', 'Dashboard')
 @push('head')
 <style>
-    .stat-icon.stat-icon-blue{color:#0868ce;background:#e8f2ff}
-    .stat-icon.stat-icon-green{color:#168361;background:#e4f5ed}
-    .stat-icon.stat-icon-amber{color:#ad6b05;background:#fff3d9}
-    .stat-icon.stat-icon-red{color:#bd3d4a;background:#ffeaeb}
+    .stat-icon.bg-blue-100.text-blue-600{background-color:#dbeafe;color:#2563eb}
+    .stat-icon.bg-emerald-100.text-emerald-600{background-color:#d1fae5;color:#059669}
+    .stat-icon.bg-amber-100.text-amber-600{background-color:#fef3c7;color:#d97706}
+    .stat-icon.bg-rose-100.text-rose-600{background-color:#ffe4e6;color:#e11d48}
 </style>
 @endpush
 @section('content')
 <div class="page-head"><div><h1>{{ $isAdmin ? 'Dashboard' : ($isTeknisi ? 'Dashboard Teknisi' : 'Beranda') }}</h1><p>{{ $isAdmin ? 'Ringkasan inventaris dan aktivitas peminjaman alat praktik RPL.' : ($isTeknisi ? 'Kelola penyerahan dan penerimaan kembali alat siswa.' : 'Selamat datang, '.auth()->user()->nama.'. Kelola peminjaman alat praktik Anda.') }}</p></div>@if(!$isAdmin && !$isTeknisi)<a class="btn btn-primary" href="{{ route('catalog') }}"><i class="bi bi-plus-lg me-1"></i>Ajukan alat</a>@endif</div>
 <div class="row g-3 mb-4">
-    <div class="col-6 col-xl-3"><div class="surface stat"><span class="stat-icon stat-icon-blue"><i class="bi bi-box-seam"></i></span><div class="stat-label">{{ $isAdmin ? 'Jenis Alat' : ($isTeknisi ? 'Alat Tersedia' : 'Alat Tersedia') }}</div><div class="stat-value">{{ $isAdmin ? $totalAlat : $tersedia }}</div><div class="stat-note">{{ $isAdmin ? 'Terdaftar dalam katalog' : 'Siap diproses' }}</div></div></div>
-    <div class="col-6 col-xl-3"><div class="surface stat"><span class="stat-icon stat-icon-green"><i class="bi bi-arrow-left-right"></i></span><div class="stat-label">{{ $isAdmin ? 'Sedang Dipinjam' : ($isTeknisi ? 'Perlu Diserahkan' : 'Pengajuan Saya') }}</div><div class="stat-value">{{ $isAdmin ? $dipinjam : ($isTeknisi ? $handoverCount : $myLoanCount) }}</div><div class="stat-note">{{ $isAdmin ? 'Transaksi aktif' : ($isTeknisi ? 'Masih ada alat belum diserahkan' : 'Semua transaksi') }}</div></div></div>
-    <div class="col-6 col-xl-3"><div class="surface stat"><span class="stat-icon stat-icon-amber"><i class="bi bi-hourglass-split"></i></span><div class="stat-label">{{ $isTeknisi ? 'Perlu Dikembalikan' : 'Menunggu Persetujuan Peminjaman' }}</div><div class="stat-value">{{ $isTeknisi ? $activeReturnCount : ($isAdmin ? $pending : $myPendingCount) }}</div><div class="stat-note">Perlu tindak lanjut</div></div></div>
-    <div class="col-6 col-xl-3"><div class="surface stat"><span class="stat-icon stat-icon-red"><i class="bi bi-check2-circle"></i></span><div class="stat-label">{{ $isAdmin ? 'Siap Dipinjam' : 'Selesai' }}</div><div class="stat-value">{{ $isAdmin ? $tersedia : $myCompletedCount }}</div><div class="stat-note">{{ $isAdmin ? 'Unit dalam kondisi tersedia' : 'Pengembalian tercatat' }}</div></div></div>
+    <div class="col-6 col-xl-3"><div class="surface stat"><span class="stat-icon bg-blue-100 text-blue-600"><i class="bi bi-box-seam"></i></span><div class="stat-label">{{ $isAdmin ? 'Jenis Alat' : ($isTeknisi ? 'Alat Tersedia' : 'Alat Tersedia') }}</div><div class="stat-value">{{ $isAdmin ? $totalAlat : $tersedia }}</div><div class="stat-note">{{ $isAdmin ? 'Terdaftar dalam katalog' : 'Siap diproses' }}</div></div></div>
+    <div class="col-6 col-xl-3"><div class="surface stat"><span class="stat-icon bg-emerald-100 text-emerald-600"><i class="bi bi-arrow-left-right"></i></span><div class="stat-label">{{ $isAdmin ? 'Sedang Dipinjam' : ($isTeknisi ? 'Perlu Diserahkan' : 'Pengajuan Saya') }}</div><div class="stat-value">{{ $isAdmin ? $dipinjam : ($isTeknisi ? $handoverCount : $myLoanCount) }}</div><div class="stat-note">{{ $isAdmin ? 'Transaksi aktif' : ($isTeknisi ? 'Masih ada alat belum diserahkan' : 'Semua transaksi') }}</div></div></div>
+    <div class="col-6 col-xl-3"><div class="surface stat"><span class="stat-icon bg-amber-100 text-amber-600"><i class="bi bi-hourglass-split"></i></span><div class="stat-label">{{ $isTeknisi ? 'Perlu Dikembalikan' : 'Menunggu Persetujuan Peminjaman' }}</div><div class="stat-value">{{ $isTeknisi ? $activeReturnCount : ($isAdmin ? $pending : $myPendingCount) }}</div><div class="stat-note">Perlu tindak lanjut</div></div></div>
+    <div class="col-6 col-xl-3"><div class="surface stat"><span class="stat-icon bg-rose-100 text-rose-600"><i class="bi bi-check2-circle"></i></span><div class="stat-label">{{ $isAdmin ? 'Siap Dipinjam' : 'Selesai' }}</div><div class="stat-value">{{ $isAdmin ? $tersedia : $myCompletedCount }}</div><div class="stat-note">{{ $isAdmin ? 'Unit dalam kondisi tersedia' : 'Pengembalian tercatat' }}</div></div></div>
 </div>
 <div class="row g-3">
     <div class="col-lg-8"><section class="surface p-3 p-md-4"><div class="d-flex justify-content-between align-items-start mb-3"><div><h2 class="panel-title">{{ $isAdmin ? 'Transaksi Terbaru' : ($isTeknisi ? 'Pekerjaan Operasional' : 'Peminjaman Terbaru') }}</h2><div class="panel-subtitle">{{ $isAdmin ? 'Aktivitas pengajuan alat' : ($isTeknisi ? 'Penyerahan dan penerimaan alat siswa' : 'Pantau perubahan status pengajuan Anda') }}</div></div><a class="small text-decoration-none" href="{{ $isAdmin ? route('admin.approvals') : ($isTeknisi ? route('technician.handovers') : route('loans.mine')) }}">Lihat semua <i class="bi bi-arrow-right"></i></a></div>
