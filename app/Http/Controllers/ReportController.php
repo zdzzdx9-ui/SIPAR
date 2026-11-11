@@ -21,7 +21,7 @@ class ReportController extends Controller
         if ($request->filled('sampai')) {
             $query->whereDate('tanggal_pengajuan', '<=', $request->date('sampai'));
         }
-        if ($request->filled('status') && in_array($request->input('status'), ['Pending', 'Approved', 'Rejected', 'Cancelled', 'Selesai'], true)) {
+        if ($request->filled('status') && in_array($request->input('status'), ['Pending', 'Approved', 'Rejected', 'Cancelled', 'Expired', 'Selesai'], true)) {
             $query->where('status', $request->input('status'));
         }
         $summaryLoans = (clone $query)
@@ -70,7 +70,7 @@ class ReportController extends Controller
         if ($request->filled('sampai')) {
             $query->whereDate('tanggal_pengajuan', '<=', $request->date('sampai'));
         }
-        if ($request->filled('status') && in_array($request->input('status'), ['Pending', 'Approved', 'Rejected', 'Cancelled', 'Selesai'], true)) {
+        if ($request->filled('status') && in_array($request->input('status'), ['Pending', 'Approved', 'Rejected', 'Cancelled', 'Expired', 'Selesai'], true)) {
             $query->where('status', $request->input('status'));
         }
 

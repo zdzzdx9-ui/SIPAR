@@ -1,9 +1,10 @@
 <?php
 
+use App\Models\Peminjaman;
+use App\Services\ExpireUncollectedLoans;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
-use App\Models\Peminjaman;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -14,3 +15,7 @@ Schedule::call(function (): void {
         ->whereDate('end_date', '<', today())
         ->update(['overdue_flag' => true, 'reminder_flag' => true]);
 })->dailyAt('00:05')->name('loans:mark-overdue');
+
+Schedule::call(function (ExpireUncollectedLoans $expireUncollectedLoans): void {
+    $expireUncollectedLoans->run();
+})->everyMinute()->name('loans:expire-uncollected')->withoutOverlapping();

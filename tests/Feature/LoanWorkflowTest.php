@@ -540,7 +540,7 @@ class LoanWorkflowTest extends TestCase
             ->assertRedirect(route('technician.returns'));
 
         $this->assertSame(1, $equipment->fresh()->stok_tersedia);
-        $this->assertSame(1, $detail->pengembalianDetail()->sum('jumlah'));
+        $this->assertEquals(1, $detail->pengembalianDetail()->sum('jumlah'));
         $this->assertSame('Approved', $loan->fresh()->status);
         $this->assertDatabaseMissing('pengembalian', ['id_peminjaman' => $loan->id_peminjaman]);
 
@@ -607,7 +607,7 @@ class LoanWorkflowTest extends TestCase
             ->assertSessionHas('success', 'Pengembalian ini sudah tercatat; permintaan duplikat diabaikan.');
 
         $this->assertSame(1, $equipment->fresh()->stok_tersedia);
-        $this->assertSame(1, $detail->pengembalianDetail()->sum('jumlah'));
+        $this->assertEquals(1, $detail->pengembalianDetail()->sum('jumlah'));
         $this->assertSame(1, $detail->pengembalianDetail()->count());
         $this->assertSame(1, count(Storage::disk('public')->allFiles('bukti/pengembalian')));
         $this->assertDatabaseHas('detail_pengembalian', [

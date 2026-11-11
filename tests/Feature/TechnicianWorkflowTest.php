@@ -299,7 +299,7 @@ class TechnicianWorkflowTest extends TestCase
         ])->count());
     }
 
-    public function test_handover_automatically_uses_an_available_unit_when_the_requested_asset_is_still_on_an_active_loan(): void
+    public function test_handover_rejects_a_requested_unit_that_is_still_on_an_active_loan(): void
     {
         Storage::fake('public');
         $technician = User::factory()->create(['role' => 'teknisi']);
@@ -368,12 +368,31 @@ class TechnicianWorkflowTest extends TestCase
                 ],
             ],
             'foto_bukti' => $this->fakeImage('unit-handover.jpg'),
-        ])->assertRedirect()->assertSessionHasNoErrors();
+        ])->assertRedirect()->assertSessionHasErrors("items.{$newDetail->id_detail}.asset_ids");
 
         $this->assertDatabaseHas('detail_penyerahan', [
             'id_penyerahan' => $previousHandover->id_penyerahan,
             'asset_id' => $borrowedUnit->asset_id,
         ]);
+        $this->assertDatabaseMissing('detail_penyerahan', [
+            'id_detail' => $newDetail->id_detail,
+            'asset_id' => $borrowedUnit->asset_id,
+        ]);
+        $this->assertSame('Dipinjam', $borrowedUnit->fresh()->status);
+        $this->assertSame('Tersedia', $availableUnit->fresh()->status);
+
+        $this->post(route('technician.handovers.store', $newLoan), [
+            'items' => [
+                $newDetail->id_detail => [
+                    'id_detail' => $newDetail->id_detail,
+                    'jumlah' => 1,
+                    'asset_ids' => $availableUnit->asset_id,
+                    'kondisi_alat' => 'Baik',
+                ],
+            ],
+            'foto_bukti' => $this->fakeImage('unit-handover-available.jpg'),
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
         $this->assertDatabaseHas('detail_penyerahan', [
             'id_detail' => $newDetail->id_detail,
             'item_unit_id' => $availableUnit->item_unit_id,

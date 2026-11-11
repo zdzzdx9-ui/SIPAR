@@ -9,6 +9,8 @@ use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use App\Services\PhotoCompressor;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -43,7 +45,7 @@ class AuthenticationTest extends TestCase
     {
         $this->get(route('login'))
             ->assertOk()
-            ->assertSee('Masukkan NIS atau email')
+            ->assertSee('Masukkan NIS terdaftar')
             ->assertSee('Lupa password? Hubungi Admin SIPAR.')
             ->assertSee('login-options d-flex justify-content-between align-items-center', false)
             ->assertSee('text-muted whitespace-nowrap', false)
@@ -108,6 +110,146 @@ class AuthenticationTest extends TestCase
             ->assertSee('id="identity-label">Username</label>', false)
             ->assertDontSee('Kendala akses? Hubungi pengelola SIPAR.')
             ->assertSee('id="login-support"></span>', false);
+    }
+
+    public function test_student_login_requires_a_registered_student_nis(): void
+    {
+        User::factory()->create([
+            'nis_nip' => '20260010',
+            'email' => 'student@example.test',
+            'role' => 'siswa',
+        ]);
+
+        $this->from(route('login'))->post(route('login.store'), [
+            'identity' => '20269999',
+            'password' => 'password',
+            'role' => 'siswa',
+        ])->assertRedirect(route('login'))
+            ->assertSessionHasErrors('identity');
+
+        $this->get(route('login'))
+            ->assertSee('NIS tidak valid atau belum terdaftar.');
+
+        $this->from(route('login'))->post(route('login.store'), [
+            'identity' => 'student@example.test',
+            'password' => 'password',
+            'role' => 'siswa',
+        ])->assertRedirect(route('login'))
+            ->assertSessionHasErrors('identity');
+
+        $this->post(route('login.store'), [
+            'identity' => '20260010',
+            'password' => 'password',
+            'role' => 'siswa',
+        ])->assertRedirect(route('dashboard'));
+    }
+
+    public function test_profile_username_label_matches_the_active_role(): void
+    {
+        foreach ([
+            ['role' => 'siswa', 'label' => 'Username (NIS)'],
+            ['role' => 'teknisi', 'label' => 'Username (NIP / ID Staf)'],
+            ['role' => 'admin', 'label' => 'Username (NIP / ID Staf)'],
+        ] as $account) {
+            $user = User::factory()->create(['role' => $account['role']]);
+
+            $this->actingAs($user)->get(route('profile'))
+                ->assertOk()
+                ->assertSee($account['label']);
+        }
+    }
+
+    public function test_profile_link_is_in_the_sidebar_footer_and_keeps_its_active_state(): void
+    {
+        $user = User::factory()->create(['role' => 'siswa']);
+
+        $this->actingAs($user)->get(route('profile'))
+            ->assertOk()
+            ->assertSeeInOrder([
+                '<div class="sidebar-footer">',
+                'class="nav-link active" href="'.route('profile').'"><i class="bi bi-person-gear"></i>Profil Saya</a>',
+                '<div class="side-user">',
+                '<i class="bi bi-box-arrow-right"></i>Keluar',
+            ], false);
+    }
+
+    public function test_profile_update_returns_json_for_async_saves(): void
+    {
+        $user = User::factory()->create(['role' => 'admin', 'nama' => 'Admin SIPAR']);
+
+        $this->actingAs($user)->putJson(route('profile.update'), [
+            'nama' => 'Admin Diperbarui',
+            'email' => 'admin.updated@example.test',
+        ])->assertOk()
+            ->assertJson([
+                'message' => 'Profil berhasil diperbarui.',
+                'nama' => 'Admin Diperbarui',
+                'avatar_url' => null,
+            ]);
+
+        $this->assertDatabaseHas('users', [
+            'id_user' => $user->id_user,
+            'nama' => 'Admin Diperbarui',
+            'email' => 'admin.updated@example.test',
+        ]);
+    }
+
+    public function test_profile_avatar_is_uploaded_and_replaced_without_a_database_column(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create(['role' => 'admin']);
+        $avatarNames = ['avatar-first.png', 'avatar-second.png'];
+        $compressor = \Mockery::mock(PhotoCompressor::class);
+        $compressor->shouldReceive('store')->twice()->andReturnUsing(function ($photo, $directory) use (&$avatarNames) {
+            $path = $directory.'/'.array_shift($avatarNames);
+            Storage::disk('public')->put($path, 'compressed-image');
+
+            return $path;
+        });
+        $this->app->instance(PhotoCompressor::class, $compressor);
+        $makeAvatar = fn () => \Illuminate\Http\Testing\File::createWithContent(
+            'avatar.png',
+            base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC')
+        );
+
+        $firstResponse = $this->actingAs($user)->post(route('profile.update'), [
+            '_method' => 'PUT',
+            'nama' => $user->nama,
+            'email' => $user->email,
+            'avatar' => $makeAvatar(),
+        ], ['Accept' => 'application/json'])->assertOk();
+        $firstAvatarUrl = $firstResponse->json('avatar_url');
+        $firstAvatarPath = str_replace(asset('storage').'/', '', $firstAvatarUrl);
+        Storage::disk('public')->assertExists($firstAvatarPath);
+
+        $secondResponse = $this->post(route('profile.update'), [
+            '_method' => 'PUT',
+            'nama' => $user->nama,
+            'email' => $user->email,
+            'avatar' => $makeAvatar(),
+        ], ['Accept' => 'application/json'])->assertOk();
+        $secondAvatarPath = str_replace(asset('storage').'/', '', $secondResponse->json('avatar_url'));
+
+        Storage::disk('public')->assertExists($secondAvatarPath);
+        Storage::disk('public')->assertMissing($firstAvatarPath);
+        $this->get(route('profile'))->assertOk()->assertSee($secondAvatarPath);
+
+        $this->assertArrayNotHasKey('avatar', \Illuminate\Support\Facades\Schema::getColumnListing('users'));
+    }
+
+    public function test_profile_form_has_a_photo_picker_and_async_success_toast(): void
+    {
+        $user = User::factory()->create(['role' => 'siswa']);
+
+        $this->actingAs($user)->get(route('profile'))
+            ->assertOk()
+            ->assertSee('id="profile-avatar"', false)
+            ->assertSee('name="avatar"', false)
+            ->assertSee('Ganti Foto')
+            ->assertSee('enctype="multipart/form-data"', false)
+            ->assertSee('id="profile-save-toast"', false)
+            ->assertSee("fetch(form.action", false)
+            ->assertSee("toast.show()", false);
     }
 
     public function test_seeder_does_not_overwrite_existing_admin_credentials(): void

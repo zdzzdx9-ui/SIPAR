@@ -12,8 +12,8 @@
     </style>
     <style>
         :root{--auth-ink:#132c3a;--auth-muted:#667987;--auth-line:#dce5eb;--auth-blue:#0877d8;--auth-blue-dark:#075da8;--auth-surface:#f3f6f7}
-        body{min-height:100svh;display:flex;flex-direction:column;align-items:center;background:#eaf0f2;color:var(--auth-ink);padding:24px}
-        .auth-frame{flex:1;width:min(100%,1280px);min-height:min(820px,calc(100svh - 104px));grid-template-columns:minmax(0,1.05fr) minmax(480px,.95fr);max-width:1280px;margin:auto;border:1px solid #dce5e9;border-radius:14px;box-shadow:0 24px 64px rgba(19,44,58,.12)}
+        body{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#eaf0f2;color:var(--auth-ink);padding:10px 24px}
+        .auth-frame{flex:1;width:min(100%,1280px);min-height:min(820px,calc(100vh - 72px));min-height:min(820px,calc(100svh - 72px));grid-template-columns:minmax(0,1.05fr) minmax(480px,.95fr);max-width:1280px;margin:auto;border:1px solid #dce5e9;border-radius:14px;box-shadow:0 24px 64px rgba(19,44,58,.12)}
         .auth-aside{isolation:isolate;background-color:#122b3a;background-image:url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1800&q=85');background-position:center;background-size:cover;padding:clamp(32px,5vw,72px)}
         .auth-aside::before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(120deg,rgba(9,44,57,.48) 0%,rgba(11,70,81,.32) 52%,rgba(7,36,56,.45) 100%)}
         .auth-aside::after{content:none}
@@ -35,11 +35,11 @@
         .aside-copy h1{max-width:440px;font:700 36px/1.16 Manrope,sans-serif;margin:17px 0 12px;text-shadow:0 2px 14px rgba(4,20,29,.44)}
         .aside-copy p{max-width:410px;font-size:15px;font-weight:600;line-height:1.65;color:#fff;text-shadow:0 1px 9px rgba(4,20,29,.58)}
         .aside-foot{font-size:11px;font-weight:600;color:#fff;border-color:#ffffff65;text-shadow:0 1px 8px rgba(4,20,29,.6)}
-        .auth-main{padding:clamp(28px,5vw,64px);background:#f1f5f6}
-        .auth-form{width:min(100%,430px);padding:38px;background:#fff;border:1px solid #e3e9ed;border-radius:12px;box-shadow:0 18px 50px rgba(18,43,58,.08);animation:auth-enter .35s ease-out both}
+        .auth-main{padding:clamp(20px,3vw,40px);background:#f1f5f6}
+        .auth-form{width:min(100%,430px);padding:28px;background:#fff;border:1px solid #e3e9ed;border-radius:12px;box-shadow:0 18px 50px rgba(18,43,58,.08);animation:auth-enter .35s ease-out both}
         .auth-form h2{font-size:25px;color:var(--auth-ink)}
-        .auth-form>p{font-size:13px;line-height:1.55;color:var(--auth-muted);margin:7px 0 24px}
-        .role-switch{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;background:#edf2f5;border:1px solid #e2e9ed;border-radius:8px;margin-bottom:22px}
+        .auth-form>p{font-size:13px;line-height:1.55;color:var(--auth-muted);margin:7px 0 16px}
+        .role-switch{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;background:#edf2f5;border:1px solid #e2e9ed;border-radius:8px;margin-bottom:16px}
         .role-switch button{min-height:40px;padding:8px 10px;border:0;border-radius:6px;background:transparent;color:#536977;font:600 12px 'DM Sans',sans-serif;white-space:nowrap;transition:background-color .16s ease,color .16s ease,box-shadow .16s ease}
         .role-switch button:hover{color:var(--auth-ink)}
         .role-switch button.active{background:#fff;color:var(--auth-blue-dark);box-shadow:0 1px 4px rgba(19,44,58,.14)}
@@ -57,12 +57,12 @@
         .auth-form .form-check-input{width:16px;height:16px;margin-top:.1em}
         .auth-form .form-check-input:checked{background-color:var(--auth-blue);border-color:var(--auth-blue)}
         .auth-form .form-check-label,.auth-form .text-muted{font-size:12px;color:var(--auth-muted)!important}
-        .login-options{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:48px}
+        .login-options{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:40px;margin-bottom:16px!important}
         .login-remember{display:flex;align-items:center;gap:6px;margin:0;white-space:nowrap}
         .login-options .form-check-input{flex:none;margin:0}
         .whitespace-nowrap{white-space:nowrap}
         .login-options #login-support{flex:none;max-width:none;font-weight:600;line-height:1.4;text-align:right}
-        .student-registration-slot{height:50px;margin-top:12px}
+        .student-registration-slot{height:46px;margin-top:10px}
         .student-registration-slot .help-note{margin:0}
         .auth-form .btn-primary{min-height:46px;border:0;border-radius:7px;background:var(--auth-blue);font-size:13px;box-shadow:0 4px 10px rgba(8,119,216,.15)}
         .auth-form .btn-primary:hover{background:var(--auth-blue-dark)}

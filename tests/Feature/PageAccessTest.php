@@ -78,7 +78,7 @@ class PageAccessTest extends TestCase
             ->assertSee('id="current-password"', false)
             ->assertSee('id="new-password-confirmation"', false)
             ->assertSee('data-password-toggle', false)
-            ->assertSee('Username (NIS / NIP)');
+            ->assertSee('Username (NIP / ID Staf)');
         $this->get('/admin/pengembalian/verifikasi')->assertNotFound();
         $this->get('/admin/pengembalian')->assertNotFound();
         $this->get('/admin/pengembalian/cari')->assertNotFound();
@@ -112,13 +112,18 @@ class PageAccessTest extends TestCase
             ->assertSee('id="new-password"', false)
             ->assertSee('id="new-password-confirmation"', false)
             ->assertSee('data-password-toggle', false)
-            ->assertSee('Username (NIS / NIP)');
+            ->assertSee('Username (NIS)');
         $this->get(route('catalog'))
             ->assertSee('Katalog Alat')
             ->assertSee('Alat pengujian kabel jaringan.')
             ->assertSee('card-katalog', false)
             ->assertSee('.card-katalog:hover{transform:translateY(-4px)', false)
-            ->assertSee('.card-katalog:hover .overflow-hidden img{transform:scale(1.08)}', false)
+            ->assertSee('.card-katalog:hover .catalog-image-frame img{transform:scale(1.05)}', false)
+            ->assertSee('transition:transform .3s ease-in-out', false)
+            ->assertSee('object-fit:contain;object-position:center', false)
+            ->assertSee('transform:translateX(-50%)', false)
+            ->assertSee('catalog-card-actions{display:flex', false)
+            ->assertSee('catalog-shell .responsive-search .btn{flex:0 0 auto;white-space:nowrap}', false)
             ->assertSee('class="catalog-image-frame overflow-hidden mb-3"', false)
             ->assertSee('class="btn btn-primary btn-sm loan-item-toggle"', false)
             ->assertSee('Pilih Alat')
@@ -224,9 +229,9 @@ class PageAccessTest extends TestCase
             ->assertSee('<th scope="col" class="text-center">Aksi</th>', false)
             ->assertSee('class="loan-equipment-image rounded-3 bg-light"', false)
             ->assertSee('object-fit:contain', false)
-            ->assertSee('<td class="align-middle">—</td>', false)
             ->assertSee('action="'.route('loans.cancel', $loan).'"', false)
-            ->assertSee('<i class="bi bi-x-circle me-1"></i>Batal', false);
+            ->assertSee('Batalkan Pengajuan')
+            ->assertSee('sebelum alat diserahkan');
     }
 
     public function test_student_without_loan_history_can_be_deleted(): void
@@ -333,13 +338,13 @@ class PageAccessTest extends TestCase
             ->assertOk()
             ->assertSee('Nama lengkap')
             ->assertSee('name="nama"', false)
-            ->assertSee('Username (NIS / NIP)')
+            ->assertSee('Username (NIS)')
             ->assertSee('readonly', false);
 
         $admin = User::factory()->create(['role' => 'admin']);
         $this->actingAs($admin)->get(route('profile'))
             ->assertOk()
-            ->assertSee('Username (NIS / NIP)')
+            ->assertSee('Username (NIP / ID Staf)')
             ->assertSee('Username tidak dapat diubah.');
         $this->put(route('profile.update'), [
             'nama' => 'Nama Admin Diperbarui',
@@ -350,7 +355,7 @@ class PageAccessTest extends TestCase
         $technician = User::factory()->create(['role' => 'teknisi']);
         $this->actingAs($technician)->get(route('profile'))
             ->assertOk()
-            ->assertSee('Username (NIS / NIP)');
+            ->assertSee('Username (NIP / ID Staf)');
 
         $this->actingAs($student);
         $this->put(route('profile.update'), [

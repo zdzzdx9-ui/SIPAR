@@ -17,7 +17,7 @@ class Peminjaman extends Model
     protected $fillable = [
         'id_user', 'user_id', 'tanggal_pengajuan', 'tanggal_pinjam', 'tanggal_kembali_rencana',
         'start_date', 'end_date', 'keperluan', 'status', 'catatan_admin', 'booking_code',
-        'operational_notes', 'overdue_flag', 'reminder_flag', 'status_read_at',
+        'operational_notes', 'overdue_flag', 'reminder_flag', 'status_read_at', 'approved_at',
     ];
 
     protected $casts = [
@@ -29,6 +29,7 @@ class Peminjaman extends Model
         'overdue_flag' => 'boolean',
         'reminder_flag' => 'boolean',
         'status_read_at' => 'datetime',
+        'approved_at' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -64,6 +65,7 @@ class Peminjaman extends Model
             'Approved' => 'Disetujui',
             'Rejected' => 'Ditolak',
             'Cancelled' => 'Dibatalkan',
+            'Expired' => 'Kedaluwarsa',
             'Selesai' => 'Selesai',
         ][$this->status] ?? ($this->status ?? '-');
     }

@@ -6,8 +6,10 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use App\Services\PhotoCompressor;
 
 class AuthController extends Controller
 {
@@ -18,13 +20,25 @@ class AuthController extends Controller
 
     public function authenticate(Request $request): RedirectResponse
     {
+        $identityRules = ['required', 'string'];
+        if ($request->input('role') === 'siswa') {
+            $identityRules[] = Rule::exists('users', 'nis_nip')->where('role', 'siswa');
+        }
+
         $credentials = $request->validate([
-            'identity' => ['required', 'string'],
+            'identity' => $identityRules,
             'password' => ['required', 'string'],
             'role' => ['required', Rule::in(['admin', 'teknisi', 'siswa'])],
+        ], [
+            'identity.required' => $request->input('role') === 'siswa'
+                ? 'NIS wajib diisi.'
+                : 'Username wajib diisi.',
+            'identity.exists' => 'NIS tidak valid atau belum terdaftar.',
         ]);
 
-        $column = filter_var($credentials['identity'], FILTER_VALIDATE_EMAIL) ? 'email' : 'nis_nip';
+        $column = $credentials['role'] === 'siswa'
+            ? 'nis_nip'
+            : (filter_var($credentials['identity'], FILTER_VALIDATE_EMAIL) ? 'email' : 'nis_nip');
         $remember = $request->boolean('remember');
 
         if (! Auth::attempt([$column => $credentials['identity'], 'password' => $credentials['password']], $remember)) {
@@ -81,23 +95,52 @@ class AuthController extends Controller
         return redirect()->route('dashboard')->with('success', 'Akun siswa berhasil dibuat.');
     }
 
-    public function profile(): View
+    public function profile(Request $request): View
     {
-        return view('profile');
+        $avatarDirectory = 'profile-avatars/'.$request->user()->id_user;
+        $avatarPath = collect(Storage::disk('public')->files($avatarDirectory))
+            ->sortByDesc(fn (string $path): int => Storage::disk('public')->lastModified($path))
+            ->first();
+
+        return view('profile', compact('avatarPath'));
     }
 
-    public function updateProfile(Request $request): RedirectResponse
+    public function updateProfile(Request $request, PhotoCompressor $photoCompressor): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $user = $request->user();
         $rules = [
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id_user.',id_user'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ];
         if ($user->role !== 'siswa') {
             $rules['nama'] = ['required', 'string', 'max:120'];
         }
 
         $data = $request->validate($rules);
+        $avatar = $data['avatar'] ?? null;
+        unset($data['avatar']);
         $user->update($data);
+
+        $avatarPath = null;
+        if ($avatar) {
+            $avatarDirectory = 'profile-avatars/'.$user->id_user;
+            $previousAvatars = Storage::disk('public')->files($avatarDirectory);
+            $avatarPath = $photoCompressor->store($avatar, $avatarDirectory, 'avatar');
+
+            foreach ($previousAvatars as $previousAvatar) {
+                if ($previousAvatar !== $avatarPath) {
+                    Storage::disk('public')->delete($previousAvatar);
+                }
+            }
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Profil berhasil diperbarui.',
+                'nama' => $user->nama,
+                'avatar_url' => $avatarPath ? asset('storage/'.$avatarPath) : null,
+            ]);
+        }
 
         return back()->with('success', 'Profil berhasil diperbarui.');
     }

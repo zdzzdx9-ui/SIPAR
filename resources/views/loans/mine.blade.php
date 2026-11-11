@@ -49,12 +49,15 @@
                         <td>{{ $loan->tanggal_pinjam->format('d M Y') }}</td>
                         <td>{{ $loan->tanggal_kembali_rencana->format('d M Y') }}</td>
                         <td><span class="badge-status status-{{ strtolower($loan->status) }}">{{ $loan->status_label }}</span></td>
-                        <td class="align-middle">{{ $note ?? '—' }}</td>
+                        <td class="align-middle">
+                            @if($note)<span class="d-block">{{ $note }}</span>@endif
+                            <small class="d-block text-muted">Pengambilan di Lab / Ruang Inventaris pukul 12.00–13.00 WIB, maksimal 24 jam sejak disetujui. Pengajuan dapat dibatalkan sebelum persetujuan; setelah disetujui, sebelum alat diserahkan.</small>
+                        </td>
                         <td class="align-middle text-center">
-                            @if($loan->status === 'Pending')
-                                <form class="d-inline-block" method="post" action="{{ route('loans.cancel', $loan) }}" data-confirm-title="Konfirmasi pembatalan pengajuan" data-confirm-message="Apakah Anda yakin ingin membatalkan pengajuan {{ $loan->booking_code }}?" data-confirm-label="Ya, Batalkan">
+                            @if($loan->status === 'Pending' || ($loan->status === 'Approved' && $loan->detail->isNotEmpty() && $loan->detail->every(fn ($detail) => $detail->penyerahanDetail->isEmpty())))
+                                <form class="d-inline-block" method="post" action="{{ route('loans.cancel', $loan) }}" data-confirm-title="Konfirmasi pembatalan peminjaman" data-confirm-message="Apakah Anda yakin ingin membatalkan {{ $loan->booking_code }}? Peminjaman yang disetujui hanya dapat dibatalkan sebelum alat diserahkan." data-confirm-label="Ya, Batalkan">
                                     @csrf
-                                    <button class="btn btn-sm btn-light text-danger text-nowrap" type="submit"><i class="bi bi-x-circle me-1"></i>Batal</button>
+                                    <button class="btn btn-sm btn-light text-danger text-nowrap" type="submit"><i class="bi bi-x-circle me-1"></i>{{ $loan->status === 'Approved' ? 'Batalkan Peminjaman' : 'Batalkan Pengajuan' }}</button>
                                 </form>
                             @else
                                 <span class="text-muted">—</span>

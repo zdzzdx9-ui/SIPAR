@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Services\PhotoCompressor;
+use App\Services\ExpireUncollectedLoans;
 use App\Models\DetailPenyerahan;
 use App\Models\ItemUnit;
 use App\Models\Peminjaman;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -15,8 +17,9 @@ use Illuminate\View\View;
 
 class TechnicianController extends Controller
 {
-    public function handovers(Request $request): View
+    public function handovers(Request $request, ExpireUncollectedLoans $expireUncollectedLoans): View
     {
+        $expireUncollectedLoans->run();
         $term = $request->string('q')->trim()->toString();
         Peminjaman::where('status', 'Approved')
             ->whereDate('tanggal_kembali_rencana', '<', today())
@@ -34,8 +37,9 @@ class TechnicianController extends Controller
         return view('technician.handovers', compact('loans'));
     }
 
-    public function storeHandover(Request $request, Peminjaman $peminjaman, PhotoCompressor $photoCompressor): RedirectResponse
+    public function storeHandover(Request $request, Peminjaman $peminjaman, PhotoCompressor $photoCompressor, ExpireUncollectedLoans $expireUncollectedLoans): RedirectResponse
     {
+        $expireUncollectedLoans->run();
         if (! $request->has('items') && $request->filled('id_detail')) {
             $request->merge(['items' => [[
                 'id_detail' => $request->input('id_detail'),
@@ -169,9 +173,23 @@ class TechnicianController extends Controller
                         ->orderBy('asset_id')
                         ->lockForUpdate()
                         ->get();
-                    $preferredAssetIds = $itemAssetIds->all();
-                    $unitsToHandOver = $availableUnits
-                        ->sortBy(fn (ItemUnit $unit) => in_array($unit->asset_id, $preferredAssetIds, true) ? 0 : 1)
+                    $unavailableRequestedIds = $itemAssetIds->reject(
+                        fn (string $assetId) => $availableUnits->contains('asset_id', $assetId)
+                    );
+                    if ($unavailableRequestedIds->isNotEmpty()) {
+                        throw ValidationException::withMessages([
+                            "items.{$detail->id_detail}.asset_ids" => 'ID Aset berikut tidak tersedia atau sedang digunakan pada transaksi lain: '.$unavailableRequestedIds->join(', '),
+                        ]);
+                    }
+
+                    $requestedUnits = $itemAssetIds->map(
+                        fn (string $assetId) => $availableUnits->firstWhere('asset_id', $assetId)
+                    )->filter();
+                    $otherAvailableUnits = $availableUnits->reject(
+                        fn (ItemUnit $unit) => $itemAssetIds->contains($unit->asset_id)
+                    );
+                    $unitsToHandOver = $requestedUnits
+                        ->concat($otherAvailableUnits)
                         ->take($item['jumlah'])
                         ->values();
 
@@ -225,6 +243,12 @@ class TechnicianController extends Controller
             }
             });
             $keepPhoto = true;
+        } catch (QueryException $exception) {
+            report($exception);
+
+            return back()->withErrors([
+                'items' => 'Penyerahan tidak disimpan karena ID unit berubah atau sudah tercatat pada transaksi lain. Periksa status unit lalu coba kembali.',
+            ]);
         } finally {
             if (! $keepPhoto) {
                 Storage::disk('public')->delete($data['foto_bukti']);

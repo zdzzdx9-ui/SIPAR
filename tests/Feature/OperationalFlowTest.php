@@ -4,10 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\Alat;
 use App\Models\DetailPeminjaman;
+use App\Models\DetailPenyerahan;
 use App\Models\ItemUnit;
 use App\Models\KategoriAlat;
 use App\Models\Peminjaman;
 use App\Models\User;
+use App\Services\ExpireUncollectedLoans;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -41,6 +43,147 @@ class OperationalFlowTest extends TestCase
         $this->actingAs($student)->post(route('loans.cancel', $otherLoan))
             ->assertSessionHasErrors('status');
         $this->assertSame('Pending', $otherLoan->fresh()->status);
+    }
+
+    public function test_student_can_cancel_an_approved_uncollected_loan_and_only_its_stock_is_restored(): void
+    {
+        $category = KategoriAlat::create(['nama_kategori' => 'Pembatalan Disetujui']);
+        $equipment = Alat::create([
+            'kode_alat' => 'CANCEL-APPROVED', 'nama_alat' => 'Alat Batal Disetujui', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 2, 'stok_tersedia' => 0, 'kondisi' => 'Baik', 'qr_code' => 'cancel-approved-qr', 'status_alat' => 'Dipinjam',
+        ]);
+        $student = User::factory()->create(['role' => 'siswa']);
+        $otherStudent = User::factory()->create(['role' => 'siswa']);
+        $loan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDays(2)->toDateString(),
+            'keperluan' => 'Batal sebelum penyerahan',
+            'status' => 'Approved',
+            'approved_at' => now()->subMinutes(30),
+        ]);
+        $loan->detail()->create(['id_alat' => $equipment->id_alat, 'jumlah' => 1]);
+        $otherLoan = Peminjaman::create([
+            'id_user' => $otherStudent->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDays(2)->toDateString(),
+            'keperluan' => 'Transaksi aktif lain',
+            'status' => 'Approved',
+            'approved_at' => now(),
+        ]);
+        $otherLoan->detail()->create(['id_alat' => $equipment->id_alat, 'jumlah' => 1]);
+
+        $this->actingAs($student)->post(route('loans.cancel', $loan))
+            ->assertSessionHas('success', 'Peminjaman dibatalkan sebelum penyerahan dan stok telah dikembalikan.');
+
+        $this->assertSame('Cancelled', $loan->fresh()->status);
+        $this->assertSame('Approved', $otherLoan->fresh()->status);
+        $this->assertSame(1, $equipment->fresh()->stok_tersedia);
+        $this->assertSame(1, $loan->detail()->count());
+    }
+
+    public function test_approved_loan_cannot_be_cancelled_after_handover(): void
+    {
+        $category = KategoriAlat::create(['nama_kategori' => 'Tidak Dapat Dibatalkan']);
+        $equipment = Alat::create([
+            'kode_alat' => 'CANCEL-HANDED', 'nama_alat' => 'Alat Sudah Diserahkan', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 1, 'stok_tersedia' => 0, 'kondisi' => 'Baik', 'qr_code' => 'cancel-handed-qr', 'status_alat' => 'Dipinjam',
+        ]);
+        $student = User::factory()->create(['role' => 'siswa']);
+        $technician = User::factory()->create(['role' => 'teknisi']);
+        $loan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDays(2)->toDateString(),
+            'keperluan' => 'Sudah diserahkan',
+            'status' => 'Approved',
+            'approved_at' => now(),
+        ]);
+        $detail = $loan->detail()->create(['id_alat' => $equipment->id_alat, 'jumlah' => 1]);
+        DetailPenyerahan::create([
+            'id_detail' => $detail->id_detail,
+            'id_teknisi' => $technician->id_user,
+            'jumlah' => 1,
+            'tanggal_penyerahan' => now(),
+            'kondisi_alat' => 'Baik',
+        ]);
+
+        $this->actingAs($student)->from(route('loans.mine'))
+            ->post(route('loans.cancel', $loan))
+            ->assertSessionHasErrors('status');
+
+        $this->assertSame('Approved', $loan->fresh()->status);
+        $this->assertSame(0, $equipment->fresh()->stok_tersedia);
+    }
+
+    public function test_uncollected_approved_loans_expire_after_24_hours_and_restore_only_unhanded_stock(): void
+    {
+        $category = KategoriAlat::create(['nama_kategori' => 'Kedaluwarsa Otomatis']);
+        $equipment = Alat::create([
+            'kode_alat' => 'EXPIRE-24H', 'nama_alat' => 'Alat Kedaluwarsa', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 2, 'stok_tersedia' => 0, 'kondisi' => 'Baik', 'qr_code' => 'expire-24h-qr', 'status_alat' => 'Dipinjam',
+        ]);
+        $student = User::factory()->create(['role' => 'siswa']);
+        $technician = User::factory()->create(['role' => 'teknisi']);
+        $expiredLoan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDays(2)->toDateString(),
+            'keperluan' => 'Belum diambil lebih dari sehari',
+            'status' => 'Approved',
+            'approved_at' => now()->subHours(25),
+        ]);
+        $expiredLoan->detail()->create(['id_alat' => $equipment->id_alat, 'jumlah' => 1]);
+        $activeLoan = Peminjaman::create([
+            'id_user' => User::factory()->create(['role' => 'siswa'])->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDays(2)->toDateString(),
+            'keperluan' => 'Sudah diambil',
+            'status' => 'Approved',
+            'approved_at' => now()->subHours(25),
+        ]);
+        $activeDetail = $activeLoan->detail()->create(['id_alat' => $equipment->id_alat, 'jumlah' => 1]);
+        DetailPenyerahan::create([
+            'id_detail' => $activeDetail->id_detail,
+            'id_teknisi' => $technician->id_user,
+            'jumlah' => 1,
+            'tanggal_penyerahan' => now()->subHours(24),
+            'kondisi_alat' => 'Baik',
+        ]);
+
+        $expireUncollectedLoans = app(ExpireUncollectedLoans::class);
+        $this->assertSame(1, $expireUncollectedLoans->run());
+        $this->assertSame('Expired', $expiredLoan->fresh()->status);
+        $this->assertSame('Approved', $activeLoan->fresh()->status);
+        $this->assertSame(1, $equipment->fresh()->stok_tersedia);
+        $this->assertSame(0, $expireUncollectedLoans->run());
+        $this->assertSame(1, $expiredLoan->detail()->count());
+    }
+
+    public function test_return_date_limit_is_five_days_from_the_selected_loan_date(): void
+    {
+        $category = KategoriAlat::create(['nama_kategori' => 'Durasi Terjadwal']);
+        $equipment = Alat::create([
+            'kode_alat' => 'DURATION-SELECTED', 'nama_alat' => 'Alat Durasi Terjadwal', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 1, 'stok_tersedia' => 1, 'kondisi' => 'Baik', 'qr_code' => 'duration-selected-qr', 'status_alat' => 'Tersedia',
+        ]);
+        $student = User::factory()->create(['role' => 'siswa']);
+        $startDate = today()->addDay();
+        $payload = [
+            'items' => [['id_alat' => $equipment->id_alat, 'jumlah' => 1]],
+            'tanggal_pinjam' => $startDate->toDateString(),
+            'keperluan' => 'Uji tanggal relatif',
+        ];
+
+        $this->actingAs($student)->post(route('loans.create'), $payload + [
+            'tanggal_kembali_rencana' => $startDate->copy()->addDays(6)->toDateString(),
+        ])->assertSessionHasErrors('tanggal_kembali_rencana');
+        $this->assertSame(0, Peminjaman::count());
+
+        $this->post(route('loans.create'), $payload + [
+            'tanggal_kembali_rencana' => $startDate->copy()->addDays(5)->toDateString(),
+        ])->assertRedirect(route('loans.mine'));
+        $this->assertSame($startDate->copy()->addDays(5)->toDateString(), Peminjaman::firstOrFail()->tanggal_kembali_rencana->toDateString());
     }
 
     public function test_admin_approves_all_requests_and_technician_receives_unit_handover_tasks(): void

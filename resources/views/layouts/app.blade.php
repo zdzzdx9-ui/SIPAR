@@ -17,7 +17,7 @@
         @media print{.sidebar,.mobile-nav-toggle,.mobile-drawer,.topbar,.no-print,.page-head .btn{display:none!important}.workspace{margin:0}.content{padding:0;max-width:none}body{background:#fff}.surface{border-color:#ccd3da}.table{font-size:10px}}
     </style>
     <style>@media(min-width:801px){.content{width:100%;max-width:1600px;margin-inline:auto}}</style>
-    <style>.sidebar{overflow-y:auto}.sidebar-logout-form{position:sticky;bottom:0;flex:none;margin-top:8px;padding:9px 8px 12px;background:var(--sidebar);border-top:1px solid #304457;z-index:2}.sidebar-logout{display:flex;align-items:center;gap:9px;width:100%;padding:3px 0;border:0;background:none;color:#c1ceda;text-align:left;font:inherit;font-size:12px}.sidebar-logout:hover{color:#fff}</style>
+    <style>.sidebar{overflow-y:auto}.sidebar-footer{flex:none;margin-top:auto;padding-top:10px;border-top:1px solid #304457}.side-user{margin-top:0;border-top:0;padding:8px 8px 0}.sidebar-logout-form{position:sticky;bottom:0;flex:none;margin-top:8px;padding:9px 8px 0;background:var(--sidebar);z-index:2}.sidebar-logout{display:flex;align-items:center;gap:9px;width:100%;padding:3px 0;border:0;background:none;color:#c1ceda;text-align:left;font:inherit;font-size:12px}.sidebar-logout:hover{color:#fff}</style>
     <style>
         .workspace,.content,.surface{min-width:0}
         .equipment-photo-placeholder:not([hidden]){display:grid;place-items:center;background:#eaf3ff;color:#176ec5;font-size:1.15rem}
@@ -159,7 +159,7 @@
 </head>
 <body>
 @if(auth()->check())
-<div class="shell d-flex min-vh-100">
+<div class="shell d-flex min-vh-100 {{ request()->routeIs('catalog') ? 'catalog-shell' : '' }}">
     <aside class="sidebar">
         <a class="brand" href="{{ route('dashboard') }}"><img class="brand-logo" src="{{ asset('assets/logo.png') }}" alt="Logo SIPAR"><span>SIPAR<small>Peminjaman Alat RPL</small></span></a>
         <div class="nav-caption">Menu utama</div>
@@ -177,9 +177,11 @@
             <a class="nav-link {{ request()->routeIs('catalog') ? 'active' : '' }}" href="{{ route('catalog') }}"><i class="bi bi-grid"></i>Katalog Alat</a>
             <a class="nav-link {{ request()->routeIs('loans.mine') ? 'active' : '' }}" href="{{ route('loans.mine') }}"><i class="bi bi-clock-history"></i>Riwayat Peminjaman <span class="badge rounded-pill text-bg-warning ms-auto" aria-label="{{ $studentLoanNotificationCount }} perubahan status belum dibaca">{{ $studentLoanNotificationCount }}</span></a>
         @endif
-        <a class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}" href="{{ route('profile') }}"><i class="bi bi-person-gear"></i>Profil Saya</a>
-        <div class="side-user"><strong>{{ auth()->user()->nama }}</strong><small>{{ auth()->user()->nis_nip }} · {{ ucfirst(auth()->user()->role) }}</small></div>
-        <form class="sidebar-logout-form" method="post" action="{{ route('logout') }}">@csrf<button class="sidebar-logout" type="submit"><i class="bi bi-box-arrow-right"></i>Keluar</button></form>
+        <div class="sidebar-footer">
+            <a class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}" href="{{ route('profile') }}"><i class="bi bi-person-gear"></i>Profil Saya</a>
+            <div class="side-user"><strong data-auth-user-name>{{ auth()->user()->nama }}</strong><small>{{ auth()->user()->nis_nip }} · {{ ucfirst(auth()->user()->role) }}</small></div>
+            <form class="sidebar-logout-form" method="post" action="{{ route('logout') }}">@csrf<button class="sidebar-logout" type="submit"><i class="bi bi-box-arrow-right"></i>Keluar</button></form>
+        </div>
     </aside>
     <div class="offcanvas offcanvas-start mobile-drawer" tabindex="-1" id="mobileNavigation" aria-labelledby="mobileNavigationLabel">
         <div class="offcanvas-header">
@@ -202,9 +204,11 @@
                 <a class="nav-link {{ request()->routeIs('catalog') ? 'active' : '' }}" href="{{ route('catalog') }}"><i class="bi bi-grid"></i>Katalog Alat</a>
                 <a class="nav-link {{ request()->routeIs('loans.mine') ? 'active' : '' }}" href="{{ route('loans.mine') }}"><i class="bi bi-clock-history"></i>Riwayat Peminjaman <span class="badge rounded-pill text-bg-warning ms-auto" aria-label="{{ $studentLoanNotificationCount }} perubahan status belum dibaca">{{ $studentLoanNotificationCount }}</span></a>
             @endif
-            <a class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}" href="{{ route('profile') }}"><i class="bi bi-person-gear"></i>Profil Saya</a>
-            <div class="side-user"><strong>{{ auth()->user()->nama }}</strong><small>{{ auth()->user()->nis_nip }} · {{ ucfirst(auth()->user()->role) }}</small></div>
-            <form class="sidebar-logout-form" method="post" action="{{ route('logout') }}">@csrf<button class="sidebar-logout" type="submit"><i class="bi bi-box-arrow-right"></i>Keluar</button></form>
+            <div class="sidebar-footer">
+                <a class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}" href="{{ route('profile') }}"><i class="bi bi-person-gear"></i>Profil Saya</a>
+                <div class="side-user"><strong data-auth-user-name>{{ auth()->user()->nama }}</strong><small>{{ auth()->user()->nis_nip }} · {{ ucfirst(auth()->user()->role) }}</small></div>
+                <form class="sidebar-logout-form" method="post" action="{{ route('logout') }}">@csrf<button class="sidebar-logout" type="submit"><i class="bi bi-box-arrow-right"></i>Keluar</button></form>
+            </div>
         </div>
     </div>
     <div class="workspace d-flex flex-column flex-grow-1 min-w-0">
@@ -217,7 +221,7 @@
                     <div class="search-suggestions" id="search-suggestions" role="listbox" aria-label="Saran pencarian"></div>
                 </form>
             @endunless
-            <div class="topbar-meta"><i class="bi bi-calendar3"></i><span>{{ now()->translatedFormat('d M Y') }}</span><a class="topbar-profile" href="{{ route('profile') }}" aria-label="Buka profil saya"><span class="topbar-name">{{ auth()->user()->nama }}</span><span class="topbar-avatar" aria-hidden="true"><i class="bi bi-person-fill"></i></span></a></div>
+            <div class="topbar-meta"><i class="bi bi-calendar3"></i><span>{{ now()->translatedFormat('d M Y') }}</span><a class="topbar-profile" href="{{ route('profile') }}" aria-label="Buka profil saya"><span class="topbar-name" data-auth-user-name>{{ auth()->user()->nama }}</span><span class="topbar-avatar" aria-hidden="true"><i class="bi bi-person-fill"></i></span></a></div>
         </header>
         <main class="content flex-grow-1">
             @if(session('success'))<div class="alert alert-success alert-dismissible fade show" role="status" aria-live="polite">{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button></div>@endif

@@ -2,19 +2,25 @@
 @section('title', 'Katalog Alat')
 @push('head')
 <style>
-    .card-katalog{transition:all 0.3s ease;box-shadow:0 4px 6px -1px rgba(15, 23, 42, 0.08),0 2px 4px -1px rgba(15, 23, 42, 0.04);background-color:#fff}
+    .card-katalog{transition:transform .3s ease-in-out,box-shadow .3s ease-in-out,border-color .3s ease-in-out;box-shadow:0 4px 6px -1px rgba(15, 23, 42, 0.08),0 2px 4px -1px rgba(15, 23, 42, 0.04);background-color:#fff}
     .card-katalog:hover{transform:translateY(-4px);box-shadow:0 20px 25px -5px rgba(15, 23, 42, 0.12),0 10px 10px -5px rgba(15, 23, 42, 0.04);z-index:1}
-    .card-katalog .overflow-hidden img{transition:transform .4s ease-in-out}
-    .card-katalog:hover .overflow-hidden img{transform:scale(1.08)}
     .catalog-image-frame{display:flex;align-items:center;justify-content:center;height:180px;width:100%;overflow:hidden;border-radius:8px;background:#f8fafc}
+    .catalog-image-frame img{transition:transform .3s ease-in-out}
+    .card-katalog:hover .catalog-image-frame img{transform:scale(1.05)}
     .catalog-image-frame>.equipment-photo{display:block;width:100%;height:100%;object-fit:contain;object-position:center;padding:12px}
-    .card-katalog:hover .catalog-image-frame img{transform:none}
     .catalog-image-frame>.equipment-photo-placeholder{min-height:100%}
     .catalog-thumb .equipment-photo{object-fit:contain}
-    .loan-list-dock{position:fixed;z-index:15;right:24px;bottom:20px;display:flex;align-items:center;gap:14px;max-width:calc(100vw - 32px);padding:10px 12px 10px 16px;border:1px solid #dce5ed;border-radius:12px;background:#fff;box-shadow:0 8px 28px #10233426}
+    .catalog-card-footer{flex-wrap:wrap;gap:.5rem}
+    .catalog-card-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:.5rem;min-width:0}
+    .catalog-card-actions .btn{white-space:normal}
+    .loan-list-dock{position:fixed;z-index:15;right:auto;bottom:max(1rem,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.75rem;width:max-content;max-width:calc(100vw - 2rem);padding:10px 12px 10px 16px;border:1px solid #dce5ed;border-radius:12px;background:#fff;box-shadow:0 8px 28px #10233426}
     .loan-list-panel{scroll-margin-top:80px}
-    @media(prefers-reduced-motion:reduce){.card-katalog,.card-katalog .overflow-hidden img{transition:none}.card-katalog:hover,.card-katalog:hover .overflow-hidden img{transform:none}}
-    @media(max-width:575.98px){.loan-list-dock{right:12px;bottom:12px;left:12px;justify-content:space-between}}
+    .catalog-shell .topbar{height:auto;min-height:62px;flex-wrap:wrap;gap:.75rem;padding-block:.5rem}
+    .catalog-shell .topbar-search{width:auto;min-width:0;max-width:430px;flex:1 1 18rem}
+    .catalog-shell .responsive-search .form-control{flex:1 1 0;min-width:0}
+    .catalog-shell .responsive-search .btn{flex:0 0 auto;white-space:nowrap}
+    @media(max-width:991.98px){.catalog-shell .topbar-search{order:3;max-width:none;flex-basis:100%}}
+    @media(prefers-reduced-motion:reduce){.card-katalog,.catalog-image-frame img{transition:none}.card-katalog:hover,.card-katalog:hover .catalog-image-frame img{transform:none}}
 </style>
 @endpush
 @section('content')
@@ -32,7 +38,7 @@
         <article class="surface card-item card-katalog h-100 d-flex flex-column">
             <div class="catalog-image-frame overflow-hidden mb-3"><x-equipment-image :equipment="$item" alt="Foto {{ $item->nama_alat }}"></x-equipment-image></div>
             <div class="d-flex align-items-start gap-3"><span class="equipment-icon overflow-hidden catalog-thumb"><x-equipment-image :equipment="$item" alt="Foto {{ $item->nama_alat }}"></x-equipment-image></span><div class="flex-grow-1"><h2 class="panel-title">{{ $item->nama_alat }}</h2><div class="panel-subtitle">{{ $item->kode_alat }} · {{ $item->kategori->nama_kategori }}</div><p class="small text-muted mb-0 mt-2">{{ $item->deskripsi ?: 'Peralatan '.$item->kategori->nama_kategori.' untuk mendukung kegiatan praktik.' }}</p></div></div>
-            <div class="d-flex justify-content-between align-items-center border-top mt-3 pt-3"><span class="text-muted">Stok <strong class="text-dark">{{ $item->stok_tersedia }}</strong></span><div class="d-flex align-items-center gap-2">
+            <div class="catalog-card-footer d-flex justify-content-between align-items-center border-top mt-3 pt-3"><span class="text-muted">Stok <strong class="text-dark">{{ $item->stok_tersedia }}</strong></span><div class="catalog-card-actions">
                 @if($activeStatus)<span class="text-muted">{{ $activeStatus === 'Pending' ? 'Sudah diajukan' : 'Sedang dipinjam' }}</span>
                 @elseif($item->status_alat !== 'Tersedia' || $item->stok_tersedia < 1)<span class="text-muted">Tidak tersedia</span>@endif
                 <button class="btn btn-primary btn-sm loan-item-toggle" type="button" data-id="{{ $item->id_alat }}" data-name="{{ $item->nama_alat }}" data-code="{{ $item->kode_alat }}" data-unavailable="{{ $unavailable ? '1' : '0' }}" data-unavailable-label="{{ $activeStatus ? 'Sudah diajukan' : 'Tidak tersedia' }}" @disabled($unavailable) aria-pressed="false">{{ $activeStatus ? 'Sudah diajukan' : ($unavailable ? 'Tidak tersedia' : 'Pilih Alat') }}</button>
@@ -206,8 +212,7 @@
         const endDate = document.getElementById('return-date');
         endDate.min = minEnd;
         endDate.max = `${maxEnd.getFullYear()}-${String(maxEnd.getMonth() + 1).padStart(2, '0')}-${String(maxEnd.getDate()).padStart(2, '0')}`;
-        if (endDate.value < minEnd) endDate.value = minEnd;
-        if (endDate.value > endDate.max) endDate.value = endDate.max;
+        endDate.value = endDate.max;
     });
     loanForm.addEventListener('submit', event => {
         if (selectedItems.size === 0) {
