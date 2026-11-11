@@ -252,10 +252,21 @@
         }
 
         event.preventDefault();
+        if (pendingForm) return;
         pendingForm = form;
         title.textContent = form.dataset.confirmTitle || 'Konfirmasi tindakan';
         message.textContent = form.dataset.confirmMessage;
         confirmButton.textContent = form.dataset.confirmLabel || 'Ya, Lanjutkan';
+
+        const formModal = form.closest('.modal');
+        if (formModal && formModal !== modalElement && formModal.classList.contains('show')) {
+            formModal.addEventListener('hidden.bs.modal', () => {
+                if (pendingForm === form) modal.show();
+            }, {once: true});
+            bootstrap.Modal.getOrCreateInstance(formModal).hide();
+            return;
+        }
+
         modal.show();
     }, true);
 
@@ -269,8 +280,13 @@
     });
 
     modalElement.addEventListener('hidden.bs.modal', () => {
+        const formToRestore = pendingForm;
         pendingForm = null;
         confirmButton.textContent = 'Ya, Lanjutkan';
+        if (formToRestore?.id === 'loan-request-form') {
+            const formModal = formToRestore.closest('.modal');
+            if (formModal) bootstrap.Modal.getOrCreateInstance(formModal).show();
+        }
     });
 
     document.addEventListener('invalid', event => {
