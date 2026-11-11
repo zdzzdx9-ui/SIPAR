@@ -19,9 +19,10 @@
 @endpush
 @section('content')
 <div class="page-head"><div><h1>Katalog Alat</h1><p>Pilih beberapa jenis alat, lalu ajukan semuanya dalam satu transaksi.</p></div></div>
+<div id="loan-empty-warning" class="alert alert-warning d-none" role="alert">Belum ada alat yang dipilih untuk dipinjam.</div>
 <div id="loan-list-dock" class="loan-list-dock d-none" role="status" aria-live="polite">
     <span><strong id="loan-list-count">0 jenis alat dipilih</strong><small id="loan-list-summary" class="d-block text-muted">Maksimal satu unit untuk setiap jenis alat</small></span>
-    <button class="btn btn-primary" id="view-loan-list" type="button" data-bs-toggle="modal" data-bs-target="#loan-request-modal" aria-haspopup="dialog">Pinjam</button>
+    <button class="btn btn-primary" id="view-loan-list" type="button" aria-haspopup="dialog" aria-controls="loan-request-modal">Pinjam</button>
 </div>
 <div class="row g-3">
     @forelse($equipment as $item)
@@ -44,7 +45,7 @@
 </div>
 <div class="modal fade" id="loan-request-modal" tabindex="-1" aria-labelledby="loan-request-modal-title" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-        <form class="modal-content" method="post" action="{{ route('loans.create') }}" id="loan-request-form" data-disable-on-submit data-confirm-title="Konfirmasi pengajuan peminjaman" data-confirm-message="Pastikan daftar alat, tanggal peminjaman, dan keperluan sudah benar. Apakah Anda yakin ingin mengajukan peminjaman?">
+        <form class="modal-content" method="post" action="{{ route('loans.create') }}" id="loan-request-form" data-disable-on-submit data-confirm-title="Konfirmasi pengajuan peminjaman">
             @csrf
             <div class="modal-header">
                 <div>
@@ -63,8 +64,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-light" type="button" data-bs-dismiss="modal">Batal</button>
-                <button class="btn btn-primary" type="submit" data-submitting-text="Mengajukan..."><i class="bi bi-send me-1"></i>Ajukan Peminjaman</button>
+                <button class="btn btn-light" id="cancel-loan-request" type="button">Batal</button>
+                <button class="btn btn-primary" id="submit-loan-request" type="submit" data-submitting-text="Mengajukan..."><i class="bi bi-send me-1"></i>Ajukan Peminjaman</button>
             </div>
         </form>
     </div>
@@ -79,8 +80,18 @@
     const loanListDock = document.getElementById('loan-list-dock');
     const loanListCount = document.getElementById('loan-list-count');
     const loanListSummary = document.getElementById('loan-list-summary');
+    const loanEmptyWarning = document.getElementById('loan-empty-warning');
+    const loanModal = document.getElementById('loan-request-modal');
+    const viewLoanList = document.getElementById('view-loan-list');
+    const cancelLoanRequest = document.getElementById('cancel-loan-request');
+    const submitLoanRequest = document.getElementById('submit-loan-request');
+    const loanConfirmationMessage = 'Pastikan daftar alat, tanggal peminjaman, dan keperluan sudah benar. Apakah Anda yakin ingin mengajukan peminjaman?';
 
-    function renderLoanList() {
+    function showEmptyWarning() {
+        loanEmptyWarning.classList.remove('d-none');
+    }
+
+    function renderLoanList(warnWhenEmpty = false) {
         loanListItems.replaceChildren();
         [...selectedItems.values()].forEach((item, index) => {
             const row = document.createElement('div');
@@ -104,7 +115,7 @@
             remove.setAttribute('aria-label', `Batalkan pilihan ${item.name}`);
             remove.addEventListener('click', () => {
                 selectedItems.delete(item.id);
-                renderLoanList();
+                renderLoanList(true);
             });
             row.append(label, quantityLabel, remove);
 
@@ -122,6 +133,14 @@
 
         const empty = selectedItems.size === 0;
         loanListDock.classList.toggle('d-none', empty);
+        if (empty) {
+            delete loanForm.dataset.confirmMessage;
+            if (warnWhenEmpty) showEmptyWarning();
+            bootstrap.Modal.getInstance(loanModal)?.hide();
+        } else {
+            loanForm.dataset.confirmMessage = loanConfirmationMessage;
+            loanEmptyWarning.classList.add('d-none');
+        }
         loanListCount.textContent = `${selectedItems.size} jenis alat dipilih`;
         loanListSummary.textContent = `Total ${selectedItems.size} unit · maksimal 1 per jenis`;
         document.querySelectorAll('.loan-item-toggle').forEach(button => {
@@ -141,13 +160,44 @@
 
     document.querySelectorAll('.loan-item-toggle:not(:disabled)').forEach(button => button.addEventListener('click', () => {
         const id = Number(button.dataset.id);
-        if (selectedItems.has(id)) {
+        const removingSelection = selectedItems.has(id);
+        if (removingSelection) {
             selectedItems.delete(id);
         } else {
             selectedItems.set(id, {id, name: button.dataset.name, code: button.dataset.code});
         }
-        renderLoanList();
+        renderLoanList(removingSelection);
     }));
+
+    viewLoanList.addEventListener('click', () => {
+        if (selectedItems.size === 0) {
+            showEmptyWarning();
+            bootstrap.Modal.getInstance(loanModal)?.hide();
+            return;
+        }
+
+        bootstrap.Modal.getOrCreateInstance(loanModal).show();
+    });
+
+    cancelLoanRequest.addEventListener('click', () => {
+        bootstrap.Modal.getOrCreateInstance(loanModal).hide();
+    });
+
+    loanForm.addEventListener('invalid', () => {
+        if (selectedItems.size === 0) showEmptyWarning();
+    }, true);
+    submitLoanRequest.addEventListener('click', event => {
+        if (selectedItems.size === 0) {
+            event.preventDefault();
+            window.alert('Pilih minimal satu alat dari katalog terlebih dahulu!');
+        }
+    });
+    loanForm.addEventListener('submit', event => {
+        if (selectedItems.size === 0) {
+            event.preventDefault();
+            window.alert('Pilih minimal satu alat dari katalog terlebih dahulu!');
+        }
+    });
 
     document.getElementById('loan-date').addEventListener('change', event => {
         const [year, month, day] = event.target.value.split('-').map(Number);
@@ -162,8 +212,10 @@
     loanForm.addEventListener('submit', event => {
         if (selectedItems.size === 0) {
             event.preventDefault();
+            showEmptyWarning();
         }
     });
+    renderLoanList();
 })();
 </script>
 @endpush
