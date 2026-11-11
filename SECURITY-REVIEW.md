@@ -27,6 +27,14 @@ The database dump is located under `C:\xampp\htdocs`, which is XAMPP's configure
 
 **Recommended action:** Move backups outside the served tree, restrict access to the directory, and review access logs. If this file was exposed, assess session invalidation and affected account credentials. This audit did not move or delete the untracked backup.
 
+### MEDIUM — Technician dashboard materializes every approved loan to calculate counters
+
+**File:** [`DashboardController.php`](./app/Http/Controllers/DashboardController.php)
+
+The technician dashboard loads all approved loans and their handover/return details into application memory to calculate two counts. This avoids N+1 queries but scales with the full active-loan history rather than returning aggregate counts from the database.
+
+**Recommended action:** Calculate each count with `whereHas` and correlated `SUM` subqueries, as used for the technician navigation counters. This was identified but not changed during this audit.
+
 ## Improvements applied during audit
 
 - Raised mobile/tablet interactive targets (buttons, close controls, navigation, password toggles, pagination, and form selects/uploads) to at least 48 px.
