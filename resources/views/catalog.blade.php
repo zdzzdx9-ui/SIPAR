@@ -21,7 +21,7 @@
 <div class="page-head"><div><h1>Katalog Alat</h1><p>Pilih beberapa jenis alat, lalu ajukan semuanya dalam satu transaksi.</p></div></div>
 <div id="loan-list-dock" class="loan-list-dock d-none" role="status" aria-live="polite">
     <span><strong id="loan-list-count">0 jenis alat dipilih</strong><small id="loan-list-summary" class="d-block text-muted">Maksimal satu unit untuk setiap jenis alat</small></span>
-    <button class="btn btn-primary" id="view-loan-list" type="button">Lengkapi Form Peminjaman</button>
+    <button class="btn btn-primary" id="view-loan-list" type="button" data-bs-toggle="modal" data-bs-target="#loan-request-modal" aria-haspopup="dialog">Pinjam</button>
 </div>
 <div class="row g-3">
     @forelse($equipment as $item)
@@ -34,7 +34,7 @@
             <div class="d-flex justify-content-between align-items-center border-top mt-3 pt-3"><span class="text-muted">Stok <strong class="text-dark">{{ $item->stok_tersedia }}</strong></span><div class="d-flex align-items-center gap-2">
                 @if($activeStatus)<span class="text-muted">{{ $activeStatus === 'Pending' ? 'Sudah diajukan' : 'Sedang dipinjam' }}</span>
                 @elseif($item->status_alat !== 'Tersedia' || $item->stok_tersedia < 1)<span class="text-muted">Tidak tersedia</span>@endif
-                <button class="btn btn-primary btn-sm loan-item-toggle" type="button" title="Pilih Alat" data-id="{{ $item->id_alat }}" data-name="{{ $item->nama_alat }}" data-code="{{ $item->kode_alat }}" data-unavailable="{{ $unavailable ? '1' : '0' }}" data-unavailable-label="{{ $activeStatus ? 'Sudah diajukan' : 'Tidak tersedia' }}" @disabled($unavailable) aria-pressed="false">{{ $activeStatus ? 'Sudah diajukan' : ($unavailable ? 'Tidak tersedia' : 'Pinjam') }}</button>
+                <button class="btn btn-primary btn-sm loan-item-toggle" type="button" data-id="{{ $item->id_alat }}" data-name="{{ $item->nama_alat }}" data-code="{{ $item->kode_alat }}" data-unavailable="{{ $unavailable ? '1' : '0' }}" data-unavailable-label="{{ $activeStatus ? 'Sudah diajukan' : 'Tidak tersedia' }}" @disabled($unavailable) aria-pressed="false">{{ $activeStatus ? 'Sudah diajukan' : ($unavailable ? 'Tidak tersedia' : 'Pilih Alat') }}</button>
             </div></div>
         </article>
     </div>
@@ -42,37 +42,43 @@
     <div class="col-12"><div class="surface p-5 text-center text-muted">Alat tidak ditemukan.</div></div>
     @endforelse
 </div>
-<section class="surface p-3 p-md-4 mt-4 loan-list-panel" id="loan-list">
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-        <div>
-            <h2 class="panel-title">Daftar Pinjam</h2>
-            <p class="panel-subtitle mb-0">Pilih beberapa jenis alat; setiap jenis maksimal 1 unit per siswa. Maksimal durasi peminjaman 5 hari dan boleh dikembalikan lebih awal.</p>
-        </div>
+<div class="modal fade" id="loan-request-modal" tabindex="-1" aria-labelledby="loan-request-modal-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <form class="modal-content" method="post" action="{{ route('loans.create') }}" id="loan-request-form" data-disable-on-submit data-confirm-title="Konfirmasi pengajuan peminjaman" data-confirm-message="Pastikan daftar alat, tanggal peminjaman, dan keperluan sudah benar. Apakah Anda yakin ingin mengajukan peminjaman?">
+            @csrf
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title fs-5 fw-bold" id="loan-request-modal-title">Form Peminjaman</h2>
+                    <p class="text-muted mb-0">Pilih beberapa jenis alat; maksimal satu unit per jenis dan durasi peminjaman lima hari.</p>
+                </div>
+                <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body">
+                <h3 class="panel-title mb-2">Daftar alat yang dipinjam</h3>
+                <div id="loan-list-items" class="mb-3"></div>
+                <div class="row g-3">
+                    <div class="col-12 col-sm-6"><label class="form-label" for="loan-date">Tanggal pinjam</label><input class="form-control" id="loan-date" type="date" name="tanggal_pinjam" min="{{ now()->toDateString() }}" value="{{ now()->toDateString() }}" required></div>
+                    <div class="col-12 col-sm-6"><label class="form-label" for="return-date">Rencana kembali</label><input class="form-control" id="return-date" type="date" name="tanggal_kembali_rencana" min="{{ now()->toDateString() }}" max="{{ now()->addDays(5)->toDateString() }}" value="{{ now()->addDays(5)->toDateString() }}" required></div>
+                    <div class="col-12"><label class="form-label" for="loan-purpose">Keperluan</label><textarea class="form-control" id="loan-purpose" name="keperluan" rows="3" maxlength="2000" required placeholder="Jelaskan keperluan alat..."></textarea></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light" type="button" data-bs-dismiss="modal">Batal</button>
+                <button class="btn btn-primary" type="submit" data-submitting-text="Mengajukan..."><i class="bi bi-send me-1"></i>Ajukan Peminjaman</button>
+            </div>
+        </form>
     </div>
-    <div id="loan-list-empty" class="text-muted py-2">Belum ada alat yang dipilih.</div>
-    <form method="post" action="{{ route('loans.create') }}" id="loan-request-form" class="d-none" data-disable-on-submit data-confirm-title="Konfirmasi pengajuan peminjaman" data-confirm-message="Pastikan daftar alat, tanggal peminjaman, dan keperluan sudah benar. Apakah Anda yakin ingin mengajukan peminjaman?">
-        @csrf
-        <div id="loan-list-items" class="mb-3"></div>
-        <div class="row g-3">
-            <div class="col-12 col-sm-6"><label class="form-label" for="loan-date">Tanggal pinjam</label><input class="form-control" id="loan-date" type="date" name="tanggal_pinjam" min="{{ now()->toDateString() }}" value="{{ now()->toDateString() }}" required></div>
-            <div class="col-12 col-sm-6"><label class="form-label" for="return-date">Rencana kembali</label><input class="form-control" id="return-date" type="date" name="tanggal_kembali_rencana" min="{{ now()->toDateString() }}" max="{{ now()->addDays(5)->toDateString() }}" value="{{ now()->addDays(5)->toDateString() }}" required></div>
-            <div class="col-12"><label class="form-label" for="loan-purpose">Keperluan</label><textarea class="form-control" id="loan-purpose" name="keperluan" rows="3" maxlength="2000" required placeholder="Jelaskan keperluan alat..."></textarea></div>
-            <div class="col-12"><button class="btn btn-primary" type="submit" data-submitting-text="Mengajukan..."><i class="bi bi-send me-1"></i>Ajukan Daftar Pinjam</button></div>
-        </div>
-    </form>
-</section>
+</div>
 @endsection
 @push('scripts')
 <script>
 (() => {
     const selectedItems = new Map();
     const loanListItems = document.getElementById('loan-list-items');
-    const loanListEmpty = document.getElementById('loan-list-empty');
     const loanForm = document.getElementById('loan-request-form');
     const loanListDock = document.getElementById('loan-list-dock');
     const loanListCount = document.getElementById('loan-list-count');
     const loanListSummary = document.getElementById('loan-list-summary');
-    const loanListSection = document.getElementById('loan-list');
 
     function renderLoanList() {
         loanListItems.replaceChildren();
@@ -115,8 +121,6 @@
         });
 
         const empty = selectedItems.size === 0;
-        loanListEmpty.classList.toggle('d-none', !empty);
-        loanForm.classList.toggle('d-none', empty);
         loanListDock.classList.toggle('d-none', empty);
         loanListCount.textContent = `${selectedItems.size} jenis alat dipilih`;
         loanListSummary.textContent = `Total ${selectedItems.size} unit · maksimal 1 per jenis`;
@@ -131,7 +135,7 @@
                 ? 'Batalkan Pilihan'
                 : unavailable
                     ? button.dataset.unavailableLabel
-                    : 'Pinjam';
+                    : 'Pilih Alat';
         });
     }
 
@@ -144,11 +148,6 @@
         }
         renderLoanList();
     }));
-
-    document.getElementById('view-loan-list').addEventListener('click', () => {
-        loanListSection.scrollIntoView({behavior: 'smooth', block: 'start'});
-        document.getElementById('loan-date').focus({preventScroll: true});
-    });
 
     document.getElementById('loan-date').addEventListener('change', event => {
         const [year, month, day] = event.target.value.split('-').map(Number);
