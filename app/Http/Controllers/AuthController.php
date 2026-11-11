@@ -28,9 +28,9 @@ class AuthController extends Controller
         $remember = $request->boolean('remember');
 
         if (! Auth::attempt([$column => $credentials['identity'], 'password' => $credentials['password']], $remember)) {
-            $message = $credentials['role'] === 'admin'
-                ? 'Username atau password tidak cocok.'
-                : 'NIS/NIP atau password tidak cocok.';
+            $message = in_array($credentials['role'], ['admin', 'teknisi'], true)
+                ? 'Username atau kata sandi tidak cocok.'
+                : 'NIS atau kata sandi tidak cocok.';
 
             return back()->withErrors(['identity' => $message])->onlyInput('identity', 'role');
         }
@@ -68,9 +68,9 @@ class AuthController extends Controller
             'email.email' => 'Format email belum benar.',
             'email.max' => 'Email maksimal 255 karakter.',
             'email.unique' => 'Email tersebut sudah terdaftar. Gunakan email lain atau masuk dengan akun yang sudah ada.',
-            'password.required' => 'Password wajib diisi.',
-            'password.min' => 'Password minimal 8 karakter.',
-            'password.confirmed' => 'Password dan ulangi password harus sama.',
+            'password.required' => 'Kata sandi wajib diisi.',
+            'password.min' => 'Kata sandi minimal 8 karakter.',
+            'password.confirmed' => 'Kata sandi dan konfirmasinya harus sama.',
         ]);
         $data['role'] = 'siswa';
 
@@ -89,10 +89,14 @@ class AuthController extends Controller
     public function updateProfile(Request $request): RedirectResponse
     {
         $user = $request->user();
-        $data = $request->validate([
-            'nama' => ['required', 'string', 'max:120'],
+        $rules = [
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id_user.',id_user'],
-        ]);
+        ];
+        if ($user->role !== 'siswa') {
+            $rules['nama'] = ['required', 'string', 'max:120'];
+        }
+
+        $data = $request->validate($rules);
         $user->update($data);
 
         return back()->with('success', 'Profil berhasil diperbarui.');
@@ -106,7 +110,7 @@ class AuthController extends Controller
         ]);
         $request->user()->update(['password' => $data['password']]);
 
-        return back()->with('success', 'Password berhasil diubah.');
+        return back()->with('success', 'Kata sandi berhasil diubah.');
     }
 
     public function logout(Request $request): RedirectResponse

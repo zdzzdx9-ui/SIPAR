@@ -15,15 +15,33 @@ class DashboardController extends Controller
         $isAdmin = $role === 'admin';
         $isTeknisi = $role === 'teknisi';
         $loans = Peminjaman::with(['user', 'detail.alat'])->latest('tanggal_pengajuan');
-        $approvedLoans = $isTeknisi
-            ? Peminjaman::with(['detail.penyerahanDetail', 'detail.pengembalianDetail'])
-                ->where('status', 'Approved')->get()
-            : collect();
 
         if (! $isAdmin && ! $isTeknisi) {
             $loans->where('id_user', $request->user()->id_user);
         }
         $myLoans = Peminjaman::where('id_user', $request->user()->id_user);
+        $handoverCount = $isTeknisi
+            ? Peminjaman::where('status', 'Approved')
+                ->whereHas('detail', fn ($query) => $query->whereRaw('(
+                    SELECT COALESCE(SUM(detail_penyerahan.jumlah), 0)
+                    FROM detail_penyerahan
+                    WHERE detail_penyerahan.id_detail = loan_items.id_detail
+                ) < loan_items.jumlah'))
+                ->count()
+            : 0;
+        $activeReturnCount = $isTeknisi
+            ? Peminjaman::where('status', 'Approved')
+                ->whereHas('detail', fn ($query) => $query->whereRaw('(
+                    SELECT COALESCE(SUM(detail_penyerahan.jumlah), 0)
+                    FROM detail_penyerahan
+                    WHERE detail_penyerahan.id_detail = loan_items.id_detail
+                ) > (
+                    SELECT COALESCE(SUM(detail_pengembalian.jumlah), 0)
+                    FROM detail_pengembalian
+                    WHERE detail_pengembalian.id_detail = loan_items.id_detail
+                )'))
+                ->count()
+            : 0;
 
         return view('dashboard', [
             'isAdmin' => $isAdmin,
@@ -37,8 +55,8 @@ class DashboardController extends Controller
             'myCompletedCount' => (clone $myLoans)->where('status', 'Selesai')->count(),
             'recentLoans' => $loans->take(6)->get(),
             'topAlat' => Alat::with('kategori')->orderByDesc('stok_total')->take(5)->get(),
-            'handoverCount' => $isTeknisi ? $approvedLoans->filter(fn ($loan) => $loan->detail->contains(fn ($detail) => $detail->penyerahanDetail->sum('jumlah') < $detail->jumlah))->count() : 0,
-            'activeReturnCount' => $isTeknisi ? $approvedLoans->filter(fn ($loan) => $loan->detail->contains(fn ($detail) => $detail->penyerahanDetail->sum('jumlah') > $detail->pengembalianDetail->sum('jumlah')))->count() : 0,
+            'handoverCount' => $handoverCount,
+            'activeReturnCount' => $activeReturnCount,
         ]);
     }
 }

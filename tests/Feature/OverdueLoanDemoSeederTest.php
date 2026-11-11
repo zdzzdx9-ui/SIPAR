@@ -7,7 +7,6 @@ use App\Models\Alat;
 use App\Models\User;
 use Database\Seeders\OverdueLoanDemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -63,7 +62,7 @@ class OverdueLoanDemoSeederTest extends TestCase
             'idempotency_key' => '00000000-0000-4000-8000-000000000075',
             'kode_alat' => $equipment->kode_alat,
             'kondisi_alat' => 'Baik',
-            'foto_bukti' => UploadedFile::fake()->create('demo-return.jpg', 100, 'image/jpeg'),
+            'foto_bukti' => $this->fakeImage('demo-return.jpg'),
         ])->assertRedirect(route('technician.returns'))
             ->assertSessionHas('success', 'Semua alat pada transaksi telah kembali. Denda: Rp 35.000');
 

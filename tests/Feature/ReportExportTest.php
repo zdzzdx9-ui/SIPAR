@@ -101,8 +101,8 @@ class ReportExportTest extends TestCase
 
             $this->assertSame(2, $sheet->getHighestRow());
             $this->assertSame([
-                'ID', 'Nama Siswa', 'NIS/NIP', 'Alat', 'Jumlah', 'Tanggal Pinjam',
-                'Rencana Kembali', 'Status', 'Kembali Aktual', 'Denda (Rp)', 'Catatan',
+                'Kode Transaksi', 'Nama Siswa', 'NIS / NIP', 'Alat', 'Jumlah', 'Tanggal Pinjam',
+                'Rencana Kembali', 'Status', 'Tanggal Kembali Aktual', 'Denda (Rp)', 'Catatan',
             ], $sheet->rangeToArray('A1:K1', null, true, false)[0]);
             $this->assertSame($approvedLoan->booking_code, $sheet->getCell('A2')->getValue());
             $this->assertSame('Siswa XLSX', $sheet->getCell('B2')->getValue());

@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title', 'Dashboard') · SIPAR</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    @vite('resources/css/vendor.css')
+    <style>
+        :root{--ink:#102334;--muted:#718090;--line:#e3e9ef;--canvas:#f2f6f9;--blue:#0868ce;--blue-soft:#e8f2ff;--green:#168361;--amber:#ad6b05;--red:#bd3d4a;--sidebar:#102334}
+        *{box-sizing:border-box}body{margin:0;background:var(--canvas);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:14px}.shell{display:flex;min-height:100vh}.sidebar{position:fixed;inset:0 auto 0 0;width:226px;background:var(--sidebar);color:#fff;padding:22px 14px;display:flex;flex-direction:column;z-index:20}.brand{display:flex;align-items:center;gap:10px;padding:0 10px 26px;color:#fff;text-decoration:none;font-family:Manrope,sans-serif;font-weight:800}.brand-logo{width:36px;height:36px;object-fit:contain;flex:none}.brand small{display:block;color:#9cb0c0;font:400 10px 'DM Sans',sans-serif}.nav-caption{font-size:10px;text-transform:uppercase;color:#758a9d;letter-spacing:.08em;padding:11px 11px 6px}.nav-link{display:flex;align-items:center;gap:11px;color:#c1ceda;text-decoration:none;padding:10px 11px;border-radius:7px;margin:2px 0;font-size:13px}.nav-link:hover,.nav-link.active{background:#203c53;color:white}.nav-link.active{box-shadow:inset 3px 0 #2093ff}.nav-link .bi{font-size:15px;width:18px}.side-user{margin-top:auto;border-top:1px solid #304457;padding:15px 8px 0;color:#dbe3e9;font-size:12px}.side-user small{display:block;color:#91a5b5}.workspace{display:flex;flex:1 1 0;flex-direction:column;min-width:0;margin-left:226px;min-height:100vh}.topbar{height:62px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px;position:sticky;top:0;z-index:10}.topbar-search{max-width:430px;width:48%;position:relative}.topbar-search input{padding-left:12px;background:#f7f9fb;border:1px solid var(--line);font-size:12px}.topbar-meta{display:flex;align-items:center;gap:13px;color:var(--muted);font-size:12px}.content{padding:27px 30px 42px;max-width:1480px;margin:auto}.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px}.page-head h1{font:800 22px Manrope,sans-serif;margin:0 0 4px}.page-head p{margin:0;color:var(--muted);font-size:12px}.surface{background:#fff;border:1px solid var(--line);border-radius:8px}.stat{padding:17px 18px;min-height:105px}.stat-label{color:var(--muted);font-size:11px}.stat-value{font:800 26px Manrope,sans-serif;margin:7px 0 1px}.stat-note{font-size:10px;color:var(--muted)}.stat-icon{height:31px;width:31px;display:grid;place-items:center;border-radius:8px;color:var(--blue);background:var(--blue-soft);float:right}.panel-title{font:700 14px Manrope,sans-serif;margin:0}.panel-subtitle{color:var(--muted);font-size:11px;margin-top:4px}.table{--bs-table-bg:transparent;margin-bottom:0;font-size:12px}.table thead th{font-size:10px;text-transform:uppercase;letter-spacing:.03em;color:#768695;font-weight:600;border-bottom-color:var(--line);padding:11px 12px;white-space:nowrap}.table td{padding:12px;border-color:#edf1f4;vertical-align:middle}.table>:not(caption)>*>*{box-shadow:none}.btn{font-size:12px;font-weight:600;border-radius:6px;padding:8px 13px}.btn-primary{background:var(--blue);border-color:var(--blue)}.btn-light{background:#f5f8fa;border-color:var(--line);color:var(--ink)}.form-control,.form-select{border-color:var(--line);font-size:12px;border-radius:6px;padding:9px 11px}.form-label{font-size:11px;font-weight:600;margin-bottom:6px}.form-text,.text-muted{font-size:11px;color:var(--muted)!important}.badge-status{display:inline-block;border-radius:20px;padding:5px 10px;font-size:11px;line-height:1.2;min-height:26px;font-weight:700;white-space:nowrap}.status-pending,.status-maintenance{color:var(--amber);background:#fff3d9}.status-approved,.status-tersedia,.status-selesai{color:var(--green);background:#e3f5ef}.status-rejected,.status-rusak,.status-cancelled{color:var(--red);background:#ffeaeb}.status-dipinjam{color:#176cb0;background:#e6f3ff}.equipment-icon{height:38px;width:38px;display:grid;place-items:center;border-radius:9px;background:#eaf3ff;color:#176ec5;font-size:16px;flex:none}.alert{font-size:12px;border-radius:7px}.card-item{padding:16px}.card-item:hover{border-color:#b7d7f3}.modal-content{border:0;border-radius:9px}.mobile-bottom{display:none}
+        @media(max-width:800px){.sidebar{display:none}.workspace{margin-left:0}.topbar{height:54px;padding:0 15px}.topbar-search{width:65%}.topbar-meta .topbar-name{display:none}.content{padding:20px 15px 28px}.page-head h1{font-size:19px}.page-head{margin-bottom:17px}.table-responsive{border-radius:8px}.content>.row{--bs-gutter-x:12px}.stat{padding:13px;min-height:95px}.stat-value{font-size:22px}.page-head .btn{padding:8px 10px}}
+        @media(max-width:575.98px){.topbar{gap:9px;padding:0 10px}.topbar-search{width:auto;flex:1}.topbar-search input{height:30px;padding-left:10px;padding-right:48px;font-size:11px}.topbar-search button{top:3px;right:3px;width:42px;height:24px;padding:0 5px;font-size:10px}.topbar-meta{gap:0}.topbar-meta>i,.topbar-meta>span:not(.topbar-profile){display:none}.topbar-profile{display:grid!important}.topbar-avatar{width:30px;height:30px}.topbar-avatar .bi{font-size:15px}.modal-dialog{width:calc(100% - 1rem)!important;margin:.5rem auto!important}.modal-dialog .modal-body{max-height:75vh}}
+        @media print{.sidebar,.mobile-nav-toggle,.mobile-drawer,.topbar,.no-print,.page-head .btn{display:none!important}.workspace{margin:0}.content{padding:0;max-width:none}body{background:#fff}.surface{border-color:#ccd3da}.table{font-size:10px}}
+    </style>
+    <style>@media(min-width:801px){.content{width:100%;max-width:1600px;margin-inline:auto}}</style>
+    <style>.sidebar{overflow-y:auto}.sidebar-logout-form{position:sticky;bottom:0;flex:none;margin-top:8px;padding:9px 8px 12px;background:var(--sidebar);border-top:1px solid #304457;z-index:2}.sidebar-logout{display:flex;align-items:center;gap:9px;width:100%;padding:3px 0;border:0;background:none;color:#c1ceda;text-align:left;font:inherit;font-size:12px}.sidebar-logout:hover{color:#fff}</style>
+    <style>
+        .workspace,.content,.surface{min-width:0}
+        .equipment-photo-placeholder:not([hidden]){display:grid;place-items:center;background:#eaf3ff;color:#176ec5;font-size:1.15rem}
+        .equipment-icon .equipment-photo{width:100%;height:100%;object-fit:cover}
+        .equipment-form-photo-preview{width:min(100%,240px);aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-inline:auto;border:1px solid var(--line);border-radius:8px;background:#f7f9fb}
+        .equipment-form-photo-preview img{display:block;width:100%;height:100%;object-fit:contain;object-position:center}
+        .equipment-form-photo-preview[hidden],.equipment-form-photo-preview img[hidden]{display:none}
+        .pagination svg{width:1rem;height:1rem;display:block}
+        .pagination .page-link{display:flex;align-items:center;justify-content:center;min-width:2.25rem}
+        .page-head{flex-wrap:wrap;align-items:flex-start}
+        .page-head>div:last-child{max-width:100%;flex-wrap:wrap}
+        .topbar-search{min-width:0}
+        .responsive-search{display:flex;align-items:center;gap:.5rem;min-width:0}
+        .responsive-search .form-control{flex:1 1 0;min-width:0}
+        .responsive-search .btn{flex:0 0 auto;white-space:nowrap}
+        .topbar-profile{display:flex;align-items:center;gap:13px;color:inherit;text-decoration:none}
+        .topbar-profile:hover{color:var(--blue)}
+        .topbar-search input{min-width:0;padding-right:58px}
+        .modal-dialog{width:calc(100% - 2rem)!important;max-width:560px!important;margin:1.75rem auto!important}
+        .modal-dialog .modal-content{max-width:100%;overflow:hidden}
+        .modal-dialog .modal-body{max-height:70vh;overflow-y:auto}
+        .operational-modal{max-width:560px!important}
+        .equipment-modal-dialog{width:calc(100% - 2rem)!important;max-width:620px!important}
+        .export-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+        .export-action{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:9px 14px;border:1px solid transparent;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;box-shadow:0 2px 6px rgba(16,35,52,.10),0 1px 2px rgba(16,35,52,.08);transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease}
+        .export-action:hover{transform:translateY(-1px);box-shadow:0 5px 12px rgba(16,35,52,.15),0 2px 3px rgba(16,35,52,.10)}
+        .export-action:active{transform:translateY(0);box-shadow:0 1px 3px rgba(16,35,52,.12)}
+        .export-action-excel{color:#176b4a;background:#f2fbf6;border-color:#b9e5cd}
+        .export-action-excel:hover{color:#12583d;background:#e2f6eb}
+        .export-action-excel .bi{color:#168361}
+        .export-action-pdf{color:#a7353f;background:#fff5f5;border-color:#f0c4c8}
+        .export-action-pdf:hover{color:#8e2933;background:#ffeaeb}
+        .export-action-pdf .bi{color:#bd3d4a}
+        .topbar-search button{position:absolute;top:3px;right:3px;width:50px;height:36px;padding:0 8px;display:grid;place-items:center}
+        .topbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,600px) max-content;column-gap:24px}
+        .topbar-search{grid-column:2;grid-row:1;width:100%;max-width:none;z-index:3}
+        .topbar-meta{grid-column:3;grid-row:1;justify-self:end;white-space:nowrap;flex-shrink:0}
+        .search-suggestions{position:absolute;top:calc(100% + 8px);left:0;right:0;display:none;max-height:420px;overflow-y:auto;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 28px rgba(16,35,52,.16);padding:6px;z-index:30}
+        .search-suggestions.is-visible{display:block}
+        .search-suggestion{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:0;border-radius:6px;background:#fff;color:var(--ink);text-align:left;text-decoration:none}
+        .search-suggestion:hover,.search-suggestion:focus{background:var(--blue-soft);outline:0}
+        .search-suggestion-icon{display:grid;place-items:center;width:30px;height:30px;flex:none;border-radius:7px;background:var(--blue-soft);color:var(--blue)}
+        .search-suggestion-type{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+        .search-suggestion-title{display:block;font-size:12px;font-weight:700}
+        .search-suggestion-subtitle{display:block;color:var(--muted);font-size:10px}
+        .search-suggestion-empty{padding:12px;color:var(--muted);font-size:12px;text-align:center}
+        .topbar-search .form-control{min-height:42px;padding-left:12px;padding-right:58px;border-radius:9px;background:#f7f9fb;font-size:13px}
+        .topbar-search button{top:3px;right:3px;width:50px;height:36px;border-radius:7px}
+        .content{width:100%;flex:1 0 auto}
+        .app-footer{width:100%;margin-top:auto;padding:14px 30px 18px;border-top:1px solid var(--line);background:#f8fafc;color:#64748b;font-size:.85rem;line-height:1.5;text-align:center}
+        .app-footer-inner{display:flex;justify-content:center;align-items:center;max-width:1480px;margin-inline:auto}
+        .app-footer strong{color:#40596a;font-weight:700}
+        .app-footer small{font-size:inherit}
+        .topbar-avatar{display:grid;width:34px;height:34px;flex:none;place-items:center;border-radius:50%;background:#e8f2ff;color:#0868ce}
+        .topbar-avatar .bi{font-size:17px;line-height:1}
+        .approval-card-header{flex-wrap:wrap}
+        .approval-status{align-self:flex-start;display:inline-flex;align-items:center;justify-content:center;flex:none;min-height:26px;padding:5px 10px;line-height:1.2}
+        .approval-card{width:100%;min-width:0}
+        .approval-card .panel-title{font-size:17px;line-height:1.4}
+        .approval-card .panel-subtitle{font-size:12px}
+        .approval-details{font-size:14px}
+        .approval-details>.col-6,.approval-details>.col-12{min-width:0}
+        .approval-details .equipment-icon{width:44px;height:44px}
+        .approval-details strong{overflow-wrap:anywhere}
+        .approval-purpose{padding:12px 14px;border-radius:8px;background:#f3f6f8;font-size:14px;line-height:1.55;overflow-wrap:anywhere}
+        .approval-reject-form .form-control{min-width:0;min-height:38px;font-size:13px}
+        .approval-actions .btn{min-height:38px}
+        .table-responsive{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+        .modal-dialog{max-width:calc(100vw - 1rem)}
+        .student-edit-dialog{width:calc(100% - 1rem);max-width:480px;margin-right:auto;margin-left:auto}
+        .modal-body{max-height:calc(100dvh - 170px);overflow-y:auto}
+        .mobile-nav-toggle{display:none;width:36px;height:36px;flex:none;place-items:center;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink)}
+        .mobile-nav-toggle .bi{font-size:18px}
+        .mobile-drawer{--bs-offcanvas-width:min(280px, 85vw);background:var(--sidebar);color:#fff}
+        .mobile-drawer .offcanvas-header{padding:18px 14px 10px}
+        .mobile-drawer .offcanvas-body{padding:8px 14px 14px}
+        .mobile-drawer .brand{padding:0 8px 8px}
+        .mobile-drawer .nav-caption{padding-top:13px}
+        .mobile-drawer .side-user{margin-top:auto}
+        @media(max-width:991.98px){.app-footer{padding:12px 16px 16px}}
+        @media(max-width:575.98px){
+            .topbar-search input{height:42px;padding-left:10px;padding-right:58px;font-size:12px}
+            .topbar-search button{top:3px;right:3px;width:50px;height:36px}
+            .app-footer{padding:10px 12px 14px}
+        }
+        @media print{.app-footer{display:none!important}}
+        @media(max-width:991.98px){
+            .sidebar{display:none}
+            .workspace{margin-left:0}
+            .mobile-nav-toggle{display:grid}
+            .topbar{padding-right:16px;padding-left:16px;gap:10px}
+            .topbar{display:flex}
+            .topbar-search{position:relative;width:auto;flex:1}
+        }
+        @media(max-width:575.98px){
+            .topbar{padding-right:12px;padding-left:12px;gap:8px}
+            .topbar-meta{gap:8px;white-space:nowrap}
+            .content{padding-right:12px;padding-left:12px}
+            .approval-card{padding:16px!important}
+            .approval-card .panel-title{font-size:15px}
+            .approval-details{font-size:13px}
+            .approval-actions>form:first-child{width:100%}
+            .approval-actions>form:first-child .btn{width:100%}
+            .approval-reject-form{width:100%}
+            .page-head{gap:10px}
+            .page-head h1{line-height:1.25}
+            .page-head>div:last-child{width:100%}
+            .page-head>div:last-child .btn{flex:1;min-width:0;white-space:normal}
+            .stat{height:100%}
+            .modal-dialog{margin:.5rem auto}
+            .export-actions{width:100%}
+            .export-action{flex:1;justify-content:center;min-width:0;padding-right:10px;padding-left:10px}
+        }
+    </style>
+    <style>
+        .password-field{position:relative}
+        .password-field>.form-control{padding-right:44px}
+        .password-toggle{position:absolute;top:50%;right:6px;display:grid;width:34px;height:34px;place-items:center;transform:translateY(-50%);border:0;border-radius:6px;background:transparent;color:#718090}
+        .password-toggle:hover{background:#e8f2ff;color:#0868ce}
+        .password-toggle:focus-visible{outline:3px solid #9ed1f7;outline-offset:1px}
+        .password-toggle .bi{font-size:16px}
+    </style>
+    <style>
+        @media(max-width:1024px){
+            .btn{display:inline-flex;min-height:48px;align-items:center;justify-content:center}
+            .btn-close{width:48px;height:48px}
+            .mobile-nav-toggle{width:48px;height:48px}
+            .nav-link,.sidebar-logout{min-height:48px}
+            .pagination .page-link{min-width:48px;min-height:48px}
+            .export-action{min-height:48px}
+            .password-toggle{right:0;width:48px;height:48px}
+            .password-field>.form-control{padding-right:56px}
+            .form-control[type=file],.form-select{min-height:48px}
+            .topbar-search .btn{width:48px;height:48px;min-height:48px;padding:0}
+            .topbar-search input{min-height:54px}
+        }
+    </style>
+    @stack('head')
+</head>
+<body>
+@if(auth()->check())
+<div class="shell d-flex min-vh-100">
+    <aside class="sidebar">
+        <a class="brand" href="{{ route('dashboard') }}"><img class="brand-logo" src="{{ asset('assets/logo.png') }}" alt="Logo SIPAR"><span>SIPAR<small>Peminjaman Alat RPL</small></span></a>
+        <div class="nav-caption">Menu utama</div>
+        <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i class="bi bi-grid-1x2"></i>Dashboard</a>
+        @if(auth()->user()->role === 'admin')
+            <a class="nav-link {{ request()->routeIs('admin.equipment') ? 'active' : '' }}" href="{{ route('admin.equipment') }}"><i class="bi bi-tools"></i>Master Data Alat</a>
+            <a class="nav-link {{ request()->routeIs('admin.categories') ? 'active' : '' }}" href="{{ route('admin.categories') }}"><i class="bi bi-collection"></i>Kategori</a>
+            <a class="nav-link {{ request()->routeIs('admin.students') ? 'active' : '' }}" href="{{ route('admin.students') }}"><i class="bi bi-people"></i>Data Siswa</a>
+            <a class="nav-link {{ request()->routeIs('admin.approvals') ? 'active' : '' }}" href="{{ route('admin.approvals') }}"><i class="bi bi-check2-square"></i>Verifikasi Peminjaman <span class="badge rounded-pill text-bg-warning ms-auto">{{ \App\Models\Peminjaman::where('status', 'Pending')->count() }}</span></a>
+            <a class="nav-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}" href="{{ route('admin.reports') }}"><i class="bi bi-file-earmark-bar-graph"></i>Laporan & Export</a>
+        @elseif(auth()->user()->role === 'teknisi')
+            <a class="nav-link {{ request()->routeIs('technician.handovers') ? 'active' : '' }}" href="{{ route('technician.handovers') }}"><i class="bi bi-box-arrow-in-down"></i>Penyerahan Alat @if($technicianHandoverCount > 0)<span class="badge rounded-pill text-bg-warning ms-auto">{{ $technicianHandoverCount }}</span>@endif</a>
+            <a class="nav-link {{ request()->routeIs('technician.returns') ? 'active' : '' }}" href="{{ route('technician.returns') }}"><i class="bi bi-arrow-return-left"></i>Pengembalian Alat @if($technicianReturnCount > 0)<span class="badge rounded-pill text-bg-warning ms-auto">{{ $technicianReturnCount }}</span>@endif</a>
+        @else
+            <a class="nav-link {{ request()->routeIs('catalog') ? 'active' : '' }}" href="{{ route('catalog') }}"><i class="bi bi-grid"></i>Katalog Alat</a>
+            <a class="nav-link {{ request()->routeIs('loans.mine') ? 'active' : '' }}" href="{{ route('loans.mine') }}"><i class="bi bi-clock-history"></i>Riwayat Peminjaman <span class="badge rounded-pill text-bg-warning ms-auto" aria-label="{{ $studentLoanNotificationCount }} perubahan status belum dibaca">{{ $studentLoanNotificationCount }}</span></a>
+        @endif
+        <a class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}" href="{{ route('profile') }}"><i class="bi bi-person-gear"></i>Profil Saya</a>
+        <div class="side-user"><strong>{{ auth()->user()->nama }}</strong><small>{{ auth()->user()->nis_nip }} · {{ ucfirst(auth()->user()->role) }}</small></div>
+        <form class="sidebar-logout-form" method="post" action="{{ route('logout') }}">@csrf<button class="sidebar-logout" type="submit"><i class="bi bi-box-arrow-right"></i>Keluar</button></form>
+    </aside>
+    <div class="offcanvas offcanvas-start mobile-drawer" tabindex="-1" id="mobileNavigation" aria-labelledby="mobileNavigationLabel">
+        <div class="offcanvas-header">
+            <a class="brand" href="{{ route('dashboard') }}"><img class="brand-logo" src="{{ asset('assets/logo.png') }}" alt="Logo SIPAR"><span>SIPAR<small>Peminjaman Alat RPL</small></span></a>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Tutup menu"></button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column">
+            <div class="nav-caption" id="mobileNavigationLabel">Menu utama</div>
+            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"><i class="bi bi-grid-1x2"></i>Dashboard</a>
+            @if(auth()->user()->role === 'admin')
+                <a class="nav-link {{ request()->routeIs('admin.equipment') ? 'active' : '' }}" href="{{ route('admin.equipment') }}"><i class="bi bi-tools"></i>Master Data Alat</a>
+                <a class="nav-link {{ request()->routeIs('admin.categories') ? 'active' : '' }}" href="{{ route('admin.categories') }}"><i class="bi bi-collection"></i>Kategori</a>
+                <a class="nav-link {{ request()->routeIs('admin.students') ? 'active' : '' }}" href="{{ route('admin.students') }}"><i class="bi bi-people"></i>Data Siswa</a>
+                <a class="nav-link {{ request()->routeIs('admin.approvals') ? 'active' : '' }}" href="{{ route('admin.approvals') }}"><i class="bi bi-check2-square"></i>Verifikasi Peminjaman <span class="badge rounded-pill text-bg-warning ms-auto">{{ \App\Models\Peminjaman::where('status', 'Pending')->count() }}</span></a>
+                <a class="nav-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}" href="{{ route('admin.reports') }}"><i class="bi bi-file-earmark-bar-graph"></i>Laporan & Export</a>
+            @elseif(auth()->user()->role === 'teknisi')
+                <a class="nav-link {{ request()->routeIs('technician.handovers') ? 'active' : '' }}" href="{{ route('technician.handovers') }}"><i class="bi bi-box-arrow-in-down"></i>Penyerahan Alat @if($technicianHandoverCount > 0)<span class="badge rounded-pill text-bg-warning ms-auto">{{ $technicianHandoverCount }}</span>@endif</a>
+                <a class="nav-link {{ request()->routeIs('technician.returns') ? 'active' : '' }}" href="{{ route('technician.returns') }}"><i class="bi bi-arrow-return-left"></i>Pengembalian Alat @if($technicianReturnCount > 0)<span class="badge rounded-pill text-bg-warning ms-auto">{{ $technicianReturnCount }}</span>@endif</a>
+            @else
+                <a class="nav-link {{ request()->routeIs('catalog') ? 'active' : '' }}" href="{{ route('catalog') }}"><i class="bi bi-grid"></i>Katalog Alat</a>
+                <a class="nav-link {{ request()->routeIs('loans.mine') ? 'active' : '' }}" href="{{ route('loans.mine') }}"><i class="bi bi-clock-history"></i>Riwayat Peminjaman <span class="badge rounded-pill text-bg-warning ms-auto" aria-label="{{ $studentLoanNotificationCount }} perubahan status belum dibaca">{{ $studentLoanNotificationCount }}</span></a>
+            @endif
+            <a class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}" href="{{ route('profile') }}"><i class="bi bi-person-gear"></i>Profil Saya</a>
+            <div class="side-user"><strong>{{ auth()->user()->nama }}</strong><small>{{ auth()->user()->nis_nip }} · {{ ucfirst(auth()->user()->role) }}</small></div>
+            <form class="sidebar-logout-form" method="post" action="{{ route('logout') }}">@csrf<button class="sidebar-logout" type="submit"><i class="bi bi-box-arrow-right"></i>Keluar</button></form>
+        </div>
+    </div>
+    <div class="workspace d-flex flex-column flex-grow-1 min-w-0">
+        <header class="topbar">
+            <button class="mobile-nav-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNavigation" aria-controls="mobileNavigation" aria-label="Buka navigasi"><i class="bi bi-list"></i></button>
+            @unless(request()->is('profil*'))
+                <form class="topbar-search responsive-search" method="get" action="{{ request()->routeIs('catalog') ? route('catalog') : route('search') }}" role="search" autocomplete="off">
+                    <input class="form-control form-control-sm" type="search" name="q" value="{{ request('q') }}" placeholder="{{ request()->routeIs('catalog') ? 'Cari nama atau kode alat...' : 'Cari alat, transaksi, atau siswa...' }}" aria-label="Cari">
+                    <button class="btn btn-primary" type="submit" aria-label="Cari"><i class="bi bi-search" aria-hidden="true"></i></button>
+                    <div class="search-suggestions" id="search-suggestions" role="listbox" aria-label="Saran pencarian"></div>
+                </form>
+            @endunless
+            <div class="topbar-meta"><i class="bi bi-calendar3"></i><span>{{ now()->translatedFormat('d M Y') }}</span><a class="topbar-profile" href="{{ route('profile') }}" aria-label="Buka profil saya"><span class="topbar-name">{{ auth()->user()->nama }}</span><span class="topbar-avatar" aria-hidden="true"><i class="bi bi-person-fill"></i></span></a></div>
+        </header>
+        <main class="content flex-grow-1">
+            @if(session('success'))<div class="alert alert-success alert-dismissible fade show" role="status" aria-live="polite">{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button></div>@endif
+            @if($errors->any())<div class="alert alert-danger alert-dismissible fade show" role="alert" aria-live="assertive"><ul class="mb-0 ps-3">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button></div>@endif
+            @yield('content')
+        </main>
+        <footer class="app-footer mt-auto">
+            <div class="app-footer-inner"><small>&copy; {{ now()->year }} <strong>SIPAR</strong> &mdash; Sistem Informasi Peminjaman Alat RPL. All rights reserved.</small></div>
+        </footer>
+    </div>
+</div>
+@else
+    @yield('content')
+@endif
+<div class="modal fade" id="global-action-confirmation" tabindex="-1" aria-labelledby="global-action-confirmation-title" aria-describedby="global-action-confirmation-message" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="global-action-confirmation-title">Konfirmasi tindakan</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body" id="global-action-confirmation-message"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="global-action-confirmation-submit">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+</div>
+@include('components.mobile-scroll-indicator')
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(() => {
+    const modalElement = document.getElementById('global-action-confirmation');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    const title = document.getElementById('global-action-confirmation-title');
+    const message = document.getElementById('global-action-confirmation-message');
+    const confirmButton = document.getElementById('global-action-confirmation-submit');
+    let pendingForm = null;
+
+    document.addEventListener('submit', event => {
+        const form = event.target;
+        if (!(form instanceof HTMLFormElement) || !form.dataset.confirmMessage) return;
+        if (form.dataset.confirmed === 'true') {
+            delete form.dataset.confirmed;
+            return;
+        }
+
+        event.preventDefault();
+        if (pendingForm) return;
+        pendingForm = form;
+        title.textContent = form.dataset.confirmTitle || 'Konfirmasi tindakan';
+        message.textContent = form.dataset.confirmMessage;
+        confirmButton.textContent = form.dataset.confirmLabel || 'Ya, Lanjutkan';
+
+        const formModal = form.closest('.modal');
+        if (formModal && formModal !== modalElement && formModal.classList.contains('show')) {
+            formModal.addEventListener('hidden.bs.modal', () => {
+                if (pendingForm === form) modal.show();
+            }, {once: true});
+            bootstrap.Modal.getOrCreateInstance(formModal).hide();
+            return;
+        }
+
+        modal.show();
+    }, true);
+
+    confirmButton.addEventListener('click', () => {
+        if (!pendingForm) return;
+        const form = pendingForm;
+        pendingForm = null;
+        form.dataset.confirmed = 'true';
+        modal.hide();
+        form.requestSubmit();
+    });
+
+    modalElement.addEventListener('hidden.bs.modal', () => {
+        const formToRestore = pendingForm;
+        pendingForm = null;
+        confirmButton.textContent = 'Ya, Lanjutkan';
+        if (formToRestore?.id === 'loan-request-form') {
+            const formModal = formToRestore.closest('.modal');
+            if (formModal) bootstrap.Modal.getOrCreateInstance(formModal).show();
+        }
+    });
+
+    document.addEventListener('invalid', event => {
+        const field = event.target;
+        if (!(field instanceof HTMLElement) || !(field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement)) return;
+        if (field.form) delete field.form.dataset.confirmed;
+
+        const validity = field.validity;
+        let validationMessage = field.dataset.validationMessage;
+        if (!validationMessage && validity.valueMissing) validationMessage = 'Bagian ini wajib diisi.';
+        if (!validationMessage && validity.badInput) validationMessage = 'Masukkan nilai dengan format yang valid.';
+        if (!validationMessage && validity.typeMismatch && field.type === 'email') validationMessage = 'Masukkan alamat email yang valid.';
+        if (!validationMessage && validity.typeMismatch) validationMessage = 'Masukkan data dengan format yang valid.';
+        if (!validationMessage && validity.patternMismatch) validationMessage = 'Masukkan data sesuai format yang diminta.';
+        if (!validationMessage && (validity.rangeOverflow || validity.rangeUnderflow || validity.stepMismatch)) validationMessage = 'Masukkan nilai sesuai batas yang ditentukan.';
+        if (!validationMessage && (validity.tooLong || validity.tooShort)) validationMessage = 'Panjang isian tidak sesuai ketentuan.';
+        if (!validationMessage && !validity.valid) validationMessage = 'Periksa kembali isian ini.';
+        if (validationMessage) field.setCustomValidity(validationMessage);
+    }, true);
+
+    document.addEventListener('input', event => {
+        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) {
+            event.target.setCustomValidity('');
+        }
+    });
+    document.addEventListener('change', event => {
+        if (event.target instanceof HTMLSelectElement || event.target instanceof HTMLInputElement) {
+            event.target.setCustomValidity('');
+        }
+    });
+})();
+</script>
+@stack('scripts')
+<script>
+document.querySelectorAll('form[data-disable-on-submit]').forEach(form => {
+    form.addEventListener('submit', event => {
+        if (form.dataset.submitting === 'true') {
+            event.preventDefault();
+            return;
+        }
+        if (event.defaultPrevented) return;
+        form.dataset.submitting = 'true';
+        form.setAttribute('aria-busy', 'true');
+        form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach(button => {
+            button.disabled = true;
+            button.setAttribute('aria-disabled', 'true');
+            if (button instanceof HTMLButtonElement) button.textContent = button.dataset.submittingText || 'Memproses...';
+            if (button instanceof HTMLInputElement) button.value = button.dataset.submittingText || 'Memproses...';
+        });
+    });
+});
+document.querySelectorAll('[data-password-toggle]').forEach(toggle => {
+    toggle.addEventListener('click', () => {
+        const input = toggle.closest('.password-field')?.querySelector('input');
+        if (!input) return;
+        const visible = input.type === 'password';
+        input.type = visible ? 'text' : 'password';
+        toggle.setAttribute('aria-label', visible ? 'Sembunyikan password' : 'Tampilkan password');
+        toggle.setAttribute('aria-pressed', String(visible));
+        toggle.querySelector('i')?.classList.toggle('bi-eye', !visible);
+        toggle.querySelector('i')?.classList.toggle('bi-eye-slash', visible);
+    });
+});
+</script>
+@if(auth()->check())
+<script>
+(() => {
+    const form = document.querySelector('.topbar-search');
+    const input = form?.querySelector('input[name="q"]');
+    const suggestions = document.getElementById('search-suggestions');
+    if (!form || !input || !suggestions) return;
+
+    let timer;
+    let controller;
+    const iconByType = {Alat: 'bi-tools', Kategori: 'bi-collection', Transaksi: 'bi-arrow-left-right', Siswa: 'bi-person'};
+    const closeSuggestions = () => {
+        suggestions.classList.remove('is-visible');
+        suggestions.replaceChildren();
+    };
+    const renderSuggestions = (results) => {
+        suggestions.replaceChildren();
+        if (!results.length) {
+            const empty = document.createElement('div');
+            empty.className = 'search-suggestion-empty';
+            empty.textContent = 'Tidak ada hasil yang cocok.';
+            suggestions.append(empty);
+        } else {
+            results.forEach(result => {
+                const link = document.createElement('a');
+                link.className = 'search-suggestion';
+                link.href = result.url;
+                link.setAttribute('role', 'option');
+                link.innerHTML = `<span class="search-suggestion-icon"><i class="bi ${iconByType[result.type] || 'bi-grid'}"></i></span><span><span class="search-suggestion-type">${result.type}</span><span class="search-suggestion-title"></span><span class="search-suggestion-subtitle"></span></span>`;
+                link.querySelector('.search-suggestion-title').textContent = result.title;
+                link.querySelector('.search-suggestion-subtitle').textContent = result.subtitle;
+                suggestions.append(link);
+            });
+        }
+        suggestions.classList.add('is-visible');
+    };
+    const loadSuggestions = async () => {
+        const query = input.value.trim();
+        if (query.length < 2) {
+            closeSuggestions();
+            return;
+        }
+        controller?.abort();
+        controller = new AbortController();
+        try {
+            const response = await fetch(`{{ route('search.suggestions') }}?q=${encodeURIComponent(query)}`, {
+                headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+                signal: controller.signal,
+            });
+            if (!response.ok) throw new Error('Pencarian gagal dimuat.');
+            const data = await response.json();
+            if (input.value.trim() === query) renderSuggestions(data.results || []);
+        } catch (error) {
+            if (error.name !== 'AbortError') closeSuggestions();
+        }
+    };
+    input.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(loadSuggestions, 250);
+    });
+    input.addEventListener('focus', loadSuggestions);
+    document.addEventListener('click', event => {
+        if (!form.contains(event.target)) closeSuggestions();
+    });
+})();
+</script>
+@endif
+</body>
+</html>

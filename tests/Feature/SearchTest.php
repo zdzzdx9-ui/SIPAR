@@ -42,6 +42,17 @@ class SearchTest extends TestCase
             ->assertViewHas('loans', fn ($loans) => $loans->contains('id_peminjaman', $loan->id_peminjaman));
     }
 
+    public function test_empty_search_results_show_helpful_states_for_each_result_type(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)->get(route('search', ['q' => 'no-matching-record']))
+            ->assertOk()
+            ->assertSee('Alat tidak ditemukan.')
+            ->assertSee('Siswa tidak ditemukan.')
+            ->assertSee('Transaksi tidak ditemukan.');
+    }
+
     public function test_student_search_only_returns_their_own_loans(): void
     {
         $student = User::factory()->create(['role' => 'siswa']);

@@ -37,7 +37,13 @@
                             <input type="hidden" name="items[{{ $detail->id_detail }}][id_detail]" value="{{ $detail->id_detail }}">
                             <input type="hidden" name="items[{{ $detail->id_detail }}][jumlah]" value="{{ $remaining }}">
                             <div class="row g-3">
-                                <div class="col-12"><label class="form-label" for="asset-ids-{{ $detail->id_detail }}">Asset ID / Serial Number (satu per unit, pisahkan dengan baris baru atau koma)</label><textarea class="form-control" id="asset-ids-{{ $detail->id_detail }}" name="items[{{ $detail->id_detail }}][asset_ids]" rows="2" required placeholder="Contoh: LAP-001&#10;LAP-002"></textarea></div>
+                                <div class="col-12">
+                                    <label class="form-label" for="asset-ids-{{ $detail->id_detail }}">Asset ID / Serial Number{{ $detail->alat->itemUnits->isNotEmpty() ? ' pilihan' : ' (satu per unit)' }}</label>
+                                    <textarea class="form-control" id="asset-ids-{{ $detail->id_detail }}" name="items[{{ $detail->id_detail }}][asset_ids]" rows="2" @if($detail->alat->itemUnits->isEmpty()) required @endif placeholder="Contoh: LAP-001&#10;LAP-002"></textarea>
+                                    @if($detail->alat->itemUnits->isNotEmpty())
+                                        <small class="text-muted">Opsional. Sistem otomatis memilih unit berstatus Tersedia jika dikosongkan atau ID pilihan sedang dipakai.</small>
+                                    @endif
+                                </div>
                                 <div class="col-12 col-sm-6"><label class="form-label" for="condition-{{ $detail->id_detail }}">Kondisi {{ $detail->alat->nama_alat }}</label><select class="form-select" id="condition-{{ $detail->id_detail }}" name="items[{{ $detail->id_detail }}][kondisi_alat]" required><option value="Baik">Baik</option><option value="Rusak">Rusak</option></select></div>
                                 <div class="col-12"><label class="form-label" for="note-{{ $detail->id_detail }}">Catatan {{ $detail->alat->nama_alat }}</label><textarea class="form-control" id="note-{{ $detail->id_detail }}" name="items[{{ $detail->id_detail }}][catatan]" rows="2"></textarea></div>
                             </div>
@@ -46,7 +52,7 @@
                         @endif
                     </div>
                 @endforeach
-                <div class="mb-3"><label class="form-label" for="handover-photo-{{ $loan->id_peminjaman }}">Foto bukti siswa dengan seluruh alat <span class="text-danger">*</span> (maks. 5 MB)</label><input class="form-control" id="handover-photo-{{ $loan->id_peminjaman }}" type="file" name="foto_bukti" accept="image/jpeg,image/png,image/webp" capture="environment" required></div>
+                <div class="mb-3"><label class="form-label" for="handover-photo-{{ $loan->id_peminjaman }}">Foto bukti siswa dengan seluruh alat <span class="text-danger">*</span> (maks. 5 MB)</label><input class="form-control" id="handover-photo-{{ $loan->id_peminjaman }}" type="file" name="foto_bukti" accept="image/jpeg,image/png,image/webp" capture="environment" required><div class="form-text">Foto akan dioptimalkan otomatis sebelum disimpan.</div></div>
                 <button class="btn btn-primary" type="submit" data-submitting-text="Menyimpan seluruh transaksi...">Simpan seluruh penyerahan</button>
             </form>
         @else

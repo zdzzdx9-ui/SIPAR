@@ -54,6 +54,8 @@ SQLite di filesystem container Railway tidak cocok untuk penyimpanan permanen ka
 
 Untuk mempertahankan foto alat dan bukti transaksi saat container diganti, tambahkan **Railway Volume** pada service aplikasi dengan mount path `/app/storage/app/public`. Aplikasi menyimpan upload pada disk Laravel `public` dan membuat `public/storage` melalui `php artisan storage:link`; database hanya menyimpan path file, sedangkan isi file harus berada di volume persisten.
 
+Unggahan foto bukti dan foto alat divalidasi (JPG/PNG/WEBP, maksimal 5 MB), dibatasi hingga 12 megapiksel, lalu diperkecil ke sisi terpanjang maksimal 1920 px sebelum disimpan. JPEG dan WEBP dikompresi pada kualitas 82; PNG mempertahankan kompresi lossless. Pemrosesan memerlukan ekstensi PHP GD, yang disediakan oleh konfigurasi Nixpacks Railway dan harus diaktifkan pada PHP lokal.
+
 Konfigurasi juga mengenali variabel bawaan service MySQL Railway (`MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER`, `MYSQLPASSWORD`, atau `MYSQL_URL`) sebagai fallback. Tetap set `DB_CONNECTION=mysql` pada service aplikasi agar aplikasi tidak mencoba memakai SQLite.
 
 ## Akun demo

@@ -9,7 +9,6 @@ use App\Models\KategoriAlat;
 use App\Models\Peminjaman;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -86,7 +85,8 @@ class OperationalFlowTest extends TestCase
         $this->actingAs($technician)->get(route('technician.handovers'))
             ->assertOk()->assertSee('Alat Unit')->assertDontSee('Alat Legacy')
             ->assertSee($unitLoan->booking_code)
-            ->assertSee('Kode Booking atau NIS siswa');
+            ->assertSee('Kode Transaksi atau NIS siswa')
+            ->assertSee('Asset ID / Serial Number');
         $this->get('/teknisi/verifikasi')->assertNotFound();
     }
 
@@ -119,8 +119,8 @@ class OperationalFlowTest extends TestCase
             'asset_ids' => $unit->asset_id,
             'jumlah' => '1',
             'kondisi_alat' => 'Baik',
-            'foto_bukti' => UploadedFile::fake()->create('handover.jpg', 10, 'image/jpeg'),
-        ])->assertRedirect();
+            'foto_bukti' => $this->fakeImage('handover.jpg'),
+        ])->assertRedirect()->assertSessionHasNoErrors();
 
         $this->assertDatabaseHas('detail_penyerahan', [
             'id_detail' => $detail->id_detail,
@@ -178,8 +178,8 @@ class OperationalFlowTest extends TestCase
                 'asset_ids' => $unit->asset_id,
                 'jumlah' => '1',
                 'kondisi_alat' => 'Baik',
-                'foto_bukti' => UploadedFile::fake()->create('handover-'.$index.'.jpg', 10, 'image/jpeg'),
-            ])->assertRedirect();
+                'foto_bukti' => $this->fakeImage('handover-'.$index.'.jpg'),
+            ])->assertRedirect()->assertSessionHasNoErrors();
 
             $this->post(route('technician.returns.store'), [
                 'id_peminjaman' => (string) $loan->id_peminjaman,
@@ -191,7 +191,7 @@ class OperationalFlowTest extends TestCase
                 'jumlah' => '1',
                 'kode_alat' => $equipment->kode_alat,
                 'kondisi_alat' => $condition,
-                'foto_bukti' => UploadedFile::fake()->create('return-'.$index.'.jpg', 10, 'image/jpeg'),
+                'foto_bukti' => $this->fakeImage('return-'.$index.'.jpg'),
             ])->assertRedirect(route('technician.returns'));
         }
 

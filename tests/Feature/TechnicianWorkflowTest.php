@@ -4,11 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\Alat;
 use App\Models\DetailPenyerahan;
+use App\Models\ItemUnit;
 use App\Models\KategoriAlat;
 use App\Models\Peminjaman;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -93,7 +93,7 @@ class TechnicianWorkflowTest extends TestCase
             ->post(route('technician.handovers.store', $loan), $handoverData)
             ->assertSessionHasErrors('foto_bukti');
         $this->actingAs($technician)->post(route('technician.handovers.store', $loan), $handoverData + [
-            'foto_bukti' => UploadedFile::fake()->create('penyerahan.jpg', 100, 'image/jpeg'),
+            'foto_bukti' => $this->fakeImage('penyerahan.jpg'),
         ])->assertRedirect();
         $this->assertDatabaseHas('detail_penyerahan', ['id_detail' => $detail->id_detail, 'id_teknisi' => $technician->id_user]);
         $this->actingAs($technician)->get(route('technician.returns'))
@@ -119,7 +119,7 @@ class TechnicianWorkflowTest extends TestCase
             'jumlah' => 1,
             'kode_alat' => $equipment->kode_alat,
             'kondisi_alat' => 'Baik',
-            'foto_bukti' => UploadedFile::fake()->create('pengembalian.jpg', 100, 'image/jpeg'),
+            'foto_bukti' => $this->fakeImage('pengembalian.jpg'),
         ])->assertRedirect(route('technician.returns'));
         $this->assertSame(1, $equipment->fresh()->stok_tersedia);
         $this->assertDatabaseHas('detail_pengembalian', [
@@ -142,6 +142,77 @@ class TechnicianWorkflowTest extends TestCase
         $this->assertSame('Selesai', $loan->fresh()->status);
         $this->actingAs($admin)->get('/admin/pengembalian')->assertNotFound();
         $this->actingAs($technician)->get(route('admin.equipment'))->assertForbidden();
+    }
+
+    public function test_technician_dashboard_counts_operational_loans_without_loading_all_loans(): void
+    {
+        $technician = User::factory()->create(['role' => 'teknisi']);
+        $student = User::factory()->create(['role' => 'siswa']);
+        $category = KategoriAlat::create(['nama_kategori' => 'Ringkasan Dashboard']);
+        $equipment = Alat::create([
+            'kode_alat' => 'DASH-COUNT',
+            'nama_alat' => 'Alat Dashboard',
+            'id_kategori' => $category->id_kategori,
+            'stok_total' => 6,
+            'stok_tersedia' => 6,
+            'kondisi' => 'Baik',
+            'qr_code' => 'dashboard-count-qr',
+            'status_alat' => 'Tersedia',
+        ]);
+        $loans = [];
+        foreach ([1, 2, 1, 1] as $quantity) {
+            $loan = Peminjaman::create([
+                'id_user' => $student->id_user,
+                'tanggal_pinjam' => today()->toDateString(),
+                'tanggal_kembali_rencana' => today()->addDays(2)->toDateString(),
+                'keperluan' => 'Hitung tugas dashboard teknisi',
+                'status' => 'Approved',
+            ]);
+            $loans[] = $loan->detail()->create([
+                'id_alat' => $equipment->id_alat,
+                'jumlah' => $quantity,
+            ]);
+        }
+
+        DetailPenyerahan::create([
+            'id_detail' => $loans[1]->id_detail,
+            'id_teknisi' => $technician->id_user,
+            'jumlah' => 1,
+            'tanggal_penyerahan' => now(),
+            'kondisi_alat' => 'Baik',
+        ]);
+        foreach ([2, 3] as $index) {
+            DetailPenyerahan::create([
+                'id_detail' => $loans[$index]->id_detail,
+                'id_teknisi' => $technician->id_user,
+                'jumlah' => 1,
+                'tanggal_penyerahan' => now(),
+                'kondisi_alat' => 'Baik',
+            ]);
+        }
+        DB::table('detail_pengembalian')->insert([
+            'id_detail' => $loans[3]->id_detail,
+            'jumlah' => 1,
+            'tanggal_kembali_aktual' => now(),
+            'kondisi_alat' => 'Baik',
+            'denda' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs($technician)->get(route('dashboard'))->assertOk();
+        $document = new \DOMDocument();
+        @$document->loadHTML($response->getContent());
+        $xpath = new \DOMXPath($document);
+        $statistics = [];
+        foreach ($xpath->query('//div[contains(concat(" ", normalize-space(@class), " "), " stat ")]') as $stat) {
+            $label = trim($xpath->query('.//*[contains(@class, "stat-label")]', $stat)->item(0)->textContent);
+            $value = trim($xpath->query('.//*[contains(@class, "stat-value")]', $stat)->item(0)->textContent);
+            $statistics[$label] = $value;
+        }
+
+        $this->assertSame('2', $statistics['Perlu Diserahkan']);
+        $this->assertSame('2', $statistics['Perlu Dikembalikan']);
     }
 
     public function test_technician_records_every_item_in_one_loan_together(): void
@@ -188,9 +259,10 @@ class TechnicianWorkflowTest extends TestCase
                     'kondisi_alat' => 'Baik',
                 ],
             ],
-            'foto_bukti' => UploadedFile::fake()->create('partial-handover.jpg', 100, 'image/jpeg'),
+            'foto_bukti' => $this->fakeImage('partial-handover.jpg'),
         ])->assertSessionHasErrors('items');
         $this->assertSame(0, $loan->detail()->withCount('penyerahanDetail')->get()->sum('penyerahan_detail_count'));
+        $this->assertSame([], Storage::disk('public')->allFiles('bukti/penyerahan'));
 
         $this->post(route('technician.handovers.store', $loan), [
             'items' => [
@@ -208,7 +280,7 @@ class TechnicianWorkflowTest extends TestCase
                     'kondisi_alat' => 'Baik',
                 ],
             ],
-            'foto_bukti' => UploadedFile::fake()->create('complete-handover.jpg', 100, 'image/jpeg'),
+            'foto_bukti' => $this->fakeImage('complete-handover.jpg'),
         ])->assertRedirect();
 
         $this->assertDatabaseHas('detail_penyerahan', [
@@ -225,5 +297,89 @@ class TechnicianWorkflowTest extends TestCase
             $firstDetail->id_detail,
             $secondDetail->id_detail,
         ])->count());
+    }
+
+    public function test_handover_automatically_uses_an_available_unit_when_the_requested_asset_is_still_on_an_active_loan(): void
+    {
+        Storage::fake('public');
+        $technician = User::factory()->create(['role' => 'teknisi']);
+        $student = User::factory()->create(['role' => 'siswa']);
+        $category = KategoriAlat::create(['nama_kategori' => 'Kategori Alokasi Unit']);
+        $equipment = Alat::create([
+            'kode_alat' => 'UNIT-ALLOC', 'nama_alat' => 'Alat Alokasi', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 2, 'stok_tersedia' => 1, 'stok_maintenance' => 0, 'stok_rusak' => 0,
+            'kondisi' => 'Baik', 'qr_code' => 'unit-alloc-qr', 'status_alat' => 'Tersedia',
+        ]);
+        $borrowedUnit = ItemUnit::create([
+            'alat_id' => $equipment->id_alat,
+            'asset_id' => 'UNIT-ALLOC-001',
+            'qr_code' => 'unit-alloc-001-qr',
+            'condition' => 'Baik',
+            'status' => 'Dipinjam',
+        ]);
+        $availableUnit = ItemUnit::create([
+            'alat_id' => $equipment->id_alat,
+            'asset_id' => 'UNIT-ALLOC-002',
+            'qr_code' => 'unit-alloc-002-qr',
+            'condition' => 'Baik',
+            'status' => 'Tersedia',
+        ]);
+
+        $previousLoan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => now()->toDateString(),
+            'tanggal_kembali_rencana' => now()->addDays(2)->toDateString(),
+            'keperluan' => 'Peminjaman unit pertama',
+            'status' => 'Approved',
+        ]);
+        $previousDetail = $previousLoan->detail()->create([
+            'id_alat' => $equipment->id_alat,
+            'jumlah' => 1,
+        ]);
+        $previousHandover = DetailPenyerahan::create([
+            'id_detail' => $previousDetail->id_detail,
+            'item_unit_id' => $borrowedUnit->item_unit_id,
+            'asset_id' => $borrowedUnit->asset_id,
+            'id_teknisi' => $technician->id_user,
+            'jumlah' => 1,
+            'tanggal_penyerahan' => now(),
+            'kondisi_alat' => 'Baik',
+        ]);
+
+        $newLoan = Peminjaman::create([
+            'id_user' => User::factory()->create(['role' => 'siswa'])->id_user,
+            'tanggal_pinjam' => now()->toDateString(),
+            'tanggal_kembali_rencana' => now()->addDays(2)->toDateString(),
+            'keperluan' => 'Peminjaman unit berikutnya',
+            'status' => 'Approved',
+        ]);
+        $newDetail = $newLoan->detail()->create([
+            'id_alat' => $equipment->id_alat,
+            'jumlah' => 1,
+        ]);
+
+        $this->actingAs($technician)->post(route('technician.handovers.store', $newLoan), [
+            'items' => [
+                $newDetail->id_detail => [
+                    'id_detail' => $newDetail->id_detail,
+                    'jumlah' => 1,
+                    'asset_ids' => $borrowedUnit->asset_id,
+                    'kondisi_alat' => 'Baik',
+                ],
+            ],
+            'foto_bukti' => $this->fakeImage('unit-handover.jpg'),
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('detail_penyerahan', [
+            'id_penyerahan' => $previousHandover->id_penyerahan,
+            'asset_id' => $borrowedUnit->asset_id,
+        ]);
+        $this->assertDatabaseHas('detail_penyerahan', [
+            'id_detail' => $newDetail->id_detail,
+            'item_unit_id' => $availableUnit->item_unit_id,
+            'asset_id' => $availableUnit->asset_id,
+        ]);
+        $this->assertSame('Dipinjam', $borrowedUnit->fresh()->status);
+        $this->assertSame('Dipinjam', $availableUnit->fresh()->status);
     }
 }

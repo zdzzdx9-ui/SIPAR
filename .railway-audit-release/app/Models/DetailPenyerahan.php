@@ -1,0 +1,24 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class DetailPenyerahan extends Model
+{
+    protected $table = 'detail_penyerahan';
+    protected $primaryKey = 'id_penyerahan';
+    protected $fillable = ['id_detail', 'item_unit_id', 'asset_id', 'id_teknisi', 'jumlah', 'tanggal_penyerahan', 'kondisi_alat', 'foto_bukti', 'catatan'];
+    protected $casts = ['tanggal_penyerahan' => 'datetime', 'jumlah' => 'integer'];
+
+    public function detail(): BelongsTo
+    {
+        return $this->belongsTo(DetailPeminjaman::class, 'id_detail', 'id_detail');
+    }
+
+    public function itemUnit(): BelongsTo
+    {
+        return $this->belongsTo(ItemUnit::class, 'item_unit_id', 'item_unit_id');
+    }
+}

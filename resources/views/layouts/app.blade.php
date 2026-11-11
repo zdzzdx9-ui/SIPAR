@@ -140,6 +140,21 @@
         .password-toggle:focus-visible{outline:3px solid #9ed1f7;outline-offset:1px}
         .password-toggle .bi{font-size:16px}
     </style>
+    <style>
+        @media(max-width:1024px){
+            .btn{display:inline-flex;min-height:48px;align-items:center;justify-content:center}
+            .btn-close{width:48px;height:48px}
+            .mobile-nav-toggle{width:48px;height:48px}
+            .nav-link,.sidebar-logout{min-height:48px}
+            .pagination .page-link{min-width:48px;min-height:48px}
+            .export-action{min-height:48px}
+            .password-toggle{right:0;width:48px;height:48px}
+            .password-field>.form-control{padding-right:56px}
+            .form-control[type=file],.form-select{min-height:48px}
+            .topbar-search .btn{width:48px;height:48px;min-height:48px;padding:0}
+            .topbar-search input{min-height:54px}
+        }
+    </style>
     @stack('head')
 </head>
 <body>
@@ -205,8 +220,8 @@
             <div class="topbar-meta"><i class="bi bi-calendar3"></i><span>{{ now()->translatedFormat('d M Y') }}</span><a class="topbar-profile" href="{{ route('profile') }}" aria-label="Buka profil saya"><span class="topbar-name">{{ auth()->user()->nama }}</span><span class="topbar-avatar" aria-hidden="true"><i class="bi bi-person-fill"></i></span></a></div>
         </header>
         <main class="content flex-grow-1">
-            @if(session('success'))<div class="alert alert-success alert-dismissible fade show" role="alert">{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button></div>@endif
-            @if($errors->any())<div class="alert alert-danger alert-dismissible fade show" role="alert"><ul class="mb-0 ps-3">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button></div>@endif
+            @if(session('success'))<div class="alert alert-success alert-dismissible fade show" role="status" aria-live="polite">{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button></div>@endif
+            @if($errors->any())<div class="alert alert-danger alert-dismissible fade show" role="alert" aria-live="assertive"><ul class="mb-0 ps-3">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul><button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button></div>@endif
             @yield('content')
         </main>
         <footer class="app-footer mt-auto">

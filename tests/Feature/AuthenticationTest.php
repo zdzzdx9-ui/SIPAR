@@ -50,9 +50,7 @@ class AuthenticationTest extends TestCase
             ->assertSeeInOrder(['class="role-switch"', '<h2>Masuk ke akun</h2>'], false)
             ->assertSee('Daftar sebagai siswa')
             ->assertSee('SMK Negeri 5 Surakarta')
-            ->assertSee('Rekayasa Perangkat Lunak')
-            ->assertSee('auth-global-footer', false)
-            ->assertSee('Sistem Informasi Peminjaman Alat RPL')
+            ->assertSee('class="auth-main"', false)
             ->assertSee('data-password-toggle', false)
             ->assertDontSee('Akun demo tersedia setelah menjalankan seeder.');
     }
@@ -105,7 +103,7 @@ class AuthenticationTest extends TestCase
             'password' => 'wrong-password',
             'role' => 'admin',
         ])->assertOk()
-            ->assertSee('Username atau password tidak cocok.')
+            ->assertSee('Username atau kata sandi tidak cocok.')
             ->assertSee('id="login-role" value="admin"', false)
             ->assertSee('id="identity-label">Username</label>', false)
             ->assertDontSee('Kendala akses? Hubungi pengelola SIPAR.')
@@ -235,6 +233,6 @@ class AuthenticationTest extends TestCase
         $this->followingRedirects()->get(route('register'))
             ->assertOk()
             ->assertSee('Format email belum benar.')
-            ->assertSee('Password dan ulangi password harus sama.');
+            ->assertSee('Kata sandi dan konfirmasinya harus sama.');
     }
 }

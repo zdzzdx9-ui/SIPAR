@@ -8,7 +8,6 @@ use App\Models\KategoriAlat;
 use App\Models\Peminjaman;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -225,7 +224,7 @@ class LoanWorkflowTest extends TestCase
             'tanggal_kembali_aktual' => $returnedAt->toDateTimeString(),
             'kondisi_alat' => 'Rusak',
             'catatan' => 'Lengkap dan berfungsi.',
-            'foto_bukti' => UploadedFile::fake()->create('return-1.jpg', 10, 'image/jpeg'),
+            'foto_bukti' => $this->fakeImage('return-1.jpg'),
         ])->assertRedirect(route('technician.returns'));
 
         $this->assertSame('Approved', $loan->fresh()->status);
@@ -253,7 +252,7 @@ class LoanWorkflowTest extends TestCase
             'kode_alat' => $equipment->kode_alat,
             'tanggal_kembali_aktual' => $returnedAt->toDateTimeString(),
             'kondisi_alat' => 'Baik',
-            'foto_bukti' => UploadedFile::fake()->create('return-2.jpg', 10, 'image/jpeg'),
+            'foto_bukti' => $this->fakeImage('return-2.jpg'),
         ])->assertRedirect(route('technician.returns'));
 
         $this->assertSame('Approved', $loan->fresh()->status);
@@ -270,7 +269,7 @@ class LoanWorkflowTest extends TestCase
             'tanggal_kembali_aktual' => $returnedAt->toDateTimeString(),
             'kondisi_alat' => 'Baik',
             'catatan' => 'Router lengkap.',
-            'foto_bukti' => UploadedFile::fake()->create('return-router.jpg', 10, 'image/jpeg'),
+            'foto_bukti' => $this->fakeImage('return-router.jpg'),
         ])->assertRedirect(route('technician.returns'));
 
         $this->assertSame(2, $equipment->fresh()->stok_tersedia);
@@ -316,7 +315,7 @@ class LoanWorkflowTest extends TestCase
             'jumlah' => 1,
             'kode_alat' => $equipment->kode_alat,
             'kondisi_alat' => 'Hilang',
-            'foto_bukti' => UploadedFile::fake()->create('lost.jpg', 10, 'image/jpeg'),
+            'foto_bukti' => $this->fakeImage('lost.jpg'),
         ])->assertRedirect(route('technician.returns'));
 
         $this->assertSame(1, $equipment->fresh()->stok_total);
@@ -459,6 +458,7 @@ class LoanWorkflowTest extends TestCase
 
     public function test_return_cannot_exceed_the_remaining_quantity(): void
     {
+        Storage::fake('public');
         $category = KategoriAlat::create(['nama_kategori' => 'Jaringan']);
         $equipment = Alat::create([
             'kode_alat' => 'RETURN-LIMIT', 'nama_alat' => 'Alat Batas Kembali', 'id_kategori' => $category->id_kategori,
@@ -490,12 +490,13 @@ class LoanWorkflowTest extends TestCase
             'jumlah' => 2,
             'kode_alat' => $equipment->kode_alat,
             'kondisi_alat' => 'Baik',
-            'foto_bukti' => UploadedFile::fake()->create('over-return.jpg', 10, 'image/jpeg'),
+            'foto_bukti' => $this->fakeImage('over-return.jpg'),
         ])->assertSessionHasErrors('jumlah');
 
         $this->assertSame('Approved', $loan->fresh()->status);
         $this->assertSame(1, $equipment->fresh()->stok_tersedia);
         $this->assertSame(0, $detail->pengembalianDetail()->count());
+        $this->assertSame([], Storage::disk('public')->allFiles('bukti/pengembalian'));
     }
 
     public function test_partial_technician_return_restores_stock_without_admin_approval(): void
@@ -533,7 +534,7 @@ class LoanWorkflowTest extends TestCase
             'jumlah' => 1,
             'kode_alat' => $equipment->kode_alat,
             'kondisi_alat' => 'Baik',
-            'foto_bukti' => UploadedFile::fake()->create('return-partial.jpg', 10, 'image/jpeg'),
+            'foto_bukti' => $this->fakeImage('return-partial.jpg'),
         ];
         $this->actingAs($technician)->post(route('technician.returns.store'), $returnData)
             ->assertRedirect(route('technician.returns'));
@@ -550,7 +551,7 @@ class LoanWorkflowTest extends TestCase
             'jumlah' => '1',
             'kode_alat' => $equipment->kode_alat,
             'kondisi_alat' => 'Maintenance',
-            'foto_bukti' => UploadedFile::fake()->create('return-maintenance.jpg', 10, 'image/jpeg'),
+            'foto_bukti' => $this->fakeImage('return-maintenance.jpg'),
         ])->assertRedirect(route('technician.returns'));
 
         $this->assertSame(1, $equipment->fresh()->stok_tersedia);
@@ -598,10 +599,10 @@ class LoanWorkflowTest extends TestCase
         ];
 
         $this->actingAs($technician)->post(route('technician.returns.store'), $requestData + [
-            'foto_bukti' => UploadedFile::fake()->create('return-first.jpg', 10, 'image/jpeg'),
+            'foto_bukti' => $this->fakeImage('return-first.jpg'),
         ])->assertRedirect(route('technician.returns'));
         $this->post(route('technician.returns.store'), $requestData + [
-            'foto_bukti' => UploadedFile::fake()->create('return-replay.jpg', 10, 'image/jpeg'),
+            'foto_bukti' => $this->fakeImage('return-replay.jpg'),
         ])->assertRedirect(route('technician.returns'))
             ->assertSessionHas('success', 'Pengembalian ini sudah tercatat; permintaan duplikat diabaikan.');
 
@@ -627,7 +628,7 @@ class LoanWorkflowTest extends TestCase
 
         $this->actingAs($technician)->getJson(route('technician.returns.search', ['q' => 'alat-tidak-dikenal']))
             ->assertNotFound()
-            ->assertJsonPath('message', 'Transaksi aktif tidak ditemukan. Periksa Kode Booking atau NIS siswa.');
+            ->assertJsonPath('message', 'Transaksi aktif tidak ditemukan. Periksa Kode Transaksi atau NIS siswa.');
 
         $student = User::factory()->create(['role' => 'siswa', 'nis_nip' => 'NIS-LOOKUP-01']);
         $loan = Peminjaman::create([

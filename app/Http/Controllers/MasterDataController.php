@@ -7,6 +7,7 @@ use App\Models\ItemUnit;
 use App\Models\KategoriAlat;
 use App\Models\User;
 use App\Exports\StudentsExport;
+use App\Services\PhotoCompressor;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,7 +32,7 @@ class MasterDataController extends Controller
         return view('admin.equipment.index', ['items' => $items, 'categories' => KategoriAlat::orderBy('nama_kategori')->get()]);
     }
 
-    public function storeEquipment(Request $request): RedirectResponse
+    public function storeEquipment(Request $request, PhotoCompressor $photoCompressor): RedirectResponse
     {
         $minimumStock = $request->input('status_alat') === 'Tersedia' ? 1 : 0;
         $data = $request->validate([
@@ -44,8 +45,12 @@ class MasterDataController extends Controller
             'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'status_alat' => ['required', Rule::in(['Tersedia', 'Maintenance', 'Rusak'])],
         ]);
-        if ($request->hasFile('foto')) {
-            $data['foto'] = $request->file('foto')->store('alat', 'public');
+        $newPhoto = $request->hasFile('foto')
+            ? $photoCompressor->store($request->file('foto'), 'alat', 'foto')
+            : null;
+        unset($data['foto']);
+        if ($newPhoto) {
+            $data['foto'] = $newPhoto;
         }
         $data['stok_tersedia'] = $data['stok_total'];
         $data['stok_maintenance'] = 0;
@@ -55,12 +60,20 @@ class MasterDataController extends Controller
             $data['stok_tersedia'] = 0;
             $data[$data['status_alat'] === 'Maintenance' ? 'stok_maintenance' : 'stok_rusak'] = $data['stok_total'];
         }
-        Alat::create($data);
+        $keepPhoto = false;
+        try {
+            Alat::create($data);
+            $keepPhoto = true;
+        } finally {
+            if (! $keepPhoto && $newPhoto) {
+                Storage::disk('public')->delete($newPhoto);
+            }
+        }
 
         return back()->with('success', 'Alat baru berhasil ditambahkan.');
     }
 
-    public function updateEquipment(Request $request, Alat $alat): RedirectResponse
+    public function updateEquipment(Request $request, Alat $alat, PhotoCompressor $photoCompressor): RedirectResponse
     {
         $minimumStock = $request->input('status_alat') === 'Tersedia' ? 1 : 0;
         $data = $request->validate([
@@ -75,6 +88,7 @@ class MasterDataController extends Controller
             'perbaiki_dari' => ['nullable', Rule::in(['Baik', 'Maintenance', 'Rusak'])],
             'jumlah_diperbaiki' => ['nullable', 'integer', 'min:1', 'max:10000'],
         ]);
+        unset($data['foto']);
         $repairSource = $data['perbaiki_dari'] ?? null;
         $repairQuantity = (int) ($data['jumlah_diperbaiki'] ?? 0);
         if (($repairSource === null) !== ($repairQuantity === 0)) {
@@ -85,7 +99,10 @@ class MasterDataController extends Controller
         unset($data['perbaiki_dari'], $data['jumlah_diperbaiki']);
 
         $oldPhoto = null;
-        DB::transaction(function () use ($request, $alat, &$data, &$oldPhoto, $repairSource, $repairQuantity): void {
+        $newPhoto = null;
+        $keepPhoto = false;
+        try {
+            DB::transaction(function () use ($request, $alat, &$data, &$oldPhoto, &$newPhoto, $photoCompressor, $repairSource, $repairQuantity): void {
             $lockedAlat = Alat::whereKey($alat->id_alat)->lockForUpdate()->firstOrFail();
             $borrowed = max(0, $lockedAlat->stok_total - $lockedAlat->stok_tersedia - $lockedAlat->stok_maintenance - $lockedAlat->stok_rusak);
             $statusChanged = $data['status_alat'] !== $lockedAlat->status_alat;
@@ -111,7 +128,7 @@ class MasterDataController extends Controller
                     ->get();
                 if ($units->count() !== (int) $data['stok_total']) {
                     throw ValidationException::withMessages([
-                        'stok_total' => 'Jumlah stok harus sama dengan jumlah Asset ID terdaftar. Tambah atau keluarkan unit fisik melalui pengelolaan inventaris.',
+                        'stok_total' => 'Jumlah stok harus sama dengan jumlah ID Aset terdaftar. Tambah atau keluarkan unit fisik melalui pengelolaan inventaris.',
                     ]);
                 }
 
@@ -126,7 +143,7 @@ class MasterDataController extends Controller
                         ->update(['condition' => $targetCondition]);
                 } elseif ($statusChanged) {
                     throw ValidationException::withMessages([
-                        'jumlah_diperbaiki' => 'Perubahan kondisi Asset ID harus menyebutkan kondisi asal dan jumlah unit.',
+                        'jumlah_diperbaiki' => 'Perubahan kondisi ID Aset harus menyebutkan kondisi asal dan jumlah unit.',
                     ]);
                 }
 
@@ -200,16 +217,18 @@ class MasterDataController extends Controller
 
             $oldPhoto = $lockedAlat->foto;
             if ($request->hasFile('foto')) {
-                $data['foto'] = $request->file('foto')->store('alat', 'public');
-            } else {
-                unset($data['foto']);
+                $newPhoto = $photoCompressor->store($request->file('foto'), 'alat', 'foto');
+                $lockedAlat->update(['foto' => $newPhoto]);
             }
-            if ($request->hasFile('foto')) {
-                $lockedAlat->update(['foto' => $data['foto']]);
+            });
+            $keepPhoto = true;
+        } finally {
+            if (! $keepPhoto && $newPhoto) {
+                Storage::disk('public')->delete($newPhoto);
             }
-        });
+        }
 
-        if ($request->hasFile('foto') && $oldPhoto) {
+        if ($newPhoto && $oldPhoto) {
             Storage::disk('public')->delete($oldPhoto);
         }
 
@@ -219,7 +238,7 @@ class MasterDataController extends Controller
     public function deleteEquipment(Alat $alat): RedirectResponse
     {
         if ($alat->detailPeminjaman()->exists()) {
-            return back()->withErrors(['alat' => 'Alat yang pernah tercatat dalam transaksi tidak dapat dihapus. Ubah statusnya menjadi Rusak atau Maintenance.']);
+            return back()->withErrors(['alat' => 'Alat yang pernah tercatat dalam transaksi tidak dapat dihapus. Ubah statusnya menjadi Rusak atau Perlu Perbaikan.']);
         }
         $alat->delete();
 

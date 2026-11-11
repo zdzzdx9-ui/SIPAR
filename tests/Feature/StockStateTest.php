@@ -9,7 +9,6 @@ use App\Models\Peminjaman;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\MasterDataController;
 use Tests\TestCase;
@@ -36,7 +35,7 @@ class StockStateTest extends TestCase
             'stok_total' => 1,
             'kondisi' => 'Baik',
             'status_alat' => 'Tersedia',
-            'foto' => UploadedFile::fake()->create('alat-baru.jpg', 100, 'image/jpeg'),
+            'foto' => $this->fakeImage('alat-baru.jpg'),
         ])->assertRedirect();
 
         $photo = $equipment->fresh()->foto;
@@ -63,7 +62,7 @@ class StockStateTest extends TestCase
             'stok_total' => 1,
             'kondisi' => 'Baik',
             'status_alat' => 'Tersedia',
-            'foto' => UploadedFile::fake()->create('alat-baru.jpg', 100, 'image/jpeg'),
+            'foto' => $this->fakeImage('alat-baru.jpg'),
         ])->assertSessionHasErrors('stok_total');
 
         $this->assertSame('alat/lama.jpg', $equipment->fresh()->foto);
@@ -89,7 +88,7 @@ class StockStateTest extends TestCase
             'kondisi' => 'Baik',
             'status_alat' => 'Tersedia',
         ]);
-        (new MasterDataController())->updateEquipment($request, $staleEquipment);
+        (new MasterDataController())->updateEquipment($request, $staleEquipment, app(\App\Services\PhotoCompressor::class));
 
         $this->assertSame(2, $equipment->fresh()->stok_tersedia);
         $this->assertSame(1, $equipment->fresh()->stok_total - $equipment->fresh()->stok_tersedia);

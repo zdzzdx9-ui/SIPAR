@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\PhotoCompressor;
 use App\Models\Alat;
 use App\Models\DetailPengembalian;
 use App\Models\ItemUnit;
@@ -47,9 +48,14 @@ class ReturnController extends Controller
     {
         $term = $request->string('q')->trim()->toString();
         if ($term === '') {
-            return response()->json(['message' => 'Masukkan Kode Booking atau NIS siswa.'], 422);
+            return response()->json(['message' => 'Masukkan Kode Transaksi atau NIS siswa.'], 422);
         }
-        $loans = Peminjaman::with(['user', 'detail.alat'])
+        $loans = Peminjaman::with([
+            'user',
+            'detail.alat',
+            'detail.penyerahanDetail',
+            'detail.pengembalianDetail',
+        ])
             ->where('status', 'Approved')
             ->where(function ($query) use ($term): void {
                 $query->where('booking_code', $term)
@@ -59,7 +65,7 @@ class ReturnController extends Controller
             })
             ->get();
         if ($loans->isEmpty()) {
-            return response()->json(['message' => 'Transaksi aktif tidak ditemukan. Periksa Kode Booking atau NIS siswa.'], 404);
+            return response()->json(['message' => 'Transaksi aktif tidak ditemukan. Periksa Kode Transaksi atau NIS siswa.'], 404);
         }
 
         return response()->json($loans->map(fn (Peminjaman $loan) => [
@@ -67,8 +73,8 @@ class ReturnController extends Controller
             'peminjam' => $loan->user->nama,
             'nis' => $loan->user->nis_nip,
             'items' => $loan->detail->map(function ($detail): array {
-                $handed = $detail->penyerahanDetail()->sum('jumlah');
-                $returned = $detail->pengembalianDetail()->sum('jumlah');
+                $handed = $detail->penyerahanDetail->sum('jumlah');
+                $returned = $detail->pengembalianDetail->sum('jumlah');
 
                 return [
                     'nama' => $detail->nama_alat,
@@ -85,7 +91,7 @@ class ReturnController extends Controller
         ]));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, PhotoCompressor $photoCompressor): RedirectResponse
     {
         $data = $request->validate([
             'id_peminjaman' => ['required', 'integer', 'exists:loans,id_peminjaman'],
@@ -104,17 +110,17 @@ class ReturnController extends Controller
         if (isset($data['jumlah'])) {
             $data['jumlah'] = (int) $data['jumlah'];
         }
-        if ($request->hasFile('foto_bukti')) {
-            $data['foto_bukti'] = $request->file('foto_bukti')->store('bukti/pengembalian', 'public');
-        }
+        $data['foto_bukti'] = $photoCompressor->store($request->file('foto_bukti'), 'bukti/pengembalian');
         $data['id_teknisi'] = $request->user()->id_user;
         $equipment = Alat::where('kode_alat', $data['kode_alat'])->firstOrFail();
 
         $fine = 0;
         $completed = false;
         $duplicate = false;
+        $keepPhoto = false;
         try {
-            DB::transaction(function () use ($data, &$fine, &$completed, &$duplicate) {
+            try {
+                DB::transaction(function () use ($data, &$fine, &$completed, &$duplicate) {
                 if (DetailPengembalian::where('idempotency_key', $data['idempotency_key'])->exists()) {
                     $duplicate = true;
 
@@ -131,7 +137,7 @@ class ReturnController extends Controller
                     throw ValidationException::withMessages(['id_peminjaman' => 'Transaksi ini sudah selesai atau tidak sedang dipinjam.']);
                 }
                 if (! empty($data['booking_code']) && $loan->booking_code !== $data['booking_code']) {
-                    throw ValidationException::withMessages(['booking_code' => 'Kode Booking tidak sesuai dengan transaksi.']);
+                    throw ValidationException::withMessages(['booking_code' => 'Kode Transaksi tidak sesuai dengan transaksi.']);
                 }
                 $equipment = Alat::where('kode_alat', $data['kode_alat'])->lockForUpdate()->firstOrFail();
                 $detailQuery = $loan->detail()->where('id_alat', $equipment->id_alat);
@@ -148,10 +154,10 @@ class ReturnController extends Controller
                         ->whereDoesntHave('detail.pengembalianDetail', fn ($query) => $query->where('asset_id', $data['asset_id']))
                         ->exists();
                     if (! $handedAsset) {
-                        throw ValidationException::withMessages(['asset_id' => 'Asset ID tidak tercatat diserahkan atau sudah dikembalikan.']);
+                        throw ValidationException::withMessages(['asset_id' => 'ID Aset tidak tercatat diserahkan atau sudah dikembalikan.']);
                     }
                     if (($data['jumlah'] ?? 1) !== 1) {
-                        throw ValidationException::withMessages(['jumlah' => 'Pengembalian Asset ID harus satu unit per proses.']);
+                        throw ValidationException::withMessages(['jumlah' => 'Pengembalian ID Aset harus satu unit per proses.']);
                     }
                 }
                 $assignedUnits = $detail->itemUnits()->where('status', 'Dipinjam')->lockForUpdate()->get();
@@ -275,37 +281,36 @@ class ReturnController extends Controller
                     ]);
                     $loan->update(['status' => 'Selesai']);
                 }
-            });
-        } catch (UniqueConstraintViolationException $exception) {
-            if (DetailPengembalian::where('idempotency_key', $data['idempotency_key'])->exists()) {
-                if (! empty($data['foto_bukti'])) {
-                    Storage::disk('public')->delete($data['foto_bukti']);
+                });
+            } catch (UniqueConstraintViolationException $exception) {
+                if (DetailPengembalian::where('idempotency_key', $data['idempotency_key'])->exists()) {
+                    return redirect()->route('technician.returns')->with('success', 'Pengembalian ini sudah tercatat; permintaan duplikat diabaikan.');
                 }
 
+                report($exception);
+
+                return back()->withErrors(['id_peminjaman' => 'Pengembalian gagal disimpan. Silakan coba kembali.']);
+            } catch (QueryException $exception) {
+                report($exception);
+
+                return back()->withErrors(['id_peminjaman' => 'Pengembalian gagal disimpan. Silakan coba kembali.']);
+            }
+
+            if ($duplicate) {
                 return redirect()->route('technician.returns')->with('success', 'Pengembalian ini sudah tercatat; permintaan duplikat diabaikan.');
             }
 
-            report($exception);
+            $message = $completed
+                ? 'Semua alat pada transaksi telah kembali. Denda: Rp '.number_format($fine, 0, ',', '.')
+                : 'Pengembalian item dicatat; transaksi tetap aktif sampai seluruh alat kembali. Denda item ini: Rp '.number_format($fine, 0, ',', '.');
 
-            return back()->withErrors(['id_peminjaman' => 'Pengembalian gagal disimpan. Silakan coba kembali.']);
-        } catch (QueryException $exception) {
-            report($exception);
+            $keepPhoto = true;
 
-            return back()->withErrors(['id_peminjaman' => 'Pengembalian gagal disimpan. Silakan coba kembali.']);
-        }
-
-        if ($duplicate) {
-            if (! empty($data['foto_bukti'])) {
+            return redirect()->route('technician.returns')->with('success', $message);
+        } finally {
+            if (! $keepPhoto && ! empty($data['foto_bukti'])) {
                 Storage::disk('public')->delete($data['foto_bukti']);
             }
-
-            return redirect()->route('technician.returns')->with('success', 'Pengembalian ini sudah tercatat; permintaan duplikat diabaikan.');
         }
-
-        $message = $completed
-            ? 'Semua alat pada transaksi telah kembali. Denda: Rp '.number_format($fine, 0, ',', '.')
-            : 'Pengembalian item dicatat; transaksi tetap aktif sampai seluruh alat kembali. Denda item ini: Rp '.number_format($fine, 0, ',', '.');
-
-        return redirect()->route('technician.returns')->with('success', $message);
     }
 }

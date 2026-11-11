@@ -72,6 +72,31 @@ class OfficialInventorySeederTest extends TestCase
         );
         $this->assertSame(14, Alat::count());
         $this->assertDatabaseHas('alat', [
+            'kode_alat' => 'MUL-002',
+            'nama_alat' => 'Speaker',
+            'stok_total' => 1,
+        ]);
+        $this->assertDatabaseHas('alat', [
+            'kode_alat' => 'KOM-001',
+            'nama_alat' => 'Laptop HP',
+        ]);
+        $this->assertDatabaseHas('alat', [
+            'kode_alat' => 'PRK-001',
+            'nama_alat' => 'Obeng Mini',
+        ]);
+        $this->assertDatabaseHas('alat', [
+            'kode_alat' => 'MIK-001',
+            'nama_alat' => 'Arduino Uno',
+        ]);
+        $this->assertDatabaseHas('alat', [
+            'kode_alat' => 'PRK-003',
+            'nama_alat' => 'Bor Tembok',
+        ]);
+        $this->assertDatabaseHas('alat', [
+            'kode_alat' => 'PRK-004',
+            'nama_alat' => 'Bor Mini Listrik',
+        ]);
+        $this->assertDatabaseHas('alat', [
             'kode_alat' => 'MUL-003',
             'nama_alat' => 'Mikrofon',
             'stok_total' => 1,
@@ -116,6 +141,39 @@ class OfficialInventorySeederTest extends TestCase
             $equipment->fresh()->deskripsi
         );
         $this->assertSame($availableStock, $equipment->fresh()->stok_tersedia);
+    }
+
+    public function test_name_migration_updates_official_inventory_without_changing_stock_or_history(): void
+    {
+        $equipment = Alat::where('kode_alat', 'MUL-002')->firstOrFail();
+        $availableStock = $equipment->stok_tersedia;
+        $equipment->update(['nama_alat' => 'Spiker']);
+
+        $student = User::factory()->create(['role' => 'siswa']);
+        $loan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => today(),
+            'tanggal_kembali_rencana' => today()->addDay(),
+            'keperluan' => 'Riwayat alat audio',
+            'status' => 'Rejected',
+        ]);
+        $detail = $loan->detail()->create([
+            'id_alat' => $equipment->id_alat,
+            'jumlah' => 1,
+            'alat_snapshot_kode' => 'MUL-002',
+            'alat_snapshot_nama' => 'Spiker',
+            'alat_snapshot_kategori' => 'Multimedia',
+        ]);
+
+        $migration = require database_path('migrations/2026_11_09_000000_update_official_inventory_names.php');
+        $migration->up();
+
+        $this->assertSame('Speaker', $equipment->fresh()->nama_alat);
+        $this->assertSame($availableStock, $equipment->fresh()->stok_tersedia);
+        $this->assertDatabaseHas('loan_items', [
+            'id_detail' => $detail->id_detail,
+            'alat_snapshot_nama' => 'Spiker',
+        ]);
     }
 
     public function test_split_migration_preserves_legacy_history_as_snapshots_and_creates_two_products(): void

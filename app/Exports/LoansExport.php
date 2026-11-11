@@ -18,15 +18,15 @@ class LoansExport implements FromCollection, ShouldAutoSize, WithHeadings
     public function headings(): array
     {
         return [
-            'ID',
+            'Kode Transaksi',
             'Nama Siswa',
-            'NIS/NIP',
+            'NIS / NIP',
             'Alat',
             'Jumlah',
             'Tanggal Pinjam',
             'Rencana Kembali',
             'Status',
-            'Kembali Aktual',
+            'Tanggal Kembali Aktual',
             'Denda (Rp)',
             'Catatan',
         ];
