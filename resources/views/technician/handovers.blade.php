@@ -8,27 +8,27 @@
 </form>
 @forelse($loans as $loan)
     @php($pendingDetails = $loan->detail->filter(fn ($detail) => $detail->penyerahanDetail->sum('jumlah') < $detail->jumlah))
-    <section class="surface p-3 p-md-4 mb-3">
-        <div class="d-flex justify-content-between gap-3 flex-wrap mb-3">
-            <div>
+    <section class="surface p-3 p-md-4 mb-3 operational-loan-card">
+        <div class="d-flex justify-content-between gap-3 flex-wrap mb-3 operational-loan-heading">
+            <div class="operational-loan-identity">
                 <div class="small text-muted mb-1">Kode Transaksi</div>
                 <span class="badge text-bg-primary font-monospace px-3 py-2">{{ $loan->booking_code }}</span>
                 <div class="panel-subtitle">{{ $loan->user->nama }} · NIS {{ $loan->user->nis_nip }}</div>
             </div>
-            <div class="text-end"><div>Jatuh tempo {{ $loan->tanggal_kembali_rencana->format('d M Y') }}</div>@if($loan->is_overdue)<span class="badge-status status-rusak">Terlambat {{ $loan->overdue_days }} hari</span>@endif</div>
+            <div class="text-end operational-deadline"><div>Jatuh tempo {{ $loan->tanggal_kembali_rencana->format('d M Y') }}</div>@if($loan->is_overdue)<span class="badge-status status-rusak">Terlambat {{ $loan->overdue_days }} hari</span>@endif</div>
         </div>
         @if($loan->operational_notes)<div class="alert alert-info py-2">{{ $loan->operational_notes }}</div>@endif
 
         @if($pendingDetails->isNotEmpty())
-            <form class="border rounded p-3" method="post" action="{{ route('technician.handovers.store', $loan) }}" enctype="multipart/form-data" data-disable-on-submit data-confirm-title="Konfirmasi penyerahan alat" data-confirm-message="Pastikan nomor aset, kondisi, dan foto bukti sudah benar. Apakah Anda yakin ingin mencatat penyerahan alat untuk {{ $loan->booking_code }}?" data-confirm-label="Ya, Serahkan">
+            <form class="border rounded p-3 technician-handover-form" method="post" action="{{ route('technician.handovers.store', $loan) }}" enctype="multipart/form-data" data-disable-on-submit data-confirm-title="Konfirmasi penyerahan alat" data-confirm-message="Pastikan nomor aset, kondisi, dan foto bukti sudah benar. Apakah Anda yakin ingin mencatat penyerahan alat untuk {{ $loan->booking_code }}?" data-confirm-label="Ya, Serahkan">
                 @csrf
                 @foreach($loan->detail as $detail)
                     @php($handed = $detail->penyerahanDetail->sum('jumlah'))
                     @php($remaining = $detail->jumlah - $handed)
-                    <div class="border rounded p-3 mb-3">
-                        <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="border rounded p-3 mb-3 technician-equipment-block">
+                        <div class="d-flex align-items-center gap-2 mb-3 technician-equipment-heading">
                             <span class="equipment-icon overflow-hidden"><x-equipment-image :equipment="$detail->alat" alt="Foto {{ $detail->alat->nama_alat }}"></x-equipment-image></span>
-                            <div>
+                            <div class="technician-equipment-copy">
                                 <strong>{{ $detail->alat->nama_alat }}</strong>
                                 <small class="d-block text-muted">{{ $detail->alat->kode_alat }} · {{ $remaining > 0 ? "sisa {$remaining} unit" : "seluruh {$detail->jumlah} unit telah diserahkan" }}</small>
                             </div>
@@ -48,7 +48,7 @@
                                 <div class="col-12"><label class="form-label" for="note-{{ $detail->id_detail }}">Catatan {{ $detail->alat->nama_alat }}</label><textarea class="form-control" id="note-{{ $detail->id_detail }}" name="items[{{ $detail->id_detail }}][catatan]" rows="2"></textarea></div>
                             </div>
                         @else
-                            <small class="text-muted">Asset ID: {{ $detail->penyerahanDetail->pluck('asset_id')->filter()->join(', ') }}</small>
+                            <small class="text-muted technician-item-id">Asset ID: {{ $detail->penyerahanDetail->pluck('asset_id')->filter()->join(', ') }}</small>
                         @endif
                     </div>
                 @endforeach
@@ -57,7 +57,7 @@
             </form>
         @else
             @foreach($loan->detail as $detail)
-                <div class="border rounded p-3 mb-2"><strong>{{ $detail->alat->nama_alat }}</strong> · seluruh {{ $detail->jumlah }} unit telah diserahkan<br><small class="text-muted">Asset ID: {{ $detail->penyerahanDetail->pluck('asset_id')->filter()->join(', ') }}</small></div>
+                <div class="border rounded p-3 mb-2 technician-equipment-block"><strong>{{ $detail->alat->nama_alat }}</strong> · seluruh {{ $detail->jumlah }} unit telah diserahkan<br><small class="text-muted technician-item-id">Asset ID: {{ $detail->penyerahanDetail->pluck('asset_id')->filter()->join(', ') }}</small></div>
             @endforeach
         @endif
     </section>

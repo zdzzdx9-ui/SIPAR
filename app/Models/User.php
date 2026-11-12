@@ -7,6 +7,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -49,6 +50,17 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function profileAvatarPath(): ?string
+    {
+        $disk = Storage::disk('public');
+        $avatarDirectory = 'profile-avatars/'.$this->id_user;
+        $avatarPaths = $disk->files($avatarDirectory);
+
+        usort($avatarPaths, fn (string $first, string $second): int => $disk->lastModified($second) <=> $disk->lastModified($first));
+
+        return $avatarPaths[0] ?? null;
     }
 
     public function peminjaman()

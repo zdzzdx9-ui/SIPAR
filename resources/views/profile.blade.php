@@ -4,10 +4,12 @@
 <style>
     .profile-avatar{display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem}
     .profile-avatar-image,.profile-avatar-placeholder{width:5rem;height:5rem;flex:none;border:1px solid var(--line);border-radius:50%;object-fit:cover}
+    .profile-avatar-image{background:#fff}
     .profile-avatar-placeholder{display:grid;place-items:center;background:var(--blue-soft);color:var(--blue);font-size:2rem}
     .profile-avatar-image[hidden],.profile-avatar-placeholder[hidden]{display:none}
-    .profile-toast-container{z-index:1085}
+    .profile-toast-container{z-index:1085;max-width:calc(100vw - 1rem)}
     .profile-save-toast{border:0;background:#168361;color:#fff}
+    .profile-save-toast .toast-body{overflow-wrap:anywhere}
 </style>
 @endpush
 @section('content')
@@ -91,6 +93,15 @@
             document.querySelectorAll('[data-auth-user-name]').forEach(element => {
                 element.textContent = result.nama;
             });
+            if (result.avatar_url) {
+                document.querySelectorAll('[data-auth-user-avatar]').forEach(image => {
+                    image.src = result.avatar_url;
+                    image.hidden = false;
+                });
+                document.querySelectorAll('[data-auth-user-initial]').forEach(initial => {
+                    initial.hidden = true;
+                });
+            }
             toastMessage.textContent = result.message;
             toast.show();
         } catch (error) {

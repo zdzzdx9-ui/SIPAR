@@ -7,17 +7,17 @@
 </div>
 
 <section class="surface">
-	<div class="table-responsive">
+	<div class="table-responsive table-card-view" role="region" aria-label="Data siswa">
 		<table class="table">
 			<thead><tr><th>Nama</th><th>NIS</th><th>Email</th><th>Terdaftar</th><th>Aksi</th></tr></thead>
 			<tbody>
 				@forelse($students as $student)
 					<tr>
-						<td><strong>{{ $student->nama }}</strong></td>
-						<td>{{ $student->nis_nip }}</td>
-						<td>{{ $student->email }}</td>
-						<td>{{ $student->created_at->format('d M Y') }}</td>
-						<td>
+						<td data-label="Nama" data-card-wide><strong>{{ $student->nama }}</strong></td>
+						<td data-label="NIS">{{ $student->nis_nip }}</td>
+						<td data-label="Email" data-card-wide>{{ $student->email }}</td>
+						<td data-label="Terdaftar">{{ $student->created_at->format('d M Y') }}</td>
+						<td data-label="Aksi" data-card-wide>
 							<div class="d-flex gap-1">
 								<button class="btn btn-light btn-sm" type="button" title="Ubah data siswa" aria-label="Ubah siswa {{ $student->nama }}" data-bs-toggle="modal" data-bs-target="#editStudent-{{ $student->id_user }}"><i class="bi bi-pencil"></i></button>
 								<form method="post" action="{{ route('admin.students.delete', $student) }}" data-confirm-title="Konfirmasi penghapusan akun" data-confirm-message="Akun siswa {{ $student->nama }} akan dihapus. Apakah Anda yakin ingin melanjutkan?" data-confirm-label="Ya, Hapus">

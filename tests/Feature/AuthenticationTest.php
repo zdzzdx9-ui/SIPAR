@@ -161,16 +161,35 @@ class AuthenticationTest extends TestCase
 
     public function test_profile_link_is_in_the_sidebar_footer_and_keeps_its_active_state(): void
     {
-        $user = User::factory()->create(['role' => 'siswa']);
+        $user = User::factory()->create(['nama' => 'RIJAL', 'role' => 'siswa']);
 
         $this->actingAs($user)->get(route('profile'))
             ->assertOk()
             ->assertSeeInOrder([
                 '<div class="sidebar-footer">',
                 'class="nav-link active" href="'.route('profile').'"><i class="bi bi-person-gear"></i>Profil Saya</a>',
-                '<div class="side-user">',
                 '<i class="bi bi-box-arrow-right"></i>Keluar',
-            ], false);
+            ], false)
+            ->assertSee('.sidebar-logout:hover{background:#71343b40;color:#ffc0c4}', false);
+    }
+
+    public function test_topbar_profile_links_to_profile_and_logout_requires_confirmation(): void
+    {
+        $user = User::factory()->create(['nama' => 'Viewport User', 'role' => 'siswa']);
+
+        $response = $this->actingAs($user)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('<a class="topbar-profile" href="'.route('profile').'" aria-label="Buka profil saya">', false)
+            ->assertSee('class="topbar-avatar" aria-hidden="true"><span class="topbar-avatar-initial" data-auth-user-initial>V</span>', false)
+            ->assertSeeInOrder(['class="topbar-avatar" aria-hidden="true"', 'class="topbar-name"'], false)
+            ->assertSee('data-confirm-message="Apakah Anda yakin ingin keluar dari akun?"', false)
+            ->assertSee('data-confirm-label="Ya, Keluar"', false)
+            ->assertSee('id="global-action-confirmation-submit"', false)
+            ->assertSee('Batal');
+
+        $this->assertSame(1, substr_count($response->getContent(), 'class="topbar-profile"'));
+        $this->assertSame(0, substr_count($response->getContent(), '<div class="side-user">'));
+        $this->assertStringNotContainsString('mobile-drawer .side-user', $response->getContent());
     }
 
     public function test_profile_update_returns_json_for_async_saves(): void
@@ -232,7 +251,15 @@ class AuthenticationTest extends TestCase
 
         Storage::disk('public')->assertExists($secondAvatarPath);
         Storage::disk('public')->assertMissing($firstAvatarPath);
-        $this->get(route('profile'))->assertOk()->assertSee($secondAvatarPath);
+        $this->get(route('profile'))
+            ->assertOk()
+            ->assertSee($secondAvatarPath)
+            ->assertSee('.profile-avatar-image{background:#fff}', false)
+            ->assertSee('.side-user-avatar{display:grid;width:34px;height:34px;flex:none;place-items:center;overflow:hidden;border-radius:50%;background:#fff', false)
+            ->assertSee('.topbar-avatar{display:grid;width:34px;height:34px;flex:none;place-items:center;overflow:hidden;border:1px solid #dce8f3;border-radius:50%;background:#e8f2ff', false)
+            ->assertSee('src="'.asset('storage/'.$secondAvatarPath).'" alt="" data-auth-user-avatar', false)
+            ->assertSee('class="topbar-avatar" aria-hidden="true"><img src="'.asset('storage/'.$secondAvatarPath).'" alt="" data-auth-user-avatar', false)
+            ->assertSee("document.querySelectorAll('[data-auth-user-avatar]')", false);
 
         $this->assertArrayNotHasKey('avatar', \Illuminate\Support\Facades\Schema::getColumnListing('users'));
     }
@@ -249,6 +276,7 @@ class AuthenticationTest extends TestCase
             ->assertSee('enctype="multipart/form-data"', false)
             ->assertSee('id="profile-save-toast"', false)
             ->assertSee("fetch(form.action", false)
+            ->assertSee("document.querySelectorAll('[data-auth-user-avatar]')", false)
             ->assertSee("toast.show()", false);
     }
 

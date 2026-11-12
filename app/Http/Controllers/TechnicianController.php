@@ -81,6 +81,12 @@ class TechnicianController extends Controller
                 ]);
             }
 
+            DB::table('alat')
+                ->whereIn('id_alat', $pendingDetails->pluck('id_alat')->unique())
+                ->orderBy('id_alat')
+                ->lockForUpdate()
+                ->get(['id_alat']);
+
             $submittedItems = collect($data['items'])->keyBy(fn ($item) => (int) $item['id_detail']);
             $assetIds = collect();
             foreach ($pendingDetails as $detail) {
@@ -167,9 +173,6 @@ class TechnicianController extends Controller
                         })
                         ->whereNotIn('item_unit_id', $alreadyHandedUnitIds)
                         ->whereNotIn('item_unit_id', $activeUnitIds)
-                        ->whereDoesntHave('details', fn ($query) => $query
-                            ->where('loan_items.id_detail', '!=', $detail->id_detail)
-                            ->whereHas('peminjaman', fn ($loanQuery) => $loanQuery->where('status', 'Approved')))
                         ->orderBy('asset_id')
                         ->lockForUpdate()
                         ->get();
@@ -211,6 +214,9 @@ class TechnicianController extends Controller
                     if (! $hasTrackedUnits && DetailPenyerahan::where('asset_id', $assetId)
                         ->where('id_detail', '!=', $detail->id_detail)
                         ->whereHas('detail.peminjaman', fn ($query) => $query->where('status', 'Approved'))
+                        ->whereDoesntHave('detail.pengembalianDetail', fn ($query) => $query
+                            ->whereColumn('detail_pengembalian.asset_id', 'detail_penyerahan.asset_id')
+                            ->where('detail_pengembalian.kondisi_alat', 'Baik'))
                         ->exists()) {
                         throw ValidationException::withMessages([
                             "items.{$detail->id_detail}.asset_ids" => "ID Aset {$assetId} sedang digunakan pada transaksi lain.",

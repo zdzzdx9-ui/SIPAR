@@ -13,13 +13,19 @@
     .catalog-card-footer{flex-wrap:wrap;gap:.5rem}
     .catalog-card-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:.5rem;min-width:0}
     .catalog-card-actions .btn{white-space:normal}
-    .loan-list-dock{position:fixed;z-index:15;right:auto;bottom:max(1rem,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.75rem;width:max-content;max-width:calc(100vw - 2rem);padding:10px 12px 10px 16px;border:1px solid #dce5ed;border-radius:12px;background:#fff;box-shadow:0 8px 28px #10233426}
+    .catalog-item-copy{min-width:0;overflow-wrap:anywhere}
+    .catalog-item-copy .panel-title,.catalog-item-copy .panel-subtitle{overflow-wrap:anywhere}
+    .loan-list-items-label{min-width:0;overflow-wrap:anywhere}
+    .loan-list-dock{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) max-content;grid-template-rows:minmax(64px,1fr);align-items:end;gap:.75rem;width:min(100%,520px);min-height:90px;max-width:100%;margin:0 0 1rem auto;padding:12px;border:1px solid #dce5ed;border-radius:12px;background:#fff;box-shadow:0 4px 16px #10233416}
+    .loan-list-dock-info{grid-column:1;grid-row:1;align-self:start;min-width:0;overflow-wrap:anywhere}
+    .loan-list-dock .btn{grid-column:2;grid-row:1;align-self:end;justify-self:end;min-height:44px;margin:0}
     .loan-list-panel{scroll-margin-top:80px}
     .catalog-shell .topbar{height:auto;min-height:62px;flex-wrap:wrap;gap:.75rem;padding-block:.5rem}
     .catalog-shell .topbar-search{width:auto;min-width:0;max-width:430px;flex:1 1 18rem}
     .catalog-shell .responsive-search .form-control{flex:1 1 0;min-width:0}
     .catalog-shell .responsive-search .btn{flex:0 0 auto;white-space:nowrap}
     @media(max-width:991.98px){.catalog-shell .topbar-search{order:3;max-width:none;flex-basis:100%}}
+    @media(max-width:767.98px){.catalog-shell .topbar{height:auto;min-height:0;display:grid;grid-template-columns:48px minmax(0,1fr);grid-template-rows:auto auto}.catalog-shell .topbar-search{grid-column:1/-1;grid-row:2;order:0;flex-basis:auto}.catalog-grid>div{min-width:0}.catalog-card-footer{align-items:flex-start!important}.catalog-card-actions{max-width:100%}.catalog-card-actions .btn{min-width:116px}.loan-list-dock{position:relative;top:auto;right:auto;bottom:auto;left:auto;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) max-content;grid-template-rows:minmax(64px,1fr);align-items:end;width:min(100%,520px);min-height:90px;max-width:100%;margin:0 0 1rem auto;padding:12px}.loan-list-dock-info{grid-column:1;grid-row:1;align-self:start;min-width:0;overflow-wrap:anywhere}.loan-list-dock .btn{grid-column:2;grid-row:1;align-self:end;justify-self:end;min-height:48px;margin:0;padding:8px 16px;font-size:13px}}
     @media(prefers-reduced-motion:reduce){.card-katalog,.catalog-image-frame img{transition:none}.card-katalog:hover,.card-katalog:hover .catalog-image-frame img{transform:none}}
 </style>
 @endpush
@@ -27,17 +33,17 @@
 <div class="page-head"><div><h1>Katalog Alat</h1><p>Pilih beberapa jenis alat, lalu ajukan semuanya dalam satu transaksi.</p></div></div>
 <div id="loan-empty-warning" class="alert alert-warning d-none" role="alert">Belum ada alat yang dipilih untuk dipinjam.</div>
 <div id="loan-list-dock" class="loan-list-dock d-none" role="status" aria-live="polite">
-    <span><strong id="loan-list-count">0 jenis alat dipilih</strong><small id="loan-list-summary" class="d-block text-muted">Maksimal satu unit untuk setiap jenis alat</small></span>
+    <span class="loan-list-dock-info"><strong id="loan-list-count">0 jenis alat dipilih</strong><small id="loan-list-summary" class="d-block text-muted">Maksimal satu unit untuk setiap jenis alat</small></span>
     <button class="btn btn-primary" id="view-loan-list" type="button" aria-haspopup="dialog" aria-controls="loan-request-modal">Pinjam</button>
 </div>
-<div class="row g-3">
+<div class="row g-3 catalog-grid">
     @forelse($equipment as $item)
     @php($activeStatus = $activeEquipmentStatuses->get($item->id_alat))
     @php($unavailable = $item->status_alat !== 'Tersedia' || $item->stok_tersedia < 1 || $activeStatus)
     <div class="col-sm-6 col-xl-4">
         <article class="surface card-item card-katalog h-100 d-flex flex-column">
             <div class="catalog-image-frame overflow-hidden mb-3"><x-equipment-image :equipment="$item" alt="Foto {{ $item->nama_alat }}"></x-equipment-image></div>
-            <div class="d-flex align-items-start gap-3"><span class="equipment-icon overflow-hidden catalog-thumb"><x-equipment-image :equipment="$item" alt="Foto {{ $item->nama_alat }}"></x-equipment-image></span><div class="flex-grow-1"><h2 class="panel-title">{{ $item->nama_alat }}</h2><div class="panel-subtitle">{{ $item->kode_alat }} · {{ $item->kategori->nama_kategori }}</div><p class="small text-muted mb-0 mt-2">{{ $item->deskripsi ?: 'Peralatan '.$item->kategori->nama_kategori.' untuk mendukung kegiatan praktik.' }}</p></div></div>
+            <div class="d-flex align-items-start gap-3"><span class="equipment-icon overflow-hidden catalog-thumb"><x-equipment-image :equipment="$item" alt="Foto {{ $item->nama_alat }}"></x-equipment-image></span><div class="flex-grow-1 catalog-item-copy"><h2 class="panel-title">{{ $item->nama_alat }}</h2><div class="panel-subtitle">{{ $item->kode_alat }} · {{ $item->kategori->nama_kategori }}</div><p class="small text-muted mb-0 mt-2">{{ $item->deskripsi ?: 'Peralatan '.$item->kategori->nama_kategori.' untuk mendukung kegiatan praktik.' }}</p></div></div>
             <div class="catalog-card-footer d-flex justify-content-between align-items-center border-top mt-3 pt-3"><span class="text-muted">Stok <strong class="text-dark">{{ $item->stok_tersedia }}</strong></span><div class="catalog-card-actions">
                 @if($activeStatus)<span class="text-muted">{{ $activeStatus === 'Pending' ? 'Sudah diajukan' : 'Sedang dipinjam' }}</span>
                 @elseif($item->status_alat !== 'Tersedia' || $item->stok_tersedia < 1)<span class="text-muted">Tidak tersedia</span>@endif
@@ -103,7 +109,7 @@
             const row = document.createElement('div');
             row.className = 'd-flex flex-wrap align-items-center gap-2 border-bottom py-2';
             const label = document.createElement('div');
-            label.className = 'flex-grow-1';
+            label.className = 'flex-grow-1 min-w-0 loan-list-items-label';
             const name = document.createElement('strong');
             name.textContent = item.name;
             const code = document.createElement('small');

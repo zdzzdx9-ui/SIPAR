@@ -97,11 +97,7 @@ class AuthController extends Controller
 
     public function profile(Request $request): View
     {
-        $avatarDirectory = 'profile-avatars/'.$request->user()->id_user;
-        $avatarPath = collect(Storage::disk('public')->files($avatarDirectory))
-            ->sortByDesc(fn (string $path): int => Storage::disk('public')->lastModified($path))
-            ->first();
-
+        $avatarPath = $request->user()->profileAvatarPath();
         return view('profile', compact('avatarPath'));
     }
 

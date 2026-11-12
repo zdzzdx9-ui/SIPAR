@@ -14,8 +14,8 @@
             <section class="surface p-3 p-md-4 h-100">
                 <h2 class="panel-title mb-3">Alat <span class="text-muted">({{ $equipment->count() }})</span></h2>
                 @forelse($equipment as $item)
-                    <div class="d-flex justify-content-between gap-3 border-bottom py-2">
-                        <div class="d-flex align-items-center gap-2"><span class="equipment-icon overflow-hidden"><x-equipment-image :equipment="$item" alt="Foto {{ $item->nama_alat }}"></x-equipment-image></span><div><strong>{{ $item->nama_alat }}</strong><div class="panel-subtitle">{{ $item->kode_alat }} · {{ $item->kategori->nama_kategori }}</div></div></div>
+                    <div class="d-flex justify-content-between gap-3 border-bottom py-2 search-result-item">
+                        <div class="d-flex align-items-center gap-2 search-result-copy"><span class="equipment-icon overflow-hidden"><x-equipment-image :equipment="$item" alt="Foto {{ $item->nama_alat }}"></x-equipment-image></span><div class="min-w-0"><strong>{{ $item->nama_alat }}</strong><div class="panel-subtitle">{{ $item->kode_alat }} · {{ $item->kategori->nama_kategori }}</div></div></div>
                         <a class="btn btn-light btn-sm align-self-center" href="{{ $isAdmin ? route('admin.equipment', ['q' => $item->kode_alat]) : route('catalog', ['q' => $item->kode_alat]) }}">Buka</a>
                     </div>
                 @empty
@@ -41,8 +41,8 @@
             <section class="surface p-3 p-md-4">
                 <h2 class="panel-title mb-3">Transaksi <span class="text-muted">({{ $loans->count() }})</span></h2>
                 @forelse($loans as $loan)
-                    <div class="d-flex flex-wrap justify-content-between gap-2 border-bottom py-2">
-                        <div>
+                    <div class="d-flex flex-wrap justify-content-between gap-2 border-bottom py-2 search-transaction-item">
+                        <div class="search-transaction-copy">
                             <strong>{{ $loan->booking_code }} · {{ $loan->status_label }}</strong>
                             <div class="panel-subtitle">{{ $loan->detail->map(fn ($detail) => $detail->nama_alat)->join(', ') ?: $loan->keperluan }}</div>
                             @if($isAdmin)<div class="panel-subtitle">{{ $loan->user?->nama }} · {{ $loan->user?->nis_nip }}</div>@endif

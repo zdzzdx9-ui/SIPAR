@@ -19,7 +19,7 @@
             <article class="surface p-3 p-md-4 approval-card">
                 <div class="d-flex justify-content-between gap-3 approval-card-header">
                     <div class="d-flex gap-3 min-w-0">
-                        <span class="equipment-icon flex-shrink-0"><i class="bi bi-box-arrow-in-down"></i></span>
+                        <span class="equipment-icon flex-shrink-0"><i class="bi bi-clipboard-check"></i></span>
                         <div class="min-w-0">
                             <h2 class="panel-title">{{ $loan->detail->pluck('alat.nama_alat')->filter()->join(', ') }}</h2>
                             <div class="panel-subtitle">{{ $loan->booking_code }} · diajukan {{ $loan->tanggal_pengajuan->format('d M Y H:i') }}</div>

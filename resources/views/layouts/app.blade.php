@@ -13,11 +13,27 @@
         :root{--ink:#102334;--muted:#718090;--line:#e3e9ef;--canvas:#f2f6f9;--blue:#0868ce;--blue-soft:#e8f2ff;--green:#168361;--amber:#ad6b05;--red:#bd3d4a;--sidebar:#102334}
         *{box-sizing:border-box}body{margin:0;background:var(--canvas);color:var(--ink);font-family:'DM Sans',sans-serif;font-size:14px}.shell{display:flex;min-height:100vh}.sidebar{position:fixed;inset:0 auto 0 0;width:226px;background:var(--sidebar);color:#fff;padding:22px 14px;display:flex;flex-direction:column;z-index:20}.brand{display:flex;align-items:center;gap:10px;padding:0 10px 26px;color:#fff;text-decoration:none;font-family:Manrope,sans-serif;font-weight:800}.brand-logo{width:36px;height:36px;object-fit:contain;flex:none}.brand small{display:block;color:#9cb0c0;font:400 10px 'DM Sans',sans-serif}.nav-caption{font-size:10px;text-transform:uppercase;color:#758a9d;letter-spacing:.08em;padding:11px 11px 6px}.nav-link{display:flex;align-items:center;gap:11px;color:#c1ceda;text-decoration:none;padding:10px 11px;border-radius:7px;margin:2px 0;font-size:13px}.nav-link:hover,.nav-link.active{background:#203c53;color:white}.nav-link.active{box-shadow:inset 3px 0 #2093ff}.nav-link .bi{font-size:15px;width:18px}.side-user{margin-top:auto;border-top:1px solid #304457;padding:15px 8px 0;color:#dbe3e9;font-size:12px}.side-user small{display:block;color:#91a5b5}.workspace{display:flex;flex:1 1 0;flex-direction:column;min-width:0;margin-left:226px;min-height:100vh}.topbar{height:62px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px;position:sticky;top:0;z-index:10}.topbar-search{max-width:430px;width:48%;position:relative}.topbar-search input{padding-left:12px;background:#f7f9fb;border:1px solid var(--line);font-size:12px}.topbar-meta{display:flex;align-items:center;gap:13px;color:var(--muted);font-size:12px}.content{padding:27px 30px 42px;max-width:1480px;margin:auto}.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px}.page-head h1{font:800 22px Manrope,sans-serif;margin:0 0 4px}.page-head p{margin:0;color:var(--muted);font-size:12px}.surface{background:#fff;border:1px solid var(--line);border-radius:8px}.stat{padding:17px 18px;min-height:105px}.stat-label{color:var(--muted);font-size:11px}.stat-value{font:800 26px Manrope,sans-serif;margin:7px 0 1px}.stat-note{font-size:10px;color:var(--muted)}.stat-icon{height:31px;width:31px;display:grid;place-items:center;border-radius:8px;color:var(--blue);background:var(--blue-soft);float:right}.panel-title{font:700 14px Manrope,sans-serif;margin:0}.panel-subtitle{color:var(--muted);font-size:11px;margin-top:4px}.table{--bs-table-bg:transparent;margin-bottom:0;font-size:12px}.table thead th{font-size:10px;text-transform:uppercase;letter-spacing:.03em;color:#768695;font-weight:600;border-bottom-color:var(--line);padding:11px 12px;white-space:nowrap}.table td{padding:12px;border-color:#edf1f4;vertical-align:middle}.table>:not(caption)>*>*{box-shadow:none}.btn{font-size:12px;font-weight:600;border-radius:6px;padding:8px 13px}.btn-primary{background:var(--blue);border-color:var(--blue)}.btn-light{background:#f5f8fa;border-color:var(--line);color:var(--ink)}.form-control,.form-select{border-color:var(--line);font-size:12px;border-radius:6px;padding:9px 11px}.form-label{font-size:11px;font-weight:600;margin-bottom:6px}.form-text,.text-muted{font-size:11px;color:var(--muted)!important}.badge-status{display:inline-block;border-radius:20px;padding:5px 10px;font-size:11px;line-height:1.2;min-height:26px;font-weight:700;white-space:nowrap}.status-pending,.status-maintenance{color:var(--amber);background:#fff3d9}.status-approved,.status-tersedia,.status-selesai{color:var(--green);background:#e3f5ef}.status-rejected,.status-rusak,.status-cancelled{color:var(--red);background:#ffeaeb}.status-dipinjam{color:#176cb0;background:#e6f3ff}.equipment-icon{height:38px;width:38px;display:grid;place-items:center;border-radius:9px;background:#eaf3ff;color:#176ec5;font-size:16px;flex:none}.alert{font-size:12px;border-radius:7px}.card-item{padding:16px}.card-item:hover{border-color:#b7d7f3}.modal-content{border:0;border-radius:9px}.mobile-bottom{display:none}
         @media(max-width:800px){.sidebar{display:none}.workspace{margin-left:0}.topbar{height:54px;padding:0 15px}.topbar-search{width:65%}.topbar-meta .topbar-name{display:none}.content{padding:20px 15px 28px}.page-head h1{font-size:19px}.page-head{margin-bottom:17px}.table-responsive{border-radius:8px}.content>.row{--bs-gutter-x:12px}.stat{padding:13px;min-height:95px}.stat-value{font-size:22px}.page-head .btn{padding:8px 10px}}
-        @media(max-width:575.98px){.topbar{gap:9px;padding:0 10px}.topbar-search{width:auto;flex:1}.topbar-search input{height:30px;padding-left:10px;padding-right:48px;font-size:11px}.topbar-search button{top:3px;right:3px;width:42px;height:24px;padding:0 5px;font-size:10px}.topbar-meta{gap:0}.topbar-meta>i,.topbar-meta>span:not(.topbar-profile){display:none}.topbar-profile{display:grid!important}.topbar-avatar{width:30px;height:30px}.topbar-avatar .bi{font-size:15px}.modal-dialog{width:calc(100% - 1rem)!important;margin:.5rem auto!important}.modal-dialog .modal-body{max-height:75vh}}
+        @media(max-width:575.98px){.topbar{gap:9px;padding:0 10px}.topbar-search{width:auto;flex:1}.topbar-search input{height:30px;padding-left:10px;padding-right:48px;font-size:11px}.topbar-search button{top:3px;right:3px;width:42px;height:24px;padding:0 5px;font-size:10px}.topbar-meta{gap:0}.topbar-meta>i,.topbar-meta>span:not(.topbar-profile){display:none}.topbar-avatar{width:30px;height:30px}.topbar-avatar .bi{font-size:15px}.modal-dialog{width:calc(100% - 1rem)!important;margin:.5rem auto!important}.modal-dialog .modal-body{max-height:75vh}}
         @media print{.sidebar,.mobile-nav-toggle,.mobile-drawer,.topbar,.no-print,.page-head .btn{display:none!important}.workspace{margin:0}.content{padding:0;max-width:none}body{background:#fff}.surface{border-color:#ccd3da}.table{font-size:10px}}
     </style>
     <style>@media(min-width:801px){.content{width:100%;max-width:1600px;margin-inline:auto}}</style>
-    <style>.sidebar{overflow-y:auto}.sidebar-footer{flex:none;margin-top:auto;padding-top:10px;border-top:1px solid #304457}.side-user{margin-top:0;border-top:0;padding:8px 8px 0}.sidebar-logout-form{position:sticky;bottom:0;flex:none;margin-top:8px;padding:9px 8px 0;background:var(--sidebar);z-index:2}.sidebar-logout{display:flex;align-items:center;gap:9px;width:100%;padding:3px 0;border:0;background:none;color:#c1ceda;text-align:left;font:inherit;font-size:12px}.sidebar-logout:hover{color:#fff}</style>
+    <style>
+        .sidebar{overflow-y:auto}
+        .sidebar-footer{display:flex;flex:none;flex-direction:column;gap:4px;margin-top:auto;padding:14px 4px 0;border-top:1px solid #304457}
+        .side-user{display:flex;align-items:center;gap:10px;margin:0 0 4px;padding:10px;border:1px solid #304457;border-radius:9px;background:#172f43;color:#eef4f8;font-size:12px}
+        .side-user-avatar{display:grid;width:34px;height:34px;flex:none;place-items:center;overflow:hidden;border-radius:50%;background:#fff;color:#0868ce;font:700 13px Manrope,sans-serif}
+        .side-user-avatar img{display:block;width:100%;height:100%;background:#fff;object-fit:cover}
+        .side-user-avatar img[hidden],.side-user-initial[hidden]{display:none}
+        .side-user-copy{min-width:0}
+        .side-user strong,.side-user small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .side-user small{margin-top:2px;color:#a9bdcc}
+        .sidebar-footer .nav-link{margin:0}
+        .sidebar-logout-form{flex:none;margin:0;padding:0}
+        .sidebar-logout{display:flex;align-items:center;gap:11px;width:100%;min-height:42px;padding:10px 11px;border:0;border-radius:7px;background:transparent;color:#e58b93;text-align:left;font:inherit;font-size:13px;text-decoration:none;transition:background-color .15s ease,color .15s ease}
+        .sidebar-logout .bi{width:18px;font-size:15px}
+        .sidebar-logout:hover{background:#71343b40;color:#ffc0c4}
+        .sidebar-logout:focus-visible{outline:2px solid #f1a4aa;outline-offset:2px}
+    </style>
     <style>
         .workspace,.content,.surface{min-width:0}
         .equipment-photo-placeholder:not([hidden]){display:grid;place-items:center;background:#eaf3ff;color:#176ec5;font-size:1.15rem}
@@ -35,6 +51,9 @@
         .responsive-search .btn{flex:0 0 auto;white-space:nowrap}
         .topbar-profile{display:flex;align-items:center;gap:13px;color:inherit;text-decoration:none}
         .topbar-profile:hover{color:var(--blue)}
+        .topbar-date{display:flex;align-items:center;gap:7px;flex:none;padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:#f8fafc;color:#64748b;font-size:11px;font-weight:600;white-space:nowrap}
+        .topbar-profile{gap:10px;flex:none;padding:5px 12px 5px 6px;border:1px solid var(--line);border-radius:999px;background:#fff}
+        .topbar-name{max-width:150px;min-width:0;overflow:hidden;color:var(--ink);font-size:12px;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
         .topbar-search input{min-width:0;padding-right:58px}
         .modal-dialog{width:calc(100% - 2rem)!important;max-width:560px!important;margin:1.75rem auto!important}
         .modal-dialog .modal-content{max-width:100%;overflow:hidden}
@@ -52,6 +71,9 @@
         .export-action-pdf:hover{color:#8e2933;background:#ffeaeb}
         .export-action-pdf .bi{color:#bd3d4a}
         .topbar-search button{position:absolute;top:3px;right:3px;width:50px;height:36px;padding:0 8px;display:grid;place-items:center}
+        .topbar-search .search-submit{color:var(--muted);border:0;background:transparent;box-shadow:none}
+        .topbar-search .search-submit:hover,.topbar-search .search-submit:focus-visible{color:var(--blue);border-color:transparent;background:var(--blue-soft);box-shadow:none}
+        .topbar-search .search-submit:focus-visible{outline:2px solid #9ed1f7;outline-offset:-2px}
         .topbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,600px) max-content;column-gap:24px}
         .topbar-search{grid-column:2;grid-row:1;width:100%;max-width:none;z-index:3}
         .topbar-meta{grid-column:3;grid-row:1;justify-self:end;white-space:nowrap;flex-shrink:0}
@@ -63,6 +85,7 @@
         .search-suggestion-type{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.04em}
         .search-suggestion-title{display:block;font-size:12px;font-weight:700}
         .search-suggestion-subtitle{display:block;color:var(--muted);font-size:10px}
+        .search-suggestion>span:last-child{min-width:0;overflow-wrap:anywhere}
         .search-suggestion-empty{padding:12px;color:var(--muted);font-size:12px;text-align:center}
         .topbar-search .form-control{min-height:42px;padding-left:12px;padding-right:58px;border-radius:9px;background:#f7f9fb;font-size:13px}
         .topbar-search button{top:3px;right:3px;width:50px;height:36px;border-radius:7px}
@@ -71,8 +94,12 @@
         .app-footer-inner{display:flex;justify-content:center;align-items:center;max-width:1480px;margin-inline:auto}
         .app-footer strong{color:#40596a;font-weight:700}
         .app-footer small{font-size:inherit}
-        .topbar-avatar{display:grid;width:34px;height:34px;flex:none;place-items:center;border-radius:50%;background:#e8f2ff;color:#0868ce}
-        .topbar-avatar .bi{font-size:17px;line-height:1}
+        .topbar-avatar{display:grid;width:34px;height:34px;flex:none;place-items:center;overflow:hidden;border:1px solid #dce8f3;border-radius:50%;background:#e8f2ff;color:#0868ce}
+        .topbar-avatar img{display:block;width:100%;height:100%;background:#fff;object-fit:cover}
+        .topbar-avatar img[hidden],.topbar-avatar-initial[hidden]{display:none}
+        .topbar-avatar-initial{font:700 13px Manrope,sans-serif}
+        .topbar-avatar-initial{display:grid;width:100%;height:100%;place-items:center}
+        .badge-status{display:inline-flex;align-items:center;justify-content:center;width:fit-content;max-width:100%;vertical-align:middle}
         .approval-card-header{flex-wrap:wrap}
         .approval-status{align-self:flex-start;display:inline-flex;align-items:center;justify-content:center;flex:none;min-height:26px;padding:5px 10px;line-height:1.2}
         .approval-card{width:100%;min-width:0}
@@ -96,11 +123,10 @@
         .mobile-drawer .offcanvas-body{padding:8px 14px 14px}
         .mobile-drawer .brand{padding:0 8px 8px}
         .mobile-drawer .nav-caption{padding-top:13px}
-        .mobile-drawer .side-user{margin-top:auto}
         @media(max-width:991.98px){.app-footer{padding:12px 16px 16px}}
         @media(max-width:575.98px){
-            .topbar-search input{height:42px;padding-left:10px;padding-right:58px;font-size:12px}
-            .topbar-search button{top:3px;right:3px;width:50px;height:36px}
+            .topbar-search input{height:48px;min-height:48px;padding-left:12px;padding-right:54px;font-size:13px}
+            .topbar-search button{top:50%;right:4px;width:42px;height:42px;min-height:42px;padding:0;transform:translateY(-50%)}
             .app-footer{padding:10px 12px 14px}
         }
         @media print{.app-footer{display:none!important}}
@@ -108,13 +134,23 @@
             .sidebar{display:none}
             .workspace{margin-left:0}
             .mobile-nav-toggle{display:grid}
-            .topbar{padding-right:16px;padding-left:16px;gap:10px}
+            .topbar{height:auto;min-height:62px;padding:8px 16px;gap:10px}
             .topbar{display:flex}
             .topbar-search{position:relative;width:auto;flex:1}
+            .topbar-meta .topbar-name{display:block}
         }
         @media(max-width:575.98px){
             .topbar{padding-right:12px;padding-left:12px;gap:8px}
-            .topbar-meta{gap:8px;white-space:nowrap}
+            .topbar{position:relative;height:auto;min-height:0;display:grid;grid-template-columns:48px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;row-gap:10px;padding:10px 12px 12px}
+            .mobile-nav-toggle{grid-column:1;grid-row:1}
+            .topbar-meta{grid-column:2;grid-row:1;justify-self:end;gap:7px;min-width:0}
+            .topbar-search{grid-column:1/-1;grid-row:2;width:100%;max-width:none;margin:0}
+            .topbar-meta>span.topbar-date{display:flex}
+            .topbar-meta .topbar-name{display:block}
+            .topbar-date{gap:5px;padding:6px 8px;font-size:10px}
+            .topbar-meta>.topbar-profile{display:flex!important;align-items:center;gap:9px;padding:4px 10px 4px 5px}
+            .topbar-avatar{width:32px;height:32px}
+            .topbar-name{max-width:clamp(72px,24vw,128px);font-size:12px}
             .content{padding-right:12px;padding-left:12px}
             .approval-card{padding:16px!important}
             .approval-card .panel-title{font-size:15px}
@@ -126,7 +162,7 @@
             .page-head h1{line-height:1.25}
             .page-head>div:last-child{width:100%}
             .page-head>div:last-child .btn{flex:1;min-width:0;white-space:normal}
-            .stat{height:100%}
+            .stat{height:100%;min-width:0;overflow-wrap:anywhere}
             .modal-dialog{margin:.5rem auto}
             .export-actions{width:100%}
             .export-action{flex:1;justify-content:center;min-width:0;padding-right:10px;padding-left:10px}
@@ -154,12 +190,119 @@
             .topbar-search .btn{width:48px;height:48px;min-height:48px;padding:0}
             .topbar-search input{min-height:54px}
         }
+        @media(min-width:768px) and (max-width:1023.98px){
+            .table-responsive{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}
+            .table-responsive:focus-visible{outline:2px solid #61a9e4;outline-offset:2px}
+            .table-responsive>.table{width:max-content;min-width:100%}
+            .table-responsive>.table td{white-space:nowrap}
+            .table-responsive .btn{min-height:36px;padding:6px 9px}
+            .modal-body{overscroll-behavior:contain}
+        }
+        @media(max-width:767.98px){
+            .table-responsive{overflow:visible;overscroll-behavior-x:auto}
+            .table-responsive>.table{display:block;width:100%;min-width:0;table-layout:fixed}
+            .table-responsive thead{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+            .table-responsive tbody{display:grid;gap:10px;padding:12px}
+            .table-responsive tbody tr{display:grid;grid-template-columns:minmax(0,1fr);gap:0;padding:10px 14px;border:1px solid #e8edf1;border-radius:11px;background:#fff;box-shadow:0 2px 8px rgba(16,35,52,.04)}
+            .table-responsive tbody td{display:grid;grid-template-columns:minmax(92px,.34fr) minmax(0,1fr);align-items:start;gap:10px;min-width:0;padding:9px 0!important;border-bottom:1px solid #f0f3f6!important;overflow-wrap:anywhere;white-space:normal}
+            .table-responsive tbody td::before{content:attr(data-label);font-size:10px;font-weight:700;line-height:1.45;color:#768695}
+            .table-responsive tbody td>*{min-width:0;max-width:100%;overflow-wrap:anywhere}
+            .table-responsive tbody td[data-card-wide]{grid-column:1}
+            .table-responsive tbody td[data-label="Aksi"]{display:grid;grid-template-columns:minmax(92px,.34fr) minmax(0,1fr);align-items:center;justify-content:initial;gap:10px;border-bottom:0!important}
+            .table-responsive tbody td[data-label="Aksi"]::before{flex:none}
+            .table-responsive tbody td[data-label="Aksi"] .d-flex{flex-wrap:wrap}
+            .table-responsive tbody td[data-label="Aksi"] .form-control{width:min(100%,150px)!important;min-width:0}
+            .table-responsive tbody td[colspan]{display:block;grid-column:1/-1;text-align:center}
+            .table-responsive tbody td[colspan]::before{content:none}
+            .table-responsive tbody td[colspan]>*{max-width:none}
+        }
+        @media(max-width:767.98px){
+            .student-shell .content{padding-top:16px}
+            .student-shell .page-head{flex-direction:column;gap:12px}
+            .student-shell .page-head>.btn{width:100%;min-height:48px}
+            .student-shell .student-dashboard-head{gap:14px;margin-bottom:22px}
+            .student-shell .student-dashboard-head>div{padding-top:4px}
+            .student-shell .student-dashboard-head h1{font-size:21px;line-height:1.3}
+            .student-shell .student-dashboard-head p{max-width:38ch;font-size:12px;line-height:1.55}
+            .student-shell .student-dashboard-stats{--bs-gutter-x:12px;--bs-gutter-y:12px;margin-bottom:22px!important}
+            .student-shell .student-dashboard-stats>[class*="col-"]{display:flex;min-width:0}
+            .student-shell .student-dashboard-stats .stat{display:flex;width:100%;min-width:0;min-height:144px;height:100%;flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:5px;padding:12px;border-radius:12px;overflow-wrap:anywhere;box-shadow:0 2px 9px rgba(16,35,52,.06)}
+            .student-shell .student-dashboard-stats .stat>div:first-child{width:40px!important;height:40px!important;flex:none;border-radius:10px!important}
+            .student-shell .student-dashboard-stats .stat>div:first-child .bi{font-size:20px!important}
+            .student-shell .student-dashboard-stats .stat-label{font-size:11px;line-height:1.35;font-weight:600}
+            .student-shell .student-dashboard-stats .stat-value{margin:0;font-size:22px;line-height:1.1}
+            .student-shell .student-dashboard-stats .stat-note{font-size:10px;line-height:1.35}
+            .student-shell .page-head h1,.student-shell .page-head p{overflow-wrap:anywhere}
+            .student-shell .dashboard-panel-heading{flex-wrap:wrap;gap:8px}
+            .student-shell .dashboard-history-link{display:inline-flex;align-items:center;min-height:44px;padding:8px 10px;border-radius:8px;background:#f2f7fc;color:var(--blue)!important;font-size:12px;font-weight:700}
+            .student-shell .search-result-item,.student-shell .search-transaction-item{align-items:flex-start;flex-wrap:wrap}
+            .student-shell .search-result-copy{flex:1 1 0;min-width:0}
+            .student-shell .search-result-copy strong,.student-shell .search-result-copy .panel-subtitle{overflow-wrap:anywhere}
+            .student-shell .search-transaction-copy{flex:1 1 100%;min-width:0;overflow-wrap:anywhere}
+            .student-shell .search-result-item>.btn,.student-shell .search-transaction-item>.btn{margin-left:auto}
+            .student-shell .loan-history .table-responsive tbody{padding:10px}
+            .student-shell .loan-history .table-responsive tbody tr{grid-template-columns:minmax(0,1fr);padding:10px}
+            .student-shell .loan-history .table-responsive tbody td{grid-template-columns:minmax(74px,.32fr) minmax(0,1fr);gap:6px}
+            .student-shell .loan-history .table-responsive tbody td[data-card-wide]{grid-column:1}
+            .student-shell .loan-history .table-responsive tbody td[data-label="Aksi"]{display:grid;grid-template-columns:minmax(74px,.32fr) minmax(0,1fr);justify-content:initial}
+            .student-shell .loan-history .table-responsive tbody td[data-label="Aksi"] form{min-width:0;max-width:100%}
+            .student-shell .loan-history .table-responsive tbody td[data-label="Aksi"] .btn{width:100%;max-width:100%;white-space:normal;text-align:center}
+            .student-shell .pagination{flex-wrap:wrap;gap:4px}
+            .student-shell .app-footer-inner{overflow-wrap:anywhere}
+            .student-shell .modal-header>div{min-width:0;overflow-wrap:anywhere}
+        }
+        @media(max-width:767.98px){
+            .staff-shell .content{padding-top:18px}
+            .staff-shell .page-head{gap:12px;margin-bottom:20px}
+            .staff-shell .page-head>div:first-child{min-width:0}
+            .staff-shell .page-head h1{font-size:20px;line-height:1.3}
+            .staff-shell .page-head p{max-width:60ch;font-size:12px;line-height:1.55;overflow-wrap:anywhere}
+            .staff-shell .page-head>.btn{width:100%;min-height:48px}
+            .staff-shell .export-actions>.btn{flex:1 1 100%}
+            .staff-shell .stat{min-width:0;min-height:116px;height:100%;padding:12px;border-radius:11px;overflow-wrap:anywhere}
+            .staff-shell .stat-label{font-size:11px;line-height:1.35;font-weight:600}
+            .staff-shell .stat-value{font-size:22px;line-height:1.1}
+            .staff-shell .stat-note{font-size:10px;line-height:1.35}
+            .staff-shell .responsive-search{gap:8px;padding:10px!important}
+            .staff-shell .responsive-search .form-control{min-height:48px}
+            .staff-shell .responsive-search .btn{min-width:76px}
+            .staff-shell .operational-loan-card{min-width:0;padding:12px!important;border-radius:11px}
+            .staff-shell .operational-loan-heading{align-items:flex-start!important}
+            .staff-shell .operational-loan-identity{flex:1 1 100%;min-width:0;overflow-wrap:anywhere}
+            .staff-shell .operational-deadline{flex:1 1 100%;min-width:0;text-align:left!important;line-height:1.5;overflow-wrap:anywhere}
+            .staff-shell .technician-equipment-heading{align-items:flex-start!important;min-width:0}
+            .staff-shell .technician-equipment-copy{min-width:0;overflow-wrap:anywhere}
+            .staff-shell .technician-item-id{overflow-wrap:anywhere}
+            .staff-shell .technician-handover-form,.staff-shell .technician-return-form{min-width:0}
+            .staff-shell .technician-handover-form>[type="submit"],.staff-shell .technician-return-form .btn[type="submit"]{width:100%}
+            .staff-shell .category-edit-actions{align-items:stretch}
+            .staff-shell .category-edit-form{flex:1 1 100%;width:100%;min-width:0}
+            .staff-shell .category-name-input{width:1%!important;min-width:0;flex:1 1 auto}
+            .staff-shell .category-delete-form{margin-left:auto}
+            .staff-shell .equipment-name-cell{min-width:0;overflow-wrap:anywhere}
+            .staff-shell .approval-card-header{align-items:flex-start}
+            .staff-shell .approval-card-header>div{min-width:0}
+            .staff-shell .approval-reject-panel{padding:10px}
+            .staff-shell .approval-reject-panel .d-flex>.btn{flex:1 1 130px}
+        }
+        @media(max-width:399.98px){
+            .equipment-modal-dialog .modal-body .row>[class*="col-6"]{flex:0 0 100%;max-width:100%}
+            .modal-footer{flex-wrap:wrap}
+            .modal-footer>.btn{flex:1 1 120px}
+            .topbar-date{padding:6px}
+            .topbar-name{max-width:76px}
+            .stat-label,.stat-value,.stat-note{min-width:0;overflow-wrap:anywhere}
+            .table-responsive tbody tr{padding-right:10px;padding-left:10px}
+            .table-responsive tbody td{grid-template-columns:minmax(82px,.36fr) minmax(0,1fr);gap:8px;font-size:12px}
+            .table-responsive tbody td[data-label="Aksi"]{grid-template-columns:minmax(82px,.36fr) minmax(0,1fr)}
+        }
     </style>
     @stack('head')
 </head>
 <body>
 @if(auth()->check())
-<div class="shell d-flex min-vh-100 {{ request()->routeIs('catalog') ? 'catalog-shell' : '' }}">
+@php($sidebarAvatarPath = auth()->user()->profileAvatarPath())
+<div class="shell d-flex min-vh-100 {{ auth()->user()->role === 'siswa' ? 'student-shell' : '' }} {{ in_array(auth()->user()->role, ['admin', 'teknisi'], true) ? 'staff-shell' : '' }} {{ request()->routeIs('catalog') ? 'catalog-shell' : '' }}">
     <aside class="sidebar">
         <a class="brand" href="{{ route('dashboard') }}"><img class="brand-logo" src="{{ asset('assets/logo.png') }}" alt="Logo SIPAR"><span>SIPAR<small>Peminjaman Alat RPL</small></span></a>
         <div class="nav-caption">Menu utama</div>
@@ -179,8 +322,7 @@
         @endif
         <div class="sidebar-footer">
             <a class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}" href="{{ route('profile') }}"><i class="bi bi-person-gear"></i>Profil Saya</a>
-            <div class="side-user"><strong data-auth-user-name>{{ auth()->user()->nama }}</strong><small>{{ auth()->user()->nis_nip }} · {{ ucfirst(auth()->user()->role) }}</small></div>
-            <form class="sidebar-logout-form" method="post" action="{{ route('logout') }}">@csrf<button class="sidebar-logout" type="submit"><i class="bi bi-box-arrow-right"></i>Keluar</button></form>
+            <form class="sidebar-logout-form" method="post" action="{{ route('logout') }}" data-confirm-title="Konfirmasi keluar" data-confirm-message="Apakah Anda yakin ingin keluar dari akun?" data-confirm-label="Ya, Keluar">@csrf<button class="sidebar-logout" type="submit"><i class="bi bi-box-arrow-right"></i>Keluar</button></form>
         </div>
     </aside>
     <div class="offcanvas offcanvas-start mobile-drawer" tabindex="-1" id="mobileNavigation" aria-labelledby="mobileNavigationLabel">
@@ -206,8 +348,7 @@
             @endif
             <div class="sidebar-footer">
                 <a class="nav-link {{ request()->routeIs('profile') ? 'active' : '' }}" href="{{ route('profile') }}"><i class="bi bi-person-gear"></i>Profil Saya</a>
-                <div class="side-user"><strong data-auth-user-name>{{ auth()->user()->nama }}</strong><small>{{ auth()->user()->nis_nip }} · {{ ucfirst(auth()->user()->role) }}</small></div>
-                <form class="sidebar-logout-form" method="post" action="{{ route('logout') }}">@csrf<button class="sidebar-logout" type="submit"><i class="bi bi-box-arrow-right"></i>Keluar</button></form>
+                <form class="sidebar-logout-form" method="post" action="{{ route('logout') }}" data-confirm-title="Konfirmasi keluar" data-confirm-message="Apakah Anda yakin ingin keluar dari akun?" data-confirm-label="Ya, Keluar">@csrf<button class="sidebar-logout" type="submit"><i class="bi bi-box-arrow-right"></i>Keluar</button></form>
             </div>
         </div>
     </div>
@@ -217,11 +358,11 @@
             @unless(request()->is('profil*'))
                 <form class="topbar-search responsive-search" method="get" action="{{ request()->routeIs('catalog') ? route('catalog') : route('search') }}" role="search" autocomplete="off">
                     <input class="form-control form-control-sm" type="search" name="q" value="{{ request('q') }}" placeholder="{{ request()->routeIs('catalog') ? 'Cari nama atau kode alat...' : 'Cari alat, transaksi, atau siswa...' }}" aria-label="Cari">
-                    <button class="btn btn-primary" type="submit" aria-label="Cari"><i class="bi bi-search" aria-hidden="true"></i></button>
+                    <button class="btn search-submit" type="submit" aria-label="Cari"><i class="bi bi-search" aria-hidden="true"></i></button>
                     <div class="search-suggestions" id="search-suggestions" role="listbox" aria-label="Saran pencarian"></div>
                 </form>
             @endunless
-            <div class="topbar-meta"><i class="bi bi-calendar3"></i><span>{{ now()->translatedFormat('d M Y') }}</span><a class="topbar-profile" href="{{ route('profile') }}" aria-label="Buka profil saya"><span class="topbar-name" data-auth-user-name>{{ auth()->user()->nama }}</span><span class="topbar-avatar" aria-hidden="true"><i class="bi bi-person-fill"></i></span></a></div>
+            <div class="topbar-meta"><span class="topbar-date"><i class="bi bi-calendar3" aria-hidden="true"></i><span>{{ now()->translatedFormat('d M Y') }}</span></span><a class="topbar-profile" href="{{ route('profile') }}" aria-label="Buka profil saya"><span class="topbar-avatar" aria-hidden="true">@if($sidebarAvatarPath)<img src="{{ asset('storage/'.$sidebarAvatarPath) }}" alt="" data-auth-user-avatar onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span class="topbar-avatar-initial" data-auth-user-initial hidden>{{ mb_strtoupper(mb_substr(auth()->user()->nama, 0, 1)) }}</span>@else<span class="topbar-avatar-initial" data-auth-user-initial>{{ mb_strtoupper(mb_substr(auth()->user()->nama, 0, 1)) }}</span>@endif</span><span class="topbar-name" data-auth-user-name>{{ auth()->user()->nama }}</span></a></div>
         </header>
         <main class="content flex-grow-1">
             @if(session('success'))<div class="alert alert-success alert-dismissible fade show" role="status" aria-live="polite">{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button></div>@endif

@@ -24,7 +24,7 @@ class LoanController extends Controller
         $equipment = Alat::with('kategori')->when($request->string('q')->trim()->isNotEmpty(), function ($query) use ($request) {
             $term = '%'.$request->string('q')->trim().'%';
             $query->where(fn ($builder) => $builder->where('nama_alat', 'like', $term)->orWhere('kode_alat', 'like', $term));
-        })->orderBy('nama_alat')->get();
+        })->orderBy('kode_alat')->orderBy('nama_alat')->get();
 
         $activeEquipmentStatuses = DetailPeminjaman::with('peminjaman:id_peminjaman,status')
             ->whereHas('peminjaman', fn ($query) => $query
@@ -270,7 +270,7 @@ class LoanController extends Controller
                     'status' => 'Approved',
                     'approved_at' => now(),
                     'status_read_at' => null,
-                    'operational_notes' => 'Ambil di Lab / Ruang Inventaris pukul 12.00 - 13.00 WIB, maksimal 24 jam sejak persetujuan. Siswa dapat membatalkan peminjaman sebelum alat diserahkan.',
+                    'operational_notes' => 'Lokasi pengambilan: Lab / Ruang Inventaris. Jam operasional teknisi: 12.00 - 13.00 WIB.',
                     'overdue_flag' => false,
                     'reminder_flag' => false,
                 ]);

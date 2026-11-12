@@ -12,7 +12,7 @@
     </style>
     <style>
         :root{--auth-ink:#132c3a;--auth-muted:#667987;--auth-line:#dce5eb;--auth-blue:#0877d8;--auth-blue-dark:#075da8;--auth-surface:#f3f6f7}
-        body{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#eaf0f2;color:var(--auth-ink);padding:10px 24px}
+        body{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;background:#eaf0f2;color:var(--auth-ink);padding:10px 24px}
         .auth-frame{flex:1;width:min(100%,1280px);min-height:min(820px,calc(100vh - 72px));min-height:min(820px,calc(100svh - 72px));grid-template-columns:minmax(0,1.05fr) minmax(480px,.95fr);max-width:1280px;margin:auto;border:1px solid #dce5e9;border-radius:14px;box-shadow:0 24px 64px rgba(19,44,58,.12)}
         .auth-aside{isolation:isolate;background-color:#122b3a;background-image:url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1800&q=85');background-position:center;background-size:cover;padding:clamp(32px,5vw,72px)}
         .auth-aside::before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(120deg,rgba(9,44,57,.48) 0%,rgba(11,70,81,.32) 52%,rgba(7,36,56,.45) 100%)}
@@ -70,7 +70,7 @@
         .help-note a{color:var(--auth-blue-dark);font-weight:700;text-decoration:none}
         .help-note a:hover{text-decoration:underline}
         .auth-form .alert{border-radius:7px;font-size:12px}
-        .auth-global-footer{width:min(100%,1280px);padding:13px 10px 0;color:#70818d;text-align:center;font-size:11px;line-height:1.5}
+        .auth-global-footer{width:min(100%,1280px);flex:none;padding:0 10px;color:#70818d;text-align:center;font-size:11px;line-height:1.5}
         .auth-global-footer strong{color:#3f5867;font-weight:700}
         .auth-global-footer .bi{margin-right:5px;color:var(--auth-blue-dark)}
         @keyframes auth-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
@@ -82,8 +82,8 @@
             .auth-form{padding:30px}
         }
         @media(max-width:767.98px){
-            body{display:flex;min-height:100svh;padding:12px;background:#eaf0f2}
-            .auth-frame{flex:none;width:100%;min-height:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto;margin:0 auto;border-radius:12px;box-shadow:0 12px 32px rgba(19,44,58,.1)}
+            body{display:flex;min-height:100svh;gap:14px;padding:12px;background:#eaf0f2}
+            .auth-frame{flex:none;width:100%;min-height:auto;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto;margin:0 auto 2px;border-radius:12px;box-shadow:0 12px 32px rgba(19,44,58,.1)}
             .auth-aside{min-height:240px;padding:20px 22px 24px;border-radius:11px 11px 0 0}
             .auth-aside-login{min-height:320px;padding:24px 22px 42px;gap:15px}
             .auth-aside .auth-brand-hero{gap:8px;font-size:34px}
@@ -97,14 +97,14 @@
             .aside-copy small{font-size:10px}
             .aside-copy h1{max-width:520px;font-size:23px;margin:8px 0}
             .aside-copy p{display:block;max-width:520px;font-size:13px;font-weight:600;line-height:1.5;margin:0}
-            .auth-main{position:relative;z-index:2;display:block;margin-top:-18px;padding:0 16px 20px;background:transparent}
+            .auth-main{position:relative;z-index:2;display:block;margin-top:-18px;padding:0 16px 28px;background:transparent}
             .auth-form{width:100%;max-width:440px;margin:0 auto;padding:24px;background:#fff;border:1px solid #e0e7eb;border-radius:10px;box-shadow:0 10px 26px rgba(19,44,58,.1);animation:none}
             .auth-form h2{font-size:22px}
             .auth-form>p{font-size:12px;margin:6px 0 20px}
             .role-switch button{font-size:12px}
             .login-options{align-items:center;gap:8px;margin-bottom:20px!important}
             .login-options #login-support{font-size:11px;text-align:right}
-            .auth-global-footer{padding:2px 6px 6px;font-size:10px}
+            .auth-global-footer{padding:0 6px 6px;font-size:10px}
         }
         @media(max-width:380px){
             .auth-aside{min-height:226px;padding-right:18px;padding-left:18px}

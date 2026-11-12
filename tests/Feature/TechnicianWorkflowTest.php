@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Alat;
+use App\Models\DetailPengembalian;
 use App\Models\DetailPenyerahan;
 use App\Models\ItemUnit;
 use App\Models\KategoriAlat;
@@ -80,6 +81,10 @@ class TechnicianWorkflowTest extends TestCase
 
         $this->actingAs($technician)->get(route('technician.handovers'))
             ->assertOk()
+            ->assertSee('staff-shell', false)
+            ->assertSee('operational-loan-card', false)
+            ->assertSee('technician-handover-form', false)
+            ->assertSee('.staff-shell .technician-handover-form>[type="submit"],.staff-shell .technician-return-form .btn[type="submit"]{width:100%}', false)
             ->assertSee('capture="environment"', false)
             ->assertSee('data-disable-on-submit', false)
             ->assertSee('data-submitting-text="Menyimpan seluruh transaksi..."', false)
@@ -98,6 +103,10 @@ class TechnicianWorkflowTest extends TestCase
         $this->assertDatabaseHas('detail_penyerahan', ['id_detail' => $detail->id_detail, 'id_teknisi' => $technician->id_user]);
         $this->actingAs($technician)->get(route('technician.returns'))
             ->assertOk()
+            ->assertSee('staff-shell', false)
+            ->assertSee('operational-loan-card', false)
+            ->assertSee('technician-return-form', false)
+            ->assertSee('.staff-shell .technician-handover-form>[type="submit"],.staff-shell .technician-return-form .btn[type="submit"]{width:100%}', false)
             ->assertSee('capture="environment"', false)
             ->assertSee('data-disable-on-submit', false)
             ->assertSee('data-submitting-text="Menyimpan..."', false)
@@ -400,5 +409,202 @@ class TechnicianWorkflowTest extends TestCase
         ]);
         $this->assertSame('Dipinjam', $borrowedUnit->fresh()->status);
         $this->assertSame('Dipinjam', $availableUnit->fresh()->status);
+    }
+
+    public function test_handover_allows_a_tracked_unit_returned_in_a_still_active_partial_loan(): void
+    {
+        Storage::fake('public');
+        $technician = User::factory()->create(['role' => 'teknisi']);
+        $student = User::factory()->create(['role' => 'siswa']);
+        $category = KategoriAlat::create(['nama_kategori' => 'Kategori Pengembalian Parsial Unit']);
+        $equipment = Alat::create([
+            'kode_alat' => 'PARTIAL-UNIT', 'nama_alat' => 'Alat Unit Parsial', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 1, 'stok_tersedia' => 1, 'stok_maintenance' => 0, 'stok_rusak' => 0,
+            'kondisi' => 'Baik', 'qr_code' => 'partial-unit-qr', 'status_alat' => 'Tersedia',
+        ]);
+        $otherEquipment = Alat::create([
+            'kode_alat' => 'PARTIAL-OTHER', 'nama_alat' => 'Alat Lain Parsial', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 1, 'stok_tersedia' => 0, 'stok_maintenance' => 0, 'stok_rusak' => 0,
+            'kondisi' => 'Baik', 'qr_code' => 'partial-other-qr', 'status_alat' => 'Dipinjam',
+        ]);
+        $unit = ItemUnit::create([
+            'alat_id' => $equipment->id_alat,
+            'asset_id' => 'PARTIAL-UNIT-001',
+            'qr_code' => 'partial-unit-001-qr',
+            'condition' => 'Baik',
+            'status' => 'Tersedia',
+        ]);
+        $previousLoan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDays(2)->toDateString(),
+            'keperluan' => 'Transaksi lama dengan pengembalian parsial',
+            'status' => 'Approved',
+        ]);
+        $previousDetail = $previousLoan->detail()->create(['id_alat' => $equipment->id_alat, 'jumlah' => 1]);
+        $outstandingDetail = $previousLoan->detail()->create(['id_alat' => $otherEquipment->id_alat, 'jumlah' => 1]);
+        $previousDetail->itemUnits()->attach($unit->item_unit_id, ['assigned_by' => $technician->id_user]);
+        DetailPenyerahan::create([
+            'id_detail' => $previousDetail->id_detail,
+            'item_unit_id' => $unit->item_unit_id,
+            'asset_id' => $unit->asset_id,
+            'id_teknisi' => $technician->id_user,
+            'jumlah' => 1,
+            'tanggal_penyerahan' => now(),
+            'kondisi_alat' => 'Baik',
+        ]);
+        DetailPenyerahan::create([
+            'id_detail' => $outstandingDetail->id_detail,
+            'asset_id' => 'PARTIAL-OTHER-001',
+            'id_teknisi' => $technician->id_user,
+            'jumlah' => 1,
+            'tanggal_penyerahan' => now(),
+            'kondisi_alat' => 'Baik',
+        ]);
+        DetailPengembalian::create([
+            'id_detail' => $previousDetail->id_detail,
+            'item_unit_id' => $unit->item_unit_id,
+            'asset_id' => $unit->asset_id,
+            'idempotency_key' => '00000000-0000-4000-8000-000000000101',
+            'jumlah' => 1,
+            'tanggal_kembali_aktual' => now(),
+            'kondisi_alat' => 'Baik',
+            'denda' => 0,
+            'id_teknisi' => $technician->id_user,
+        ]);
+
+        $newLoan = Peminjaman::create([
+            'id_user' => User::factory()->create(['role' => 'siswa'])->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDays(2)->toDateString(),
+            'keperluan' => 'Transaksi baru setelah unit dikembalikan',
+            'status' => 'Approved',
+        ]);
+        $newDetail = $newLoan->detail()->create(['id_alat' => $equipment->id_alat, 'jumlah' => 1]);
+
+        $this->actingAs($technician)->post(route('technician.handovers.store', $newLoan), [
+            'items' => [
+                $newDetail->id_detail => [
+                    'id_detail' => $newDetail->id_detail,
+                    'jumlah' => 1,
+                    'asset_ids' => $unit->asset_id,
+                    'kondisi_alat' => 'Baik',
+                ],
+            ],
+            'foto_bukti' => $this->fakeImage('partial-unit-reuse.jpg'),
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertSame('Approved', $previousLoan->fresh()->status);
+        $this->assertDatabaseHas('detail_penyerahan', [
+            'id_detail' => $newDetail->id_detail,
+            'item_unit_id' => $unit->item_unit_id,
+            'asset_id' => $unit->asset_id,
+        ]);
+        $this->assertDatabaseHas('detail_peminjaman_item_unit', [
+            'id_detail' => $previousDetail->id_detail,
+            'item_unit_id' => $unit->item_unit_id,
+        ]);
+        $this->assertDatabaseHas('detail_peminjaman_item_unit', [
+            'id_detail' => $newDetail->id_detail,
+            'item_unit_id' => $unit->item_unit_id,
+        ]);
+        $this->assertSame('Dipinjam', $unit->fresh()->status);
+    }
+
+    public function test_handover_allows_a_legacy_asset_returned_in_a_still_active_partial_loan(): void
+    {
+        Storage::fake('public');
+        $technician = User::factory()->create(['role' => 'teknisi']);
+        $student = User::factory()->create(['role' => 'siswa']);
+        $category = KategoriAlat::create(['nama_kategori' => 'Kategori Pengembalian Parsial Legacy']);
+        $equipment = Alat::create([
+            'kode_alat' => 'PARTIAL-LEGACY', 'nama_alat' => 'Alat Legacy Parsial', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 1, 'stok_tersedia' => 1, 'stok_maintenance' => 0, 'stok_rusak' => 0,
+            'kondisi' => 'Baik', 'qr_code' => 'partial-legacy-qr', 'status_alat' => 'Tersedia',
+        ]);
+        $otherEquipment = Alat::create([
+            'kode_alat' => 'PARTIAL-LEGACY-OTHER', 'nama_alat' => 'Alat Legacy Lain', 'id_kategori' => $category->id_kategori,
+            'stok_total' => 1, 'stok_tersedia' => 0, 'stok_maintenance' => 0, 'stok_rusak' => 0,
+            'kondisi' => 'Baik', 'qr_code' => 'partial-legacy-other-qr', 'status_alat' => 'Dipinjam',
+        ]);
+        $previousLoan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDays(2)->toDateString(),
+            'keperluan' => 'Transaksi legacy dengan pengembalian parsial',
+            'status' => 'Approved',
+        ]);
+        $previousDetail = $previousLoan->detail()->create(['id_alat' => $equipment->id_alat, 'jumlah' => 1]);
+        $outstandingDetail = $previousLoan->detail()->create(['id_alat' => $otherEquipment->id_alat, 'jumlah' => 1]);
+        DetailPenyerahan::create([
+            'id_detail' => $previousDetail->id_detail,
+            'asset_id' => 'LEGACY-UNIT-001',
+            'id_teknisi' => $technician->id_user,
+            'jumlah' => 1,
+            'tanggal_penyerahan' => now(),
+            'kondisi_alat' => 'Baik',
+        ]);
+        DetailPenyerahan::create([
+            'id_detail' => $outstandingDetail->id_detail,
+            'asset_id' => 'LEGACY-OTHER-001',
+            'id_teknisi' => $technician->id_user,
+            'jumlah' => 1,
+            'tanggal_penyerahan' => now(),
+            'kondisi_alat' => 'Baik',
+        ]);
+        $newLoan = Peminjaman::create([
+            'id_user' => User::factory()->create(['role' => 'siswa'])->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDays(2)->toDateString(),
+            'keperluan' => 'Transaksi baru setelah aset legacy dikembalikan',
+            'status' => 'Approved',
+        ]);
+        $newDetail = $newLoan->detail()->create(['id_alat' => $equipment->id_alat, 'jumlah' => 1]);
+
+        $this->actingAs($technician)->post(route('technician.handovers.store', $newLoan), [
+            'items' => [
+                $newDetail->id_detail => [
+                    'id_detail' => $newDetail->id_detail,
+                    'jumlah' => 1,
+                    'asset_ids' => 'LEGACY-UNIT-001',
+                    'kondisi_alat' => 'Baik',
+                ],
+            ],
+            'foto_bukti' => $this->fakeImage('legacy-unit-still-out.jpg'),
+        ])->assertRedirect()->assertSessionHasErrors("items.{$newDetail->id_detail}.asset_ids");
+
+        $this->assertDatabaseMissing('detail_penyerahan', [
+            'id_detail' => $newDetail->id_detail,
+            'asset_id' => 'LEGACY-UNIT-001',
+        ]);
+
+        DetailPengembalian::create([
+            'id_detail' => $previousDetail->id_detail,
+            'asset_id' => 'LEGACY-UNIT-001',
+            'idempotency_key' => '00000000-0000-4000-8000-000000000102',
+            'jumlah' => 1,
+            'tanggal_kembali_aktual' => now(),
+            'kondisi_alat' => 'Baik',
+            'denda' => 0,
+            'id_teknisi' => $technician->id_user,
+        ]);
+
+        $this->post(route('technician.handovers.store', $newLoan), [
+            'items' => [
+                $newDetail->id_detail => [
+                    'id_detail' => $newDetail->id_detail,
+                    'jumlah' => 1,
+                    'asset_ids' => 'LEGACY-UNIT-001',
+                    'kondisi_alat' => 'Baik',
+                ],
+            ],
+            'foto_bukti' => $this->fakeImage('partial-legacy-reuse.jpg'),
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertSame('Approved', $previousLoan->fresh()->status);
+        $this->assertDatabaseHas('detail_penyerahan', [
+            'id_detail' => $newDetail->id_detail,
+            'asset_id' => 'LEGACY-UNIT-001',
+        ]);
     }
 }

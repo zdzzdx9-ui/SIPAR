@@ -19,15 +19,25 @@ class PageAccessTest extends TestCase
     public function test_admin_pages_render(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
+        $student = User::factory()->create(['role' => 'siswa', 'nama' => 'Siswa Uji Responsif']);
         $category = KategoriAlat::create(['nama_kategori' => 'Jaringan']);
-        Alat::create([
+        $equipment = Alat::create([
             'kode_alat' => 'LAN-001', 'nama_alat' => 'LAN Tester', 'id_kategori' => $category->id_kategori,
             'stok_total' => 2, 'stok_tersedia' => 2, 'kondisi' => 'Baik', 'qr_code' => 'qr-admin-test', 'status_alat' => 'Tersedia',
         ]);
+        $loan = Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDay()->toDateString(),
+            'keperluan' => 'Uji tampilan kartu responsif.',
+            'status' => 'Pending',
+        ]);
+        $loan->detail()->create(['id_alat' => $equipment->id_alat, 'jumlah' => 1]);
 
         $this->actingAs($admin);
         $this->get(route('dashboard'))
             ->assertOk()
+            ->assertSee('staff-shell', false)
             ->assertSee('<div class="surface stat">', false)
             ->assertSee('style="background-color: #dbeafe !important; color: #2563eb !important; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px;"', false)
             ->assertSee('<i class="bi bi-box" style="font-size: 24px;"></i>', false)
@@ -37,10 +47,22 @@ class PageAccessTest extends TestCase
             ->assertSee('<i class="bi bi-hourglass-split" style="font-size: 24px;"></i>', false)
             ->assertSee('style="background-color: #d1fae5 !important; color: #059669 !important; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px;"', false)
             ->assertSee('<i class="bi bi-check-circle" style="font-size: 24px;"></i>', false)
+            ->assertSee('.badge-status{display:inline-flex;align-items:center;justify-content:center;width:fit-content;max-width:100%;vertical-align:middle}', false)
             ->assertSee('Jenis Alat')
             ->assertSee('Transaksi Terbaru')
             ->assertSee('Inventaris Teratas')
             ->assertSee('app-footer', false)
+            ->assertSee('.table-responsive tbody{display:grid;gap:10px;padding:12px}', false)
+            ->assertSee('class="topbar-date"', false)
+            ->assertSee('class="topbar-name"', false)
+            ->assertSee('.search-suggestions{position:absolute', false)
+            ->assertSee('.topbar-meta>.topbar-profile{display:flex!important', false)
+            ->assertSee('.topbar{position:relative;height:auto;min-height:0;display:grid', false)
+            ->assertSee('.topbar-search .search-submit{color:var(--muted);border:0;background:transparent;box-shadow:none}', false)
+            ->assertSee('.stat{height:100%;min-width:0;overflow-wrap:anywhere}', false)
+            ->assertSee('.table-responsive tbody tr{display:grid;grid-template-columns:minmax(0,1fr)', false)
+            ->assertSee('.table-responsive tbody td{display:grid;grid-template-columns:minmax(92px,.34fr) minmax(0,1fr)', false)
+            ->assertSee('.staff-shell .stat{min-width:0;min-height:116px;height:100%;padding:12px', false)
             ->assertSee('data-bs-target="#mobileNavigation"', false)
             ->assertSee('id="mobileNavigation"', false)
             ->assertSee(route('admin.categories'), false)
@@ -54,24 +76,35 @@ class PageAccessTest extends TestCase
         ] as $url) {
             $this->get($url)->assertOk();
         }
+        $this->get(route('admin.approvals'))
+            ->assertOk()
+            ->assertSee('bi-clipboard-check', false)
+            ->assertSee('class="equipment-icon flex-shrink-0"', false)
+            ->assertSee('class="badge-status approval-status', false);
         $this->get(route('admin.categories'))
             ->assertSee('Kategori Alat')
             ->assertSee('Jaringan')
+            ->assertSee('data-label="Nama kategori"', false)
+            ->assertSee('category-edit-form', false)
             ->assertSee('name="nama_kategori"', false);
         $this->get(route('admin.students'))
             ->assertSee('Data Siswa')
+            ->assertSee('class="table-responsive table-card-view"', false)
+            ->assertSee('data-label="Nama"', false)
             ->assertSee('Tambah akun siswa')
             ->assertSee('id="new-student-password"', false)
             ->assertSee('data-password-toggle', false)
             ->assertSee('bi-eye', false);
         $this->get(route('admin.equipment'))
             ->assertSee('Master Data Alat')
+            ->assertSee('data-label="Nama alat"', false)
             ->assertSee('LAN Tester')
-            ->assertSee('title="Edit"', false)
+            ->assertSee('aria-label="Edit LAN Tester"', false)
             ->assertSee('name="stok_total"', false);
         $this->get(route('admin.reports'))
             ->assertSee('Dari tanggal')
             ->assertSee('Sampai tanggal')
+            ->assertSee('data-label="Peminjam"', false)
             ->assertSee('Semua status')
             ->assertSee('Total Denda');
         $this->get(route('profile'))
@@ -98,6 +131,11 @@ class PageAccessTest extends TestCase
         $this->get(route('dashboard'))
             ->assertOk()
             ->assertSee('Beranda')
+            ->assertSee('student-shell', false)
+            ->assertSee('student-dashboard-stats', false)
+            ->assertSee('.student-shell .student-dashboard-stats .stat{display:flex;width:100%;min-width:0;min-height:144px', false)
+            ->assertSee('<button class="btn search-submit" type="submit" aria-label="Cari">', false)
+            ->assertSee('.topbar-search .search-submit{color:var(--muted);border:0;background:transparent;box-shadow:none}', false)
             ->assertSee('class="surface stat"', false)
             ->assertSee('Alat Tersedia')
             ->assertSee('Peminjaman Terbaru')
@@ -121,10 +159,15 @@ class PageAccessTest extends TestCase
             ->assertSee('.card-katalog:hover .catalog-image-frame img{transform:scale(1.05)}', false)
             ->assertSee('transition:transform .3s ease-in-out', false)
             ->assertSee('object-fit:contain;object-position:center', false)
-            ->assertSee('transform:translateX(-50%)', false)
             ->assertSee('catalog-card-actions{display:flex', false)
             ->assertSee('catalog-shell .responsive-search .btn{flex:0 0 auto;white-space:nowrap}', false)
             ->assertSee('class="catalog-image-frame overflow-hidden mb-3"', false)
+            ->assertSee('.loan-list-dock{position:relative;z-index:1;display:grid', false)
+            ->assertDontSee('position:fixed;top:auto;right:max(12px,env(safe-area-inset-right))', false)
+            ->assertSee('display:grid;grid-template-columns:minmax(0,1fr) max-content;grid-template-rows:minmax(64px,1fr)', false)
+            ->assertSee('min-height:90px', false)
+            ->assertSee('class="loan-list-dock-info"', false)
+            ->assertSee('.loan-list-dock .btn{grid-column:2;grid-row:1;align-self:end;justify-self:end;min-height:44px;margin:0}', false)
             ->assertSee('class="btn btn-primary btn-sm loan-item-toggle"', false)
             ->assertSee('Pilih Alat')
             ->assertSee('id="loan-request-form"', false)
@@ -188,6 +231,33 @@ class PageAccessTest extends TestCase
             ->assertDontSee('page=2');
     }
 
+    public function test_student_catalog_uses_stable_asset_code_order(): void
+    {
+        $student = User::factory()->create(['role' => 'siswa']);
+        $category = KategoriAlat::create(['nama_kategori' => 'Urutan Katalog']);
+        foreach ([
+            ['kode_alat' => 'ORD-MIK-001', 'nama_alat' => 'Urutan Arduino'],
+            ['kode_alat' => 'ORD-KOM-003', 'nama_alat' => 'Urutan Keyboard'],
+            ['kode_alat' => 'ORD-PRK-004', 'nama_alat' => 'Urutan Bor'],
+        ] as $item) {
+            Alat::create($item + [
+                'id_kategori' => $category->id_kategori,
+                'stok_total' => 1,
+                'stok_tersedia' => 1,
+                'kondisi' => 'Baik',
+                'qr_code' => $item['kode_alat'].'-catalog-order',
+                'status_alat' => 'Tersedia',
+            ]);
+        }
+
+        $this->actingAs($student)->get(route('catalog'))
+            ->assertOk()
+            ->assertSee('class="row g-3 catalog-grid"', false)
+            ->assertSee('.loan-list-dock{position:relative;z-index:1;display:grid', false)
+            ->assertSee('width:min(100%,520px);min-height:90px;max-width:100%;margin:0 0 1rem auto', false)
+            ->assertSeeInOrder(['Urutan Keyboard', 'Urutan Arduino', 'Urutan Bor']);
+    }
+
     public function test_student_with_loan_history_cannot_be_deleted(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -225,13 +295,66 @@ class PageAccessTest extends TestCase
 
         $this->actingAs($student)->get(route('loans.mine'))
             ->assertOk()
+            ->assertSee('class="table-responsive table-card-view"', false)
+            ->assertSee('data-label="Tanggal pinjam"', false)
+            ->assertSee('.loan-equipment-image{display:grid;place-items:center;width:56px;height:56px;flex:0 0 56px;overflow:hidden', false)
+            ->assertSee('.loan-equipment-image>.equipment-photo{display:block;width:100%;height:100%;max-width:100%;object-fit:contain', false)
+            ->assertSee('class="loan-equipment-list"', false)
+            ->assertSee('class="loan-equipment-name"', false)
+            ->assertSee('.table-responsive{overflow:visible;overscroll-behavior-x:auto}', false)
+            ->assertSee('.table-responsive tbody{display:grid;gap:10px;padding:12px}', false)
             ->assertSee('<th scope="col">Catatan</th>', false)
             ->assertSee('<th scope="col" class="text-center">Aksi</th>', false)
             ->assertSee('class="loan-equipment-image rounded-3 bg-light"', false)
             ->assertSee('object-fit:contain', false)
             ->assertSee('action="'.route('loans.cancel', $loan).'"', false)
             ->assertSee('Batalkan Pengajuan')
-            ->assertSee('sebelum alat diserahkan');
+            ->assertDontSee('Pengambilan di Lab / Ruang Inventaris');
+    }
+
+    public function test_loan_history_only_shows_pickup_guidance_for_approved_and_completed_loans(): void
+    {
+        $student = User::factory()->create(['role' => 'siswa']);
+        Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDay()->toDateString(),
+            'keperluan' => 'Catatan untuk pengambilan',
+            'status' => 'Approved',
+            'operational_notes' => 'Instruksi lama yang harus diganti.',
+        ]);
+        Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDay()->toDateString(),
+            'keperluan' => 'Permohonan ditolak',
+            'status' => 'Rejected',
+            'catatan_admin' => 'Jadwal penggunaan tidak tersedia.',
+            'operational_notes' => 'Instruksi lama yang tidak boleh ditampilkan.',
+        ]);
+        Peminjaman::create([
+            'id_user' => $student->id_user,
+            'tanggal_pinjam' => today()->toDateString(),
+            'tanggal_kembali_rencana' => today()->addDay()->toDateString(),
+            'keperluan' => 'Permohonan dibatalkan',
+            'status' => 'Cancelled',
+            'operational_notes' => 'Instruksi pembatalan yang tidak boleh ditampilkan.',
+        ]);
+
+        $response = $this->actingAs($student)->get(route('loans.mine'))->assertOk();
+        $html = $response->getContent();
+
+        $this->assertStringContainsString('Lokasi pengambilan: Lab / Ruang Inventaris. Jam operasional teknisi: 12.00 - 13.00 WIB.', $html);
+        $this->assertStringContainsString('Harap ambil alat dalam 1×24 jam / pada jam operasional berikutnya setelah disetujui. Pembatalan dapat dilakukan sebelum persetujuan atau sebelum alat diserahkan kepada peminjam.', $html);
+        $this->assertStringContainsString('Jadwal penggunaan tidak tersedia.', $html);
+        $this->assertStringNotContainsString('Instruksi lama yang tidak boleh ditampilkan.', $html);
+        $this->assertStringNotContainsString('Instruksi lama yang harus diganti.', $html);
+        $this->assertStringNotContainsString('Instruksi pembatalan yang tidak boleh ditampilkan.', $html);
+
+        $cancelledRowStart = strrpos($html, '<tr', strpos($html, 'Permohonan dibatalkan'));
+        $cancelledRowEnd = strpos($html, '</tr>', $cancelledRowStart);
+        $cancelledRow = substr($html, $cancelledRowStart, $cancelledRowEnd - $cancelledRowStart);
+        $this->assertStringNotContainsString('12.00–13.00 WIB', $cancelledRow);
     }
 
     public function test_student_without_loan_history_can_be_deleted(): void
