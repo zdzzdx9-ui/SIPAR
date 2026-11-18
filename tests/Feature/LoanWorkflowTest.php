@@ -200,7 +200,8 @@ class LoanWorkflowTest extends TestCase
         $this->assertSame(1, $equipment->fresh()->stok_tersedia);
         $this->assertSame(1, $secondEquipment->fresh()->stok_tersedia);
         $this->assertSame('Approved', $loan->fresh()->status);
-        $this->assertStringContainsString('12.00 - 13.00 WIB', $loan->fresh()->operational_notes);
+        $this->assertStringContainsString('Gudang RPL', $loan->fresh()->operational_notes);
+        $this->assertStringContainsString('08.00 - 15.00 WIB', $loan->fresh()->operational_notes);
         $technician = User::factory()->create(['role' => 'teknisi']);
         foreach ($loan->detail as $detail) {
             DetailPenyerahan::create([

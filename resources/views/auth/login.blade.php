@@ -5,9 +5,9 @@
 <div class="auth-frame">
     <aside class="auth-aside auth-aside-login">
         <a class="brand auth-brand-hero" href="{{ route('login') }}"><img class="brand-logo" src="{{ asset('assets/logo.png') }}" alt="Logo SMK Negeri 5 Surakarta"><span>SIPAR</span></a>
-        <div class="auth-school"><strong>SMK Negeri 5 Surakarta</strong><span>Rekayasa Perangkat Lunak</span></div>
+        <div class="auth-school"><strong>SISTEM INFORMASI PEMINJAMAN ALAT RPL</strong></div>
         <div class="aside-copy auth-tagline"><p>Ajukan peminjaman, pantau verifikasi, dan kembalikan alat dalam satu sistem yang tertata.</p></div>
-        <div class="aside-foot">Layanan alat praktik · SMK Negeri 5 Surakarta</div>
+        <div class="aside-foot">SIPAR— Sistem Informasi Peminjaman Alat RPL · SMK Negeri 5 Surakarta</div>
     </aside>
     <main class="auth-main"><form class="auth-form" method="post" action="{{ route('login.store') }}">
         @csrf

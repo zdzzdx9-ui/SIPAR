@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') · SIPAR</title>
+    <link rel="icon" type="image/png" sizes="48x48" href="{{ asset('assets/favicon.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -38,6 +39,8 @@
         .workspace,.content,.surface{min-width:0}
         .equipment-photo-placeholder:not([hidden]){display:grid;place-items:center;background:#eaf3ff;color:#176ec5;font-size:1.15rem}
         .equipment-icon .equipment-photo{width:100%;height:100%;object-fit:cover}
+        .technician-task-icon{width:38px;height:38px;display:grid;flex:none;place-items:center;font-size:18px}
+        .technician-task-icon .bi{font-size:18px;line-height:1}
         .equipment-form-photo-preview{width:min(100%,240px);aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-inline:auto;border:1px solid var(--line);border-radius:8px;background:#f7f9fb}
         .equipment-form-photo-preview img{display:block;width:100%;height:100%;object-fit:contain;object-position:center}
         .equipment-form-photo-preview[hidden],.equipment-form-photo-preview img[hidden]{display:none}
@@ -164,8 +167,9 @@
             .page-head>div:last-child .btn{flex:1;min-width:0;white-space:normal}
             .stat{height:100%;min-width:0;overflow-wrap:anywhere}
             .modal-dialog{margin:.5rem auto}
-            .export-actions{width:100%}
-            .export-action{flex:1;justify-content:center;min-width:0;padding-right:10px;padding-left:10px}
+            .export-actions{display:grid;width:100%;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+            .export-actions .export-action{display:flex;flex:initial;width:100%;min-width:0;min-height:44px;justify-content:center;padding:9px 10px;white-space:nowrap}
+            .export-actions>.btn{grid-column:1/-1;min-height:44px;white-space:normal}
         }
     </style>
     <style>
@@ -190,6 +194,8 @@
             .topbar-search .btn{width:48px;height:48px;min-height:48px;padding:0}
             .topbar-search input{min-height:54px}
         }
+        .content>.alert-dismissible{padding-right:3.75rem}
+        .content>.alert-dismissible>.btn-close{position:absolute;top:4px;right:4px;width:40px;height:40px;min-height:40px;padding:0;background-size:12px}
         @media(min-width:768px) and (max-width:1023.98px){
             .table-responsive{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}
             .table-responsive:focus-visible{outline:2px solid #61a9e4;outline-offset:2px}
@@ -234,7 +240,7 @@
             .student-shell .student-dashboard-stats .stat-note{font-size:10px;line-height:1.35}
             .student-shell .page-head h1,.student-shell .page-head p{overflow-wrap:anywhere}
             .student-shell .dashboard-panel-heading{flex-wrap:wrap;gap:8px}
-            .student-shell .dashboard-history-link{display:inline-flex;align-items:center;min-height:44px;padding:8px 10px;border-radius:8px;background:#f2f7fc;color:var(--blue)!important;font-size:12px;font-weight:700}
+            .student-shell .dashboard-history-link{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:8px 10px;border-radius:8px;background:#f2f7fc;color:var(--blue)!important;font-size:12px;font-weight:700}
             .student-shell .search-result-item,.student-shell .search-transaction-item{align-items:flex-start;flex-wrap:wrap}
             .student-shell .search-result-copy{flex:1 1 0;min-width:0}
             .student-shell .search-result-copy strong,.student-shell .search-result-copy .panel-subtitle{overflow-wrap:anywhere}
@@ -246,7 +252,7 @@
             .student-shell .loan-history .table-responsive tbody td[data-card-wide]{grid-column:1}
             .student-shell .loan-history .table-responsive tbody td[data-label="Aksi"]{display:grid;grid-template-columns:minmax(74px,.32fr) minmax(0,1fr);justify-content:initial}
             .student-shell .loan-history .table-responsive tbody td[data-label="Aksi"] form{min-width:0;max-width:100%}
-            .student-shell .loan-history .table-responsive tbody td[data-label="Aksi"] .btn{width:100%;max-width:100%;white-space:normal;text-align:center}
+            .student-shell .loan-history .table-responsive tbody td[data-label="Aksi"] .btn{width:fit-content;max-width:100%;justify-self:start;white-space:normal;text-align:center}
             .student-shell .pagination{flex-wrap:wrap;gap:4px}
             .student-shell .app-footer-inner{overflow-wrap:anywhere}
             .student-shell .modal-header>div{min-width:0;overflow-wrap:anywhere}

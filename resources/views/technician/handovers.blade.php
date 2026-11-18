@@ -52,7 +52,7 @@
                         @endif
                     </div>
                 @endforeach
-                <div class="mb-3"><label class="form-label" for="handover-photo-{{ $loan->id_peminjaman }}">Foto bukti siswa dengan seluruh alat <span class="text-danger">*</span> (maks. 5 MB)</label><input class="form-control" id="handover-photo-{{ $loan->id_peminjaman }}" type="file" name="foto_bukti" accept="image/jpeg,image/png,image/webp" capture="environment" required><div class="form-text">Foto akan dioptimalkan otomatis sebelum disimpan.</div></div>
+                <div class="mb-3"><label class="form-label" for="handover-photo-{{ $loan->id_peminjaman }}">Foto bukti siswa dengan seluruh alat <span class="text-danger">*</span> (maks. 5 MB)</label><input class="form-control" id="handover-photo-{{ $loan->id_peminjaman }}" type="file" name="foto_bukti" accept="image/jpeg,image/png,image/webp" required><div class="form-text">Pilih file foto JPG, PNG, atau WEBP. Foto akan dioptimalkan otomatis sebelum disimpan.</div></div>
                 <button class="btn btn-primary" type="submit" data-submitting-text="Menyimpan seluruh transaksi...">Simpan seluruh penyerahan</button>
             </form>
         @else

@@ -89,6 +89,9 @@ class PageAccessTest extends TestCase
             ->assertSee('name="nama_kategori"', false);
         $this->get(route('admin.students'))
             ->assertSee('Data Siswa')
+            ->assertSee('Unduh Excel')
+            ->assertDontSee('Export Excel')
+            ->assertSee('.export-actions{display:grid;width:100%;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}', false)
             ->assertSee('class="table-responsive table-card-view"', false)
             ->assertSee('data-label="Nama"', false)
             ->assertSee('Tambah akun siswa')
@@ -104,6 +107,8 @@ class PageAccessTest extends TestCase
         $this->get(route('admin.reports'))
             ->assertSee('Dari tanggal')
             ->assertSee('Sampai tanggal')
+            ->assertSee('Unduh Excel')
+            ->assertDontSee('Export Excel')
             ->assertSee('data-label="Peminjam"', false)
             ->assertSee('Semua status')
             ->assertSee('Total Denda');
@@ -162,12 +167,32 @@ class PageAccessTest extends TestCase
             ->assertSee('catalog-card-actions{display:flex', false)
             ->assertSee('catalog-shell .responsive-search .btn{flex:0 0 auto;white-space:nowrap}', false)
             ->assertSee('class="catalog-image-frame overflow-hidden mb-3"', false)
-            ->assertSee('.loan-list-dock{position:relative;z-index:1;display:grid', false)
-            ->assertDontSee('position:fixed;top:auto;right:max(12px,env(safe-area-inset-right))', false)
-            ->assertSee('display:grid;grid-template-columns:minmax(0,1fr) max-content;grid-template-rows:minmax(64px,1fr)', false)
-            ->assertSee('min-height:90px', false)
+            ->assertSee('.content>.alert-dismissible{padding-right:3.75rem}', false)
+            ->assertSee('.content>.alert-dismissible>.btn-close{position:absolute;top:4px;right:4px;width:40px;height:40px;min-height:40px;padding:0;background-size:12px}', false)
+            ->assertSee('.catalog-thumb{display:grid;width:42px;height:42px;flex:none;place-items:center}', false)
+            ->assertSee('.catalog-thumb .equipment-photo{display:block;width:100%;height:100%;object-fit:contain;object-position:center}', false)
+            ->assertSee('.catalog-thumb .equipment-photo-placeholder .bi{font-size:20px;line-height:1}', false)
+            ->assertSee('.loan-date-control::-webkit-calendar-picker-indicator{opacity:0}', false)
+            ->assertSee('.loan-date-picker{position:absolute;top:50%;right:1px;z-index:2;display:grid;width:44px;height:44px;place-items:center', false)
+            ->assertSee('.loan-date-picker:focus-visible{outline:3px solid #93c5fd;outline-offset:1px}', false)
+            ->assertSee('aria-label="Pilih tanggal pinjam" aria-controls="loan-date"', false)
+            ->assertSee('aria-label="Pilih rencana tanggal kembali" aria-controls="return-date"', false)
+            ->assertSee('class="form-control loan-date-control"', false)
+            ->assertSee('<i class="bi bi-calendar3" aria-hidden="true"></i>', false)
+            ->assertSee("dateInput.showPicker()", false)
+            ->assertSee('.loan-list-dock{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:1030;display:grid', false)
+            ->assertSee('.catalog-shell.has-loan-selection .content{padding-bottom:calc(96px + env(safe-area-inset-bottom))}', false)
+            ->assertSee("catalogShell.classList.toggle('has-loan-selection', !empty)", false)
+            ->assertDontSee('.loan-list-dock{position:relative', false)
+            ->assertSee('display:grid;grid-template-columns:max-content max-content;grid-template-rows:1fr', false)
+            ->assertSee('width:fit-content;max-width:calc(100vw - 24px);min-height:58px', false)
+            ->assertSee('background:rgba(255,255,255,.9);box-shadow:0 4px 16px #10233420;backdrop-filter:blur(5px)', false)
+            ->assertSee('white-space:nowrap;font-size:12px;line-height:1.2', false)
+            ->assertSee('min-height:40px;margin:0;padding:6px 10px;font-size:12px;line-height:1.2', false)
+            ->assertSee('grid-template-columns:minmax(0,max-content) max-content;gap:.5rem;min-height:56px;padding:6px 8px', false)
+            ->assertSee('padding-bottom:calc(88px + env(safe-area-inset-bottom))', false)
             ->assertSee('class="loan-list-dock-info"', false)
-            ->assertSee('.loan-list-dock .btn{grid-column:2;grid-row:1;align-self:end;justify-self:end;min-height:44px;margin:0}', false)
+            ->assertSee('.loan-list-dock .btn{grid-column:2;grid-row:1;align-self:center;justify-self:end;min-width:0;min-height:40px;margin:0;padding:6px 10px;font-size:12px;line-height:1.2}', false)
             ->assertSee('class="btn btn-primary btn-sm loan-item-toggle"', false)
             ->assertSee('Pilih Alat')
             ->assertSee('id="loan-request-form"', false)
@@ -253,8 +278,8 @@ class PageAccessTest extends TestCase
         $this->actingAs($student)->get(route('catalog'))
             ->assertOk()
             ->assertSee('class="row g-3 catalog-grid"', false)
-            ->assertSee('.loan-list-dock{position:relative;z-index:1;display:grid', false)
-            ->assertSee('width:min(100%,520px);min-height:90px;max-width:100%;margin:0 0 1rem auto', false)
+            ->assertSee('.loan-list-dock{position:fixed;', false)
+            ->assertSee('width:fit-content;max-width:calc(100vw - 24px);min-height:58px', false)
             ->assertSeeInOrder(['Urutan Keyboard', 'Urutan Arduino', 'Urutan Bor']);
     }
 
@@ -301,6 +326,16 @@ class PageAccessTest extends TestCase
             ->assertSee('.loan-equipment-image>.equipment-photo{display:block;width:100%;height:100%;max-width:100%;object-fit:contain', false)
             ->assertSee('class="loan-equipment-list"', false)
             ->assertSee('class="loan-equipment-name"', false)
+            ->assertSee('.loan-history .table-responsive>.table{width:100%;min-width:100%;table-layout:fixed}', false)
+            ->assertSee('.loan-history .table tr>:nth-child(2){width:20%}', false)
+            ->assertSee('.loan-history .table td[data-label="Aksi"] .btn{max-width:100%;padding:7px 10px;line-height:1.35;white-space:normal}', false)
+            ->assertDontSee('text-danger text-nowrap', false)
+            ->assertSee('.student-shell .loan-equipment-name{flex:1 1 0;min-width:0}', false)
+            ->assertSee('.student-shell .loan-history .table-responsive tbody{display:grid;gap:10px;padding:12px}', false)
+            ->assertSee('.student-shell .loan-history .table-responsive tbody td[data-label="Aksi"]{display:grid;grid-template-columns:minmax(120px,.32fr) minmax(0,1fr)', false)
+            ->assertSee('.student-shell .loan-history .table-responsive tbody td[data-label="Aksi"] .btn{width:fit-content;max-width:100%;justify-self:start', false)
+            ->assertSee('.student-shell .loan-history .table-responsive tbody td,.student-shell .loan-history .table-responsive tbody td[data-label="Aksi"]{grid-template-columns:minmax(74px,.32fr) minmax(0,1fr)}', false)
+            ->assertDontSee('min-width:1280px', false)
             ->assertSee('.table-responsive{overflow:visible;overscroll-behavior-x:auto}', false)
             ->assertSee('.table-responsive tbody{display:grid;gap:10px;padding:12px}', false)
             ->assertSee('<th scope="col">Catatan</th>', false)
@@ -344,7 +379,7 @@ class PageAccessTest extends TestCase
         $response = $this->actingAs($student)->get(route('loans.mine'))->assertOk();
         $html = $response->getContent();
 
-        $this->assertStringContainsString('Lokasi pengambilan: Lab / Ruang Inventaris. Jam operasional teknisi: 12.00 - 13.00 WIB.', $html);
+        $this->assertStringContainsString('Lokasi pengambilan alat: Gudang RPL. Jam operasional pengambilan: 08.00 - 15.00 WIB.', $html);
         $this->assertStringContainsString('Harap ambil alat dalam 1×24 jam / pada jam operasional berikutnya setelah disetujui. Pembatalan dapat dilakukan sebelum persetujuan atau sebelum alat diserahkan kepada peminjam.', $html);
         $this->assertStringContainsString('Jadwal penggunaan tidak tersedia.', $html);
         $this->assertStringNotContainsString('Instruksi lama yang tidak boleh ditampilkan.', $html);
@@ -430,6 +465,9 @@ class PageAccessTest extends TestCase
             ->assertOk()
             ->assertViewHas('handoverCount', 1)
             ->assertViewHas('activeReturnCount', 0)
+            ->assertSee('class="d-flex align-items-start gap-3 mb-3 technician-task-content"', false)
+            ->assertSee('class="equipment-icon technician-task-icon"', false)
+            ->assertSee('.technician-task-icon{width:38px;height:38px;display:grid;flex:none;place-items:center;font-size:18px}', false)
             ->assertSee('Penyerahan Alat')
             ->assertSee('Pengembalian Alat')
             ->assertSee('text-bg-warning', false)
@@ -488,6 +526,14 @@ class PageAccessTest extends TestCase
         ])->assertRedirect();
         $this->assertSame('LOCKED-USER', $student->fresh()->nis_nip);
         $this->assertNotSame('Nama Baru', $student->fresh()->nama);
+
+        $this->put(route('profile.password'), [
+            'current_password' => 'salah',
+            'password' => 'password-baru-123',
+            'password_confirmation' => 'password-baru-123',
+        ])->assertRedirect()->assertSessionHasErrors([
+            'current_password' => 'Kata sandi saat ini tidak sesuai.',
+        ]);
 
         $this->put(route('profile.password'), [
             'current_password' => 'password',

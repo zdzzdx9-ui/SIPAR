@@ -270,7 +270,7 @@ class LoanController extends Controller
                     'status' => 'Approved',
                     'approved_at' => now(),
                     'status_read_at' => null,
-                    'operational_notes' => 'Lokasi pengambilan: Lab / Ruang Inventaris. Jam operasional teknisi: 12.00 - 13.00 WIB.',
+                    'operational_notes' => 'Lokasi pengambilan alat: Gudang RPL. Jam operasional pengambilan: 08.00 - 15.00 WIB.',
                     'overdue_flag' => false,
                     'reminder_flag' => false,
                 ]);

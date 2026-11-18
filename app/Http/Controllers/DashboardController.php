@@ -47,7 +47,7 @@ class DashboardController extends Controller
             'isAdmin' => $isAdmin,
             'isTeknisi' => $isTeknisi,
             'totalAlat' => Alat::count(),
-            'tersedia' => Alat::where('status_alat', 'Tersedia')->sum('stok_tersedia'),
+            'tersedia' => Alat::sum('stok_tersedia'),
             'pending' => Peminjaman::where('status', 'Pending')->count(),
             'dipinjam' => Peminjaman::where('status', 'Approved')->count(),
             'myLoanCount' => (clone $myLoans)->count(),
