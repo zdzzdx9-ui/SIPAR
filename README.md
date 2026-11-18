@@ -89,3 +89,5 @@ php artisan test
 ```
 
 Suite berjalan pada SQLite in-memory dan mencakup migrasi, pembatasan role, serta alur pengajuan sampai pengembalian terlambat.
+#   S I P A R   -   S i s t e m   P e m i n j a m a n   A l a t   R P L  
+ 
